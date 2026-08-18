@@ -1,8 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "vpnhub",
+  "productName": "VPNHub",
+  "mainBinaryName": "vpnhub",
   "version": "0.1.0",
-  "identifier": "com.hephaestus-studio.vpnhub",
+  "identifier": "vpnhub",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +13,7 @@
   "app": {
     "windows": [
       {
-        "title": "vpnhub",
+        "title": "VPNHub",
         "width": 800,
         "height": 600
       }
@@ -23,13 +24,43 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["deb", "rpm", "nsis", "app"],
+    "resources": ["../../../target/release/vpnhub-daemon*"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/bin/vpnhub-daemon": "../../../target/release/vpnhub-daemon",
+          "/usr/lib/systemd/system/vpnhub-daemon.service": "../../daemon/vpnhub-daemon.service"
+        },
+        "postInstallScript": "scripts/postinstall.sh",
+        "preRemoveScript": "scripts/preremove.sh",
+        "postRemoveScript": "scripts/postremove.sh"
+      },
+      "rpm": {
+        "files": {
+          "/usr/bin/vpnhub-daemon": "../../../target/release/vpnhub-daemon",
+          "/usr/lib/systemd/system/vpnhub-daemon.service": "../../daemon/vpnhub-daemon.service"
+        },
+        "postInstallScript": "scripts/postinstall.sh",
+        "preRemoveScript": "scripts/preremove.sh",
+        "postRemoveScript": "scripts/postremove.sh"
+      }
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "installerHooks": "scripts/windows/hooks.nsh"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    }
   }
 }
