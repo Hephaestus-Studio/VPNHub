@@ -1,18 +1,16 @@
-name: Changelog & Release
+name: Update Changelog
 
 on:
   push:
     branches:
       - main
-    tags:
-      - "v*"
 
 permissions:
   contents: write
 
 jobs:
   changelog:
-    name: Update Changelog & Release
+    name: Update Changelog
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,23 +18,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1. Generate release notes for the tag (only runs on v* tags)
-      - name: Generate Release Notes for Tag
-        if: startsWith(github.ref, 'refs/tags/v')
-        id: git-cliff-release
-        uses: orhun/git-cliff-action@v4
-        with:
-          config: cliff.toml
-          args: --latest --strip header
-
-      # 2. Update full CHANGELOG.md
+      # 1. Update full CHANGELOG.md
       - name: Generate Full CHANGELOG.md
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
           args: --output CHANGELOG.md
 
-      # 3. Commit and push CHANGELOG.md back to main
+      # 2. Commit and push CHANGELOG.md back to main
       - name: Commit and Push CHANGELOG.md
         run: |
           git config user.name "github-actions[bot]"
@@ -48,12 +37,3 @@ jobs:
             git commit -m "chore(release): update CHANGELOG.md [skip ci]"
             git push origin HEAD:main || echo "Push to main skipped or branch is protected."
           fi
-
-      # 4. Create GitHub Release when a new tag is pushed
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          body: ${{ steps.git-cliff-release.outputs.content }}
-          draft: false
-          prerelease: false
