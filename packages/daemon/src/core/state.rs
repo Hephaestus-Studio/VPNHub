@@ -135,10 +135,11 @@ impl StateManager {
             // From Disconnected can go to Connecting
             (SessionState::Disconnected, SessionState::Connecting) => true,
 
-            // From Connecting can go to Connected, Error, or Disconnecting
+            // From Connecting can go to Connected, Error, Disconnecting, or Reconnecting
             (SessionState::Connecting, SessionState::Connected) => true,
             (SessionState::Connecting, SessionState::Error) => true,
             (SessionState::Connecting, SessionState::Disconnecting) => true,
+            (SessionState::Connecting, SessionState::Reconnecting) => true,
 
             // From Connected can go to Reconnecting, Disconnecting, or Error
             (SessionState::Connected, SessionState::Reconnecting) => true,
@@ -154,9 +155,10 @@ impl StateManager {
             (SessionState::Disconnecting, SessionState::Disconnected) => true,
             (SessionState::Disconnecting, SessionState::Error) => true,
 
-            // From Error can recover to Disconnected or attempt Connecting
+            // From Error can recover to Disconnected, attempt Connecting, or Disconnecting for teardown
             (SessionState::Error, SessionState::Disconnected) => true,
             (SessionState::Error, SessionState::Connecting) => true,
+            (SessionState::Error, SessionState::Disconnecting) => true,
 
             _ => false,
         }

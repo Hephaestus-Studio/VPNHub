@@ -6,16 +6,18 @@
 
 use futures_util::{SinkExt, StreamExt};
 use std::sync::Arc;
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
 use tracing::{debug, error, info, warn};
 
 use crate::config::DaemonConfig;
 use crate::core::DaemonOrchestrator;
 use crate::error::IpcError;
-use crate::ipc::auth::verify_peer_credentials;
 use crate::ipc::codec::JsonLengthDelimitedCodec;
 use crate::ipc::protocol::{DaemonRequest, DaemonResponse};
 
+#[cfg(unix)]
+use crate::ipc::auth::verify_peer_credentials;
 #[cfg(unix)]
 use crate::ipc::transport::UnixTransportListener;
 
@@ -54,7 +56,8 @@ impl IpcServer {
                                 debug!("Accepted authorized IPC connection from PID {}", pid);
                                 let orchestrator = self.orchestrator.clone();
                                 tokio::spawn(async move {
-                                    if let Err(e) = Self::handle_client(stream, orchestrator).await
+                                    if let Err(e) =
+                                        Self::handle_client_stream(stream, orchestrator).await
                                     {
                                         debug!("Client connection closed: {}", e);
                                     }
@@ -72,12 +75,54 @@ impl IpcServer {
             }
         }
 
-        #[cfg(not(unix))]
+        #[cfg(windows)]
         {
-            info!(
-                "IPC Server initialized on Windows Named Pipe {:?}",
-                self.config.socket_path
-            );
+            use tokio::net::windows::named_pipe::ServerOptions;
+            let pipe_name = self.config.socket_path.to_string_lossy().to_string();
+            info!("IPC Server listening on Windows Named Pipe: {}", pipe_name);
+
+            let mut server = ServerOptions::new()
+                .first_pipe_instance(true)
+                .create(&pipe_name)
+                .map_err(|e| IpcError::BindFailed {
+                    endpoint: pipe_name.clone(),
+                    source: e,
+                })?;
+
+            loop {
+                match server.connect().await {
+                    Ok(()) => {
+                        let stream = server;
+                        server = match ServerOptions::new()
+                            .first_pipe_instance(false)
+                            .create(&pipe_name)
+                        {
+                            Ok(s) => s,
+                            Err(e) => {
+                                error!("Failed to create subsequent Named Pipe instance: {}", e);
+                                break;
+                            }
+                        };
+
+                        let orchestrator = self.orchestrator.clone();
+                        tokio::spawn(async move {
+                            if let Err(e) = Self::handle_client_stream(stream, orchestrator).await {
+                                debug!("Windows Named Pipe client connection closed: {}", e);
+                            }
+                        });
+                    }
+                    Err(e) => {
+                        warn!("Windows Named Pipe connect error: {}", e);
+                        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+                    }
+                }
+            }
+            Ok(())
+        }
+
+        #[cfg(not(any(unix, windows)))]
+        {
+            info!("IPC Server unsupported on current platform");
             loop {
                 tokio::time::sleep(tokio::time::Duration::from_secs(3600)).await;
             }
@@ -85,10 +130,13 @@ impl IpcServer {
     }
 
     /// Handles an individual connected client session with bidirectional streaming.
-    async fn handle_client(
-        stream: tokio::net::UnixStream,
+    async fn handle_client_stream<S>(
+        stream: S,
         orchestrator: Arc<DaemonOrchestrator>,
-    ) -> Result<(), IpcError> {
+    ) -> Result<(), IpcError>
+    where
+        S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    {
         let codec = JsonLengthDelimitedCodec::<DaemonRequest, DaemonResponse>::default();
         let mut framed = Framed::new(stream, codec);
 
@@ -116,7 +164,6 @@ impl IpcServer {
 
                 // Outbound server push event
                 Ok(event) = event_rx.recv() => {
-                    // Send event wrapped as response if supported or via dedicated event framing
                     debug!("Streaming push event to client: {:?}", event);
                 }
             }

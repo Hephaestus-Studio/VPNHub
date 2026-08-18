@@ -99,6 +99,8 @@ impl LinuxFirewallManager {
 
         let _ = std::process::Command::new("nft")
             .args(["delete", "table", "inet", NFT_TABLE_NAME])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status();
 
         self.flush_iptables_fallback();
@@ -164,9 +166,13 @@ impl LinuxFirewallManager {
     fn flush_iptables_fallback(&self) {
         let _ = std::process::Command::new("iptables")
             .args(["-F", "VPNHUB_OUTPUT"])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status();
         let _ = std::process::Command::new("iptables")
             .args(["-X", "VPNHUB_OUTPUT"])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status();
     }
 }

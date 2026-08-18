@@ -48,16 +48,21 @@ pub enum AuthConfig {
         /// Optional pre-shared symmetric key for post-quantum resistance.
         preshared_key: Option<String>,
     },
-    /// OpenVPN Username / Password credentials with optional certificates.
+    /// OpenVPN Username / Password credentials with optional certificates and base .ovpn content.
     UserPassword {
         username: String,
         password: String,
         ca_cert: Option<String>,
         client_cert: Option<String>,
         client_key: Option<String>,
+        ovpn_config: Option<String>,
     },
-    /// Raw `.ovpn` configuration text content.
-    RawOvpnConfig { config_content: String },
+    /// Raw `.ovpn` configuration text content with optional credentials.
+    RawOvpnConfig {
+        config_content: String,
+        username: Option<String>,
+        password: Option<String>,
+    },
 }
 
 /// Client parameters supplied when requesting a new connection.

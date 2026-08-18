@@ -42,10 +42,11 @@ impl UnixTransportListener {
             source: e,
         })?;
 
-        // Set socket permissions to 0660 (read/write for owner and group only)
+        // Set socket permissions to 0666 (world read/write for local socket endpoint).
+        // Access security and Anti-LPE verification is strictly enforced by SO_PEERCRED in verify_peer_credentials.
         if let Ok(metadata) = fs::metadata(&path) {
             let mut permissions = metadata.permissions();
-            permissions.set_mode(0o660);
+            permissions.set_mode(0o666);
             let _ = fs::set_permissions(&path, permissions);
         }
 

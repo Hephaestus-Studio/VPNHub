@@ -1,11 +1,6 @@
-//! # Central Daemon Orchestrator
-//!
-//! Central coordinator managing the state machine, driver lifecycle,
-//! network routing and firewall rules, DNS protection, telemetry, and diagnostics.
-
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 use crate::core::session::ActiveSession;
 use crate::core::state::StateManager;
@@ -149,32 +144,9 @@ impl DaemonOrchestrator {
         let iface = driver.interface_name().to_string();
         let assigned_ip = driver.assigned_ip();
 
-        // Apply network configurations
-        let dns_servers = params
-            .custom_dns
-            .clone()
-            .unwrap_or_else(|| vec!["1.1.1.1".to_string(), "1.0.0.1".to_string()]);
-        {
-            let mut net = self.network_mgr.lock().await;
-            if let Err(e) = net.setup_vpn_network(
-                &params.server_endpoint,
-                params.server_port,
-                &iface,
-                params.enable_kill_switch,
-                &dns_servers,
-            ) {
-                warn!("Network setup failed during connect: {}", e);
-            }
-        }
-
         let session = ActiveSession::new(&params, iface, assigned_ip);
         *self.active_session.lock().await = Some(session);
         *self.active_driver.lock().await = Some(driver);
-
-        self.state_mgr.transition_to(
-            SessionState::Connected,
-            Some("Tunnel established successfully".to_string()),
-        )?;
 
         // Start telemetry collector loop
         self.metrics_collector
@@ -182,11 +154,24 @@ impl DaemonOrchestrator {
 
         // Spawn driver event monitoring task
         let state_mgr = self.state_mgr.clone();
+        let network_mgr = self.network_mgr.clone();
+        let enable_kill_switch = params.enable_kill_switch;
+
         tokio::spawn(async move {
             while let Some(event) = driver_rx.recv().await {
                 match event {
                     DriverEvent::StateChanged(new_st) => {
-                        let _ = state_mgr.transition_to(new_st, None);
+                        let current = state_mgr.current_state();
+                        if current != new_st {
+                            if new_st == SessionState::Connected {
+                                // Tunnel is confirmed active
+                                if enable_kill_switch {
+                                    let mut net = network_mgr.lock().await;
+                                    let _ = net.set_kill_switch(true);
+                                }
+                            }
+                            let _ = state_mgr.transition_to(new_st, None);
+                        }
                     }
                     DriverEvent::Log { level, message } => {
                         info!("[Driver {}] {}", level, message);

@@ -5,6 +5,14 @@ edition = "2021"
 authors = ["VPNHub Team"]
 description = "Background VPN daemon for VPNHub with multi-protocol support, fail-closed kill switch, and secure IPC."
 
+[lib]
+name = "vpnhub_daemon"
+path = "src/lib.rs"
+
+[[bin]]
+name = "vpnhub-daemon"
+path = "src/main.rs"
+
 [dependencies]
 # Async Runtime & Utilities
 tokio = { version = "1", features = ["full"] }

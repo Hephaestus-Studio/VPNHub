@@ -1,14 +1,91 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+//! # VPNHub Desktop Client Backend (`src-tauri`)
+
+pub mod commands;
+pub mod error;
+pub mod ipc;
+pub mod storage;
+pub mod tray;
+
+use std::sync::Arc;
+use tracing::{error, info};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+
+use crate::commands::*;
+use crate::ipc::{start_ipc_monitor_worker, DaemonClient};
+use crate::storage::StorageManager;
+use crate::tray::setup_system_tray;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 1. Initialize structured logging
+    let _ = tracing_subscriber::registry()
+        .with(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::new("info,vpnhub=debug")),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .try_init();
+
+    info!("Starting VPNHub Desktop Tauri Client");
+
+    // 2. Initialize Daemon IPC Client
+    let daemon_client = Arc::new(DaemonClient::new());
+
+    // 3. Initialize Persistent Encrypted Storage
+    let storage_manager = match StorageManager::new() {
+        Ok(mgr) => Arc::new(mgr),
+        Err(e) => {
+            error!("Fatal: Failed to initialize persistent storage: {}", e);
+            panic!("Failed to initialize storage: {}", e);
+        }
+    };
+
+    // 4. Build Tauri Application
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .manage(daemon_client.clone())
+        .manage(storage_manager.clone())
+        .setup(move |app| {
+            let app_handle = app.handle().clone();
+
+            // Setup System Tray
+            if let Err(e) = setup_system_tray(&app_handle) {
+                tracing::warn!("Failed to setup system tray: {}", e);
+            }
+
+            // Spawn Background IPC Monitor Worker
+            let client = daemon_client.clone();
+            tauri::async_runtime::spawn(async move {
+                start_ipc_monitor_worker(app_handle, client).await;
+            });
+
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            vpn_connect,
+            vpn_disconnect,
+            get_daemon_status,
+            get_metrics,
+            set_kill_switch,
+            set_split_tunneling,
+            get_diagnostics,
+            ping_daemon,
+            window_start_dragging,
+            window_start_resize_dragging,
+            window_minimize,
+            window_maximize,
+            window_toggle_maximize,
+            window_close,
+            window_show,
+            window_set_size,
+            window_set_position,
+            window_get_geometry,
+            storage_load_all,
+            storage_save_profile,
+            storage_delete_profile,
+            storage_save_security_settings,
+            storage_save_split_rules
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

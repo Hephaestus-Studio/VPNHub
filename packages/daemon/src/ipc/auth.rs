@@ -30,20 +30,37 @@ pub fn verify_peer_credentials(
         let uid = creds.uid();
         let pid = creds.pid();
 
-        // Root user always authorized
+        // 1. Root user always authorized
         if uid == 0 {
             return Ok(pid as u32);
         }
 
-        // Check if user is member of auth group
+        // 2. Check if user is member of configured auth group (e.g. "vpnhub")
         if is_linux_user_in_group(uid, auth_group) {
-            Ok(pid as u32)
-        } else {
-            Err(IpcError::Unauthorized(format!(
-                "Caller UID {} is not root and not in authorized group '{}'",
-                uid, auth_group
-            )))
+            return Ok(pid as u32);
         }
+
+        // 3. Fallback for standard admin groups (sudo, wheel, adm)
+        if is_linux_user_in_group(uid, "sudo")
+            || is_linux_user_in_group(uid, "wheel")
+            || is_linux_user_in_group(uid, "adm")
+        {
+            return Ok(pid as u32);
+        }
+
+        // 4. Check if caller matches SUDO_USER who launched the daemon
+        if let Ok(sudo_user) = std::env::var("SUDO_USER") {
+            if let Ok(Some(u)) = nix::unistd::User::from_name(&sudo_user) {
+                if u.uid.as_raw() == uid {
+                    return Ok(pid as u32);
+                }
+            }
+        }
+
+        Err(IpcError::Unauthorized(format!(
+            "Caller UID {} is not root, not in '{}', and not an authorized administrative user",
+            uid, auth_group
+        )))
     }
 
     #[cfg(not(target_os = "linux"))]

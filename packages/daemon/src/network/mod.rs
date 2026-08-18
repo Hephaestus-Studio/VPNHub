@@ -53,6 +53,7 @@ impl NetworkManager {
         server_ip: &str,
         server_port: u16,
         iface: &str,
+        assigned_ip: Option<&str>,
         enable_kill_switch: bool,
         dns_servers: &[String],
     ) -> Result<(), DaemonError> {
@@ -61,8 +62,8 @@ impl NetworkManager {
             iface
         );
 
-        // 1. Configure interface MTU
-        InterfaceManager::configure_interface(iface, DEFAULT_VPN_MTU)?;
+        // 1. Configure interface MTU and assign virtual IP
+        InterfaceManager::configure_interface(iface, DEFAULT_VPN_MTU, assigned_ip)?;
 
         // 2. Configure routing
         self.router.setup_vpn_routing(server_ip, iface)?;
@@ -108,6 +109,8 @@ impl NetworkManager {
         // 3. Teardown routing
         if let Some(ctx) = self.active_tunnel.take() {
             let _ = self.router.teardown_vpn_routing(&ctx.server_ip, &ctx.iface);
+            // 4. Teardown virtual interface
+            let _ = InterfaceManager::teardown_interface(&ctx.iface);
         }
 
         Ok(())

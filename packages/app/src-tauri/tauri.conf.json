@@ -14,8 +14,13 @@
     "windows": [
       {
         "title": "VPNHub",
-        "width": 800,
-        "height": 600
+        "width": 980,
+        "height": 660,
+        "minWidth": 360,
+        "minHeight": 480,
+        "resizable": true,
+        "decorations": false,
+        "center": true
       }
     ],
     "security": {
