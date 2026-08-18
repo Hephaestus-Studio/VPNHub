@@ -1,0 +1,15 @@
+{
+  "$schema": "vscode://schemas/settings/folder",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+  },
+  "rust-analyzer.linkedProjects": [
+    "./packages/app/src-tauri/Cargo.toml",
+    "./packages/daemon/Cargo.toml"
+  ],
+  "rust-analyzer.cargo.buildScripts.enable": true,
+  "rust-analyzer.check.command": "clippy"
+}

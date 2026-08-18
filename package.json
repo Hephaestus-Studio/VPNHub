@@ -1,31 +1,22 @@
 {
-  "name": "vpnhub",
+  "name": "vpnhub-workspace",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "typecheck": "tsc --noEmit",
+    "dev": "pnpm --filter @vpnhub/app dev",
+    "build": "pnpm --filter @vpnhub/app build",
+    "preview": "pnpm --filter @vpnhub/app preview",
+    "tauri": "pnpm --filter @vpnhub/app tauri",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "format": "prettier --write . && cargo fmt --all",
+    "format:check": "prettier --check . && cargo fmt --all --check",
     "prepare": "husky"
-  },
-  "dependencies": {
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
-    "@tauri-apps/cli": "^2",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
     "husky": "^9.1.7",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "prettier": "^3.9.6"
   }
 }

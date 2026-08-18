@@ -1,0 +1,11 @@
+node_modules
+target
+dist
+dist-ssr
+pnpm-lock.yaml
+Cargo.lock
+*.local
+.husky/_
+packages/app/src-tauri/target
+packages/app/src-tauri/gen
+CHANGELOG.md
