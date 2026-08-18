@@ -2,13 +2,42 @@
 name = "vpnhub-daemon"
 version = "0.1.0"
 edition = "2021"
+authors = ["VPNHub Team"]
+description = "Background VPN daemon for VPNHub with multi-protocol support, fail-closed kill switch, and secure IPC."
 
 [dependencies]
+# Async Runtime & Utilities
 tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+futures-util = { version = "0.3", features = ["sink"] }
+bytes = "1"
+async-trait = "0.1"
+
+# Serialization & Data Formats
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+
+# CLI & Configuration
+clap = { version = "4", features = ["derive", "env"] }
+
+# Logging & Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
+
+# Error Handling
+thiserror = "2"
+anyhow = "1"
+
+# Cryptography & Security
+zeroize = { version = "1", features = ["derive"] }
+
+# OpenVPN 3 C++ Core integration
 openvpn-connect = { version = "0.1.1", features = ["tokio", "vendor"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nix = { version = "0.29", features = ["fs", "socket", "user", "process", "signal", "mman"] }
+libc = "0.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-service = "0.8.1"
