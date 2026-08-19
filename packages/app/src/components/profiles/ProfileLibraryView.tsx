@@ -16,7 +16,6 @@ import {
 import {
   IconSearch,
   IconPlus,
-  IconFileUpload,
   IconLayoutGrid,
   IconList,
   IconStar,
@@ -29,7 +28,7 @@ import { useVpnStore } from "../../state/useVpnStore";
 import { VpnProfile } from "../../types/vpn";
 import { ProfileCard } from "./ProfileCard";
 import { ProfileModal } from "./ProfileModal";
-import { ImportProfileModal } from "./ImportProfileModal";
+import { NewProfileHubModal } from "./NewProfileHubModal";
 import { QrCodeModal } from "./QrCodeModal";
 
 export const ProfileLibraryView: React.FC = () => {
@@ -42,8 +41,9 @@ export const ProfileLibraryView: React.FC = () => {
 
   // Modals state
   const [isProfileModalOpen, setProfileModalOpen] = useState(false);
-  const [isImportModalOpen, setImportModalOpen] = useState(false);
+  const [isHubModalOpen, setHubModalOpen] = useState(false);
   const [isQrModalOpen, setQrModalOpen] = useState(false);
+  const [chosenProtocol, setChosenProtocol] = useState<"wireguard" | "openvpn">("wireguard");
   const [selectedProfile, setSelectedProfile] = useState<VpnProfile | null>(null);
 
   // Filter Logic
@@ -66,11 +66,7 @@ export const ProfileLibraryView: React.FC = () => {
 
   const handleEdit = (profile: VpnProfile) => {
     setSelectedProfile(profile);
-    setProfileModalOpen(true);
-  };
-
-  const handleCreateNew = () => {
-    setSelectedProfile(null);
+    setChosenProtocol(profile.protocol === "wireguard" ? "wireguard" : "openvpn");
     setProfileModalOpen(true);
   };
 
@@ -101,26 +97,14 @@ export const ProfileLibraryView: React.FC = () => {
           </Text>
         </Box>
 
-        <Group gap="xs">
-          <Button
-            size="sm"
-            variant="default"
-            leftSection={<IconFileUpload size={16} />}
-            onClick={() => setImportModalOpen(true)}
-            style={{ background: "rgba(31, 41, 55, 0.6)", border: "1px solid var(--vpn-border)" }}
-          >
-            Import (.ovpn/.conf)
-          </Button>
-
-          <Button
-            size="sm"
-            color="cyan"
-            leftSection={<IconPlus size={16} />}
-            onClick={handleCreateNew}
-          >
-            Add Profile
-          </Button>
-        </Group>
+        <Button
+          size="sm"
+          color="cyan"
+          leftSection={<IconPlus size={16} />}
+          onClick={() => setHubModalOpen(true)}
+        >
+          Add / Import Profile
+        </Button>
       </Group>
 
       {/* Controls Bar: Search & Filter Pills & Grid/Table Toggle */}
@@ -407,13 +391,27 @@ export const ProfileLibraryView: React.FC = () => {
       )}
 
       {/* Modals */}
+      <NewProfileHubModal
+        opened={isHubModalOpen}
+        onClose={() => setHubModalOpen(false)}
+        onSelectManualCreate={(protocol) => {
+          setChosenProtocol(protocol);
+          setSelectedProfile(null);
+          setProfileModalOpen(true);
+        }}
+        onImportParsed={(parsedProfile) => {
+          setSelectedProfile(parsedProfile);
+          setChosenProtocol(parsedProfile.protocol === "wireguard" ? "wireguard" : "openvpn");
+          setProfileModalOpen(true);
+        }}
+      />
+
       <ProfileModal
         opened={isProfileModalOpen}
         onClose={() => setProfileModalOpen(false)}
         initialProfile={selectedProfile}
+        defaultProtocol={chosenProtocol}
       />
-
-      <ImportProfileModal opened={isImportModalOpen} onClose={() => setImportModalOpen(false)} />
 
       <QrCodeModal
         opened={isQrModalOpen}

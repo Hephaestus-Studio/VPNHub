@@ -7,8 +7,9 @@ export const BottomStatusBar: React.FC = () => {
   const { securitySettings, connectionState, daemonLatencyMs, activeProfileId, profiles } =
     useVpnStore();
 
-  const isSmall = useMediaQuery("(max-width: 640px)");
-  const isMobile = useMediaQuery("(max-width: 480px)");
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
+  if (isMobile) return null;
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
   const interfaceName = activeProfile?.protocol === "wireguard" ? "wg0" : "tun0";
@@ -17,19 +18,19 @@ export const BottomStatusBar: React.FC = () => {
     switch (securitySettings.killSwitch) {
       case "strict":
         return {
-          label: isSmall ? "KS: STRICT" : "Kill Switch: STRICT FAIL-CLOSED",
+          label: "Kill Switch: STRICT FAIL-CLOSED",
           color: "teal",
           icon: IconShieldCheck,
         };
       case "standard":
         return {
-          label: isSmall ? "KS: AUTO" : "Kill Switch: AUTO DROPOUT",
+          label: "Kill Switch: AUTO DROPOUT",
           color: "blue",
           icon: IconShieldCheck,
         };
       case "off":
         return {
-          label: isSmall ? "KS: OFF" : "Kill Switch: DISABLED",
+          label: "Kill Switch: DISABLED",
           color: "red",
           icon: IconShieldX,
         };
@@ -74,44 +75,36 @@ export const BottomStatusBar: React.FC = () => {
           </Text>
         </Group>
 
-        {!isMobile && (
-          <>
-            <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
+        <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
 
-            {/* IPv6 */}
-            <Group gap={4} wrap="nowrap">
-              <Text size="11px" c="dimmed">
-                IPv6:
-              </Text>
-              <Text
-                size="11px"
-                fw={500}
-                style={{ color: securitySettings.ipv6LeakProtection ? "#38bdf8" : "#f59e0b" }}
-              >
-                {securitySettings.ipv6LeakProtection ? "BLOCKED" : "PASS"}
-              </Text>
-            </Group>
-          </>
-        )}
+        {/* IPv6 */}
+        <Group gap={4} wrap="nowrap">
+          <Text size="11px" c="dimmed">
+            IPv6:
+          </Text>
+          <Text
+            size="11px"
+            fw={500}
+            style={{ color: securitySettings.ipv6LeakProtection ? "#38bdf8" : "#f59e0b" }}
+          >
+            {securitySettings.ipv6LeakProtection ? "BLOCKED" : "PASS"}
+          </Text>
+        </Group>
 
-        {!isSmall && (
-          <>
-            <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
+        <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
 
-            {/* DNS */}
-            <Group gap={4} wrap="nowrap">
-              <IconLock size={12} color="var(--vpn-cyan)" />
-              <Text size="11px" c="dimmed">
-                DNS:
-              </Text>
-              <Text size="11px" fw={500} style={{ color: "#67e8f9" }}>
-                SECURED
-              </Text>
-            </Group>
-          </>
-        )}
+        {/* DNS */}
+        <Group gap={4} wrap="nowrap">
+          <IconLock size={12} color="var(--vpn-cyan)" />
+          <Text size="11px" c="dimmed">
+            DNS:
+          </Text>
+          <Text size="11px" fw={500} style={{ color: "#67e8f9" }}>
+            SECURED
+          </Text>
+        </Group>
 
-        {connectionState === "connected" && !isMobile && (
+        {connectionState === "connected" && (
           <>
             <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
             <Group gap={4} wrap="nowrap">

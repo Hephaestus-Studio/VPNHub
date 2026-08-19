@@ -33,8 +33,19 @@ export interface VpnProfile {
     hasPassword?: boolean;
     hasCert?: boolean;
     hasPrivateKey?: boolean;
+    hasCaCert?: boolean;
+    hasTlsAuth?: boolean;
+    hasTlsCrypt?: boolean;
     privateKey?: string;
     presharedKey?: string;
+    caCert?: string;
+    clientCert?: string;
+    clientKey?: string;
+    tlsAuthKey?: string;
+    tlsCryptKey?: string;
+    keyDirection?: string;
+    remoteCertTlsServer?: boolean;
+    renegSec?: number;
   };
   rawConfig?: string;
 }

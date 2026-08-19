@@ -2,7 +2,9 @@ import React, { useEffect } from "react";
 import { Box } from "@mantine/core";
 import { Titlebar } from "./Titlebar";
 import { Sidebar } from "./Sidebar";
+import { SplitPaneLayout } from "./SplitPaneLayout";
 import { BottomStatusBar } from "./BottomStatusBar";
+import { MobileBottomNavBar } from "./MobileBottomNavBar";
 import { SpotlightSearch } from "./SpotlightSearch";
 import { DashboardView } from "../dashboard/DashboardView";
 import { ProfileLibraryView } from "../profiles/ProfileLibraryView";
@@ -99,28 +101,17 @@ export const AppShell: React.FC = () => {
       {/* Top Custom Frameless Titlebar */}
       <Titlebar />
 
-      {/* Main Center Area: Sidebar + Workspace */}
-      <Box
-        style={{
-          display: "flex",
-          flex: 1,
-          overflow: "hidden",
-          position: "relative",
-        }}
+      {/* Main Center Area: SplitPane Sidebar + Workspace */}
+      <SplitPaneLayout
+        sidebar={({ isCompact, onToggleCollapse }) => (
+          <Sidebar isCompact={isCompact} onToggleCollapse={onToggleCollapse} />
+        )}
       >
-        <Sidebar />
+        {renderActiveView()}
+      </SplitPaneLayout>
 
-        <Box
-          component="main"
-          style={{
-            flex: 1,
-            overflow: "hidden",
-            background: "var(--vpn-bg-base)",
-          }}
-        >
-          {renderActiveView()}
-        </Box>
-      </Box>
+      {/* Mobile Responsive Bottom Navigation Bar */}
+      <MobileBottomNavBar />
 
       {/* Bottom Persistent Statusbar */}
       <BottomStatusBar />

@@ -70,6 +70,7 @@ pub fn run() {
             set_split_tunneling,
             get_diagnostics,
             ping_daemon,
+            ping_server,
             window_start_dragging,
             window_start_resize_dragging,
             window_minimize,
@@ -84,7 +85,9 @@ pub fn run() {
             storage_save_profile,
             storage_delete_profile,
             storage_save_security_settings,
-            storage_save_split_rules
+            storage_save_split_rules,
+            read_text_file,
+            tray_set_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

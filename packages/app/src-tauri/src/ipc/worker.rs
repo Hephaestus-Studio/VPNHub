@@ -33,12 +33,17 @@ pub async fn start_ipc_monitor_worker(app_handle: AppHandle, client: Arc<DaemonC
         // If daemon is online, fetch metrics and snapshot
         if is_alive {
             if let Ok(response) = client.send_request(DaemonRequest::GetStatus).await {
+                if let vpnhub_daemon::ipc::protocol::DaemonResponse::Status(ref snap) = response {
+                    crate::tray::update_tray_status(&app_handle, &format!("{:?}", snap.state));
+                }
                 let _ = app_handle.emit("vpn-status-update", response);
             }
 
             if let Ok(response) = client.send_request(DaemonRequest::GetMetrics).await {
                 let _ = app_handle.emit("vpn-metrics-update", response);
             }
+        } else {
+            crate::tray::update_tray_status(&app_handle, "disconnected");
         }
     }
 }

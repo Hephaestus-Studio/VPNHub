@@ -144,13 +144,13 @@ impl DaemonOrchestrator {
         let iface = driver.interface_name().to_string();
         let assigned_ip = driver.assigned_ip();
 
-        let session = ActiveSession::new(&params, iface, assigned_ip);
+        let session = ActiveSession::new(&params, iface.clone(), assigned_ip);
         *self.active_session.lock().await = Some(session);
         *self.active_driver.lock().await = Some(driver);
 
         // Start telemetry collector loop
         self.metrics_collector
-            .start(1000, self.state_mgr.event_sender());
+            .start(1000, iface, self.state_mgr.event_sender());
 
         // Spawn driver event monitoring task
         let state_mgr = self.state_mgr.clone();
@@ -259,10 +259,6 @@ impl DaemonOrchestrator {
 
     /// Queries real-time bandwidth metrics.
     pub async fn query_metrics(&self) -> BandwidthMetrics {
-        if let Some(ref driver) = *self.active_driver.lock().await {
-            driver.query_metrics().await.unwrap_or_default()
-        } else {
-            BandwidthMetrics::default()
-        }
+        self.metrics_collector.get_latest().await
     }
 }

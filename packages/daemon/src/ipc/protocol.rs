@@ -55,6 +55,11 @@ pub enum AuthConfig {
         ca_cert: Option<String>,
         client_cert: Option<String>,
         client_key: Option<String>,
+        tls_auth_key: Option<String>,
+        tls_crypt_key: Option<String>,
+        key_direction: Option<String>,
+        remote_cert_tls_server: Option<bool>,
+        reneg_sec: Option<u32>,
         ovpn_config: Option<String>,
     },
     /// Raw `.ovpn` configuration text content with optional credentials.

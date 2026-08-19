@@ -1,131 +1,211 @@
 import React, { useState } from "react";
-import { Modal, Tabs, Stack, Text, Group, Button, TextInput, Box } from "@mantine/core";
+import { Modal, Stack, Text, Box, Alert, Group, Badge } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
-import {
-  IconFileUpload,
-  IconLink,
-  IconQrcode,
-  IconCheck,
-  IconFileTypeTxt,
-} from "@tabler/icons-react";
-import { VpnProfile } from "../../types/vpn";
-import { useVpnStore } from "../../state/useVpnStore";
+import { IconFileTypeTxt, IconAlertCircle, IconBolt, IconShieldLock } from "@tabler/icons-react";
+import { VpnProfile, ProtocolType } from "../../types/vpn";
 
 interface ImportProfileModalProps {
   opened: boolean;
   onClose: () => void;
+  targetProtocol?: "wireguard" | "openvpn";
+  onImportParsed?: (profile: VpnProfile) => void;
 }
 
-export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({ opened, onClose }) => {
-  const { addProfile } = useVpnStore();
-  const [importUrl, setImportUrl] = useState("");
-  const [parsedProfile, setParsedProfile] = useState<VpnProfile | null>(null);
+export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
+  opened,
+  onClose,
+  targetProtocol = "openvpn",
+  onImportParsed,
+}) => {
+  const [error, setError] = useState<string | null>(null);
+
+  const isWireGuardExpected = targetProtocol === "wireguard";
 
   const handleDrop = (files: File[]) => {
+    setError(null);
     const file = files[0];
     if (!file) return;
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      setError("Failed to read configuration file. Please try again.");
+    };
+
     reader.onload = (e) => {
-      const content = e.target?.result as string;
-      const isWireGuard = file.name.endsWith(".conf") || content.includes("[Interface]");
-      let protocol: import("../../types/vpn").ProtocolType = isWireGuard
-        ? "wireguard"
-        : "openvpn_udp";
-      let serverHost = "";
-      let serverPort = isWireGuard ? 51820 : 1194;
-      let privateKey: string | undefined = undefined;
-      let presharedKey: string | undefined = undefined;
-      let virtualIp = "10.8.0.50/24";
-      let username: string | undefined = undefined;
+      try {
+        const content = (e.target?.result as string) || "";
+        const isWireGuardContent = content.includes("[Interface]") || content.includes("[Peer]");
+        const isOpenVpnContent =
+          content.includes("<ca>") ||
+          content.includes("<cert>") ||
+          content.includes("auth-user-pass") ||
+          /^remote\s+/im.test(content) ||
+          /^proto\s+/im.test(content) ||
+          file.name.toLowerCase().endsWith(".ovpn");
 
-      if (isWireGuard) {
-        const privMatch = content.match(/PrivateKey\s*=\s*([^\s#]+)/i);
-        if (privMatch) privateKey = privMatch[1];
-        const pskMatch = content.match(/PresharedKey\s*=\s*([^\s#]+)/i);
-        if (pskMatch) presharedKey = pskMatch[1];
-        const addrMatch = content.match(/Address\s*=\s*([^\s#]+)/i);
-        if (addrMatch) virtualIp = addrMatch[1];
-
-        const endpointMatch = content.match(/Endpoint\s*=\s*([^:\s]+):(\d+)/i);
-        if (endpointMatch) {
-          serverHost = endpointMatch[1];
-          serverPort = parseInt(endpointMatch[2], 10);
-        }
-      } else {
-        const protoMatch = content.match(/^proto\s+(tcp\d*|udp\d*|tcp|udp)/im);
-        if (protoMatch) {
-          const p = protoMatch[1].toLowerCase();
-          protocol = p.startsWith("tcp") ? "openvpn_tcp" : "openvpn_udp";
+        if (isWireGuardExpected && isOpenVpnContent && !isWireGuardContent) {
+          setError(
+            "The selected file appears to be an OpenVPN configuration. Please select a valid WireGuard (.conf) file containing [Interface] directives."
+          );
+          return;
         }
 
-        const remoteMatch = content.match(/^remote\s+([^\s]+)(?:\s+(\d+))?(?:\s+(tcp|udp))?/im);
-        if (remoteMatch) {
-          serverHost = remoteMatch[1];
-          if (remoteMatch[2]) {
-            serverPort = parseInt(remoteMatch[2], 10);
+        if (!isWireGuardExpected && isWireGuardContent && !isOpenVpnContent) {
+          setError(
+            "The selected file appears to be a WireGuard configuration. Please select an OpenVPN (.ovpn) file."
+          );
+          return;
+        }
+
+        let protocol: ProtocolType = isWireGuardExpected ? "wireguard" : "openvpn_udp";
+        let serverHost = "";
+        let serverPort = isWireGuardExpected ? 51820 : 1194;
+        let privateKey: string | undefined = undefined;
+        let presharedKey: string | undefined = undefined;
+        let virtualIp = isWireGuardExpected ? "10.8.0.2/24" : "10.8.0.50/24";
+        let username: string | undefined = undefined;
+        let hasAuthUserPass = false;
+
+        let caCert: string | undefined = undefined;
+        let clientCert: string | undefined = undefined;
+        let clientKey: string | undefined = undefined;
+        let tlsAuthKey: string | undefined = undefined;
+        let tlsCryptKey: string | undefined = undefined;
+        let keyDirection: string | undefined = undefined;
+        let remoteCertTlsServer: boolean | undefined = undefined;
+        let renegSec: number | undefined = undefined;
+
+        if (isWireGuardExpected || isWireGuardContent) {
+          protocol = "wireguard";
+          const privMatch = content.match(/PrivateKey\s*=\s*([^\s#]+)/i);
+          if (privMatch) privateKey = privMatch[1].trim();
+
+          const pskMatch = content.match(/PresharedKey\s*=\s*([^\s#]+)/i);
+          if (pskMatch) presharedKey = pskMatch[1].trim();
+
+          const addrMatch = content.match(/Address\s*=\s*([^\r\n,#]+)/i);
+          if (addrMatch) virtualIp = addrMatch[1].trim();
+
+          const endpointMatch = content.match(/Endpoint\s*=\s*([^:\s#]+)(?::(\d+))?/i);
+          if (endpointMatch) {
+            serverHost = endpointMatch[1].trim();
+            if (endpointMatch[2]) {
+              serverPort = parseInt(endpointMatch[2], 10);
+            }
           }
-          if (remoteMatch[3]) {
-            protocol = remoteMatch[3].toLowerCase().startsWith("tcp")
-              ? "openvpn_tcp"
-              : "openvpn_udp";
+        } else {
+          const protoMatch = content.match(/^[ \t]*proto\s+(tcp\d*|udp\d*|tcp|udp)/im);
+          if (protoMatch) {
+            const p = protoMatch[1].toLowerCase();
+            protocol = p.startsWith("tcp") ? "openvpn_tcp" : "openvpn_udp";
+          }
+
+          const remoteMatch = content.match(
+            /^[ \t]*remote\s+([^\s]+)(?:\s+(\d+))?(?:\s+(tcp|udp))?/im
+          );
+          if (remoteMatch) {
+            serverHost = remoteMatch[1].trim();
+            if (remoteMatch[2]) {
+              serverPort = parseInt(remoteMatch[2], 10);
+            }
+            if (remoteMatch[3]) {
+              protocol = remoteMatch[3].toLowerCase().startsWith("tcp")
+                ? "openvpn_tcp"
+                : "openvpn_udp";
+            }
+          }
+
+          const ifconfigMatch = content.match(/^[ \t]*ifconfig\s+([^\s]+)/im);
+          if (ifconfigMatch) {
+            virtualIp = `${ifconfigMatch[1].trim()}/24`;
+          }
+
+          hasAuthUserPass = /^[ \t]*auth-user-pass/im.test(content);
+          // Only extract explicit username if defined in comment tag like # username: my_user
+          const userCommentMatch = content.match(
+            /^[ \t]*#\s*(?:username|user)\s*[:=]\s*([^\r\n]+)/im
+          );
+          if (userCommentMatch) {
+            username = userCommentMatch[1].trim();
+          }
+
+          // Extract XML Certificate & Key Blocks
+          const caMatch = content.match(/<ca>([\s\S]*?)<\/ca>/i);
+          if (caMatch) caCert = caMatch[1].trim();
+
+          const certMatch = content.match(/<cert>([\s\S]*?)<\/cert>/i);
+          if (certMatch) clientCert = certMatch[1].trim();
+
+          const keyMatch = content.match(/<key>([\s\S]*?)<\/key>/i);
+          if (keyMatch) clientKey = keyMatch[1].trim();
+
+          const tlsAuthMatch = content.match(/<tls-auth>([\s\S]*?)<\/tls-auth>/i);
+          if (tlsAuthMatch) tlsAuthKey = tlsAuthMatch[1].trim();
+
+          const tlsCryptMatch = content.match(/<tls-crypt>([\s\S]*?)<\/tls-crypt>/i);
+          if (tlsCryptMatch) tlsCryptKey = tlsCryptMatch[1].trim();
+
+          const kdMatch = content.match(/^[ \t]*key-direction\s+([^\s]+)/im);
+          if (kdMatch) keyDirection = kdMatch[1].trim();
+
+          if (content.match(/^[ \t]*remote-cert-tls\s+server/im)) {
+            remoteCertTlsServer = true;
+          }
+
+          const renegMatch = content.match(/^[ \t]*reneg-sec\s+(\d+)/im);
+          if (renegMatch) {
+            renegSec = parseInt(renegMatch[1], 10);
           }
         }
+
+        const cleanName = file.name.replace(/\.(conf|ovpn)$/i, "");
+
+        const newProf: VpnProfile = {
+          id: crypto.randomUUID(),
+          name: cleanName || (isWireGuardExpected ? "WireGuard Profile" : "OpenVPN Profile"),
+          protocol,
+          serverHost: serverHost || "127.0.0.1",
+          serverPort: serverPort || (isWireGuardExpected ? 51820 : 1194),
+          serverCountry: "Imported Gateway",
+          serverCity: "Remote DC",
+          serverFlag: "🌐",
+          virtualIp,
+          isFavorite: false,
+          tags: ["Imported", isWireGuardExpected ? "WireGuard" : "OpenVPN"],
+          pingMs: Math.floor(20 + Math.random() * 30),
+          credentials: {
+            username: username || undefined,
+            passwordMode: "static",
+            totpFormat: "append",
+            hasPassword: hasAuthUserPass,
+            hasPrivateKey: Boolean(privateKey || clientKey),
+            hasCert: Boolean(clientCert),
+            hasCaCert: Boolean(caCert),
+            hasTlsAuth: Boolean(tlsAuthKey),
+            hasTlsCrypt: Boolean(tlsCryptKey),
+            privateKey,
+            presharedKey,
+            caCert,
+            clientCert,
+            clientKey,
+            tlsAuthKey,
+            tlsCryptKey,
+            keyDirection,
+            remoteCertTlsServer,
+            renegSec,
+          },
+        };
+
+        if (onImportParsed) {
+          onImportParsed(newProf);
+        }
+        onClose();
+      } catch (err: any) {
+        setError(err?.message || "Failed to parse configuration file.");
       }
-
-      const newProf: VpnProfile = {
-        id: crypto.randomUUID(),
-        name: file.name.replace(/\.(conf|ovpn)$/, ""),
-        protocol,
-        serverHost: serverHost || (isWireGuard ? "127.0.0.1" : "127.0.0.1"),
-        serverPort: serverPort || (isWireGuard ? 51820 : 1194),
-        serverCountry: "Imported Gateway",
-        serverCity: "Remote DC",
-        serverFlag: "🌐",
-        virtualIp,
-        isFavorite: false,
-        tags: ["Imported", isWireGuard ? "WireGuard" : "OpenVPN"],
-        pingMs: 32,
-        credentials: {
-          username,
-          passwordMode: "static",
-          totpFormat: "append",
-          hasPassword: false,
-          hasPrivateKey: Boolean(privateKey),
-          hasCert: content.includes("<cert>") || content.includes("cert "),
-          privateKey,
-          presharedKey,
-        },
-        rawConfig: content,
-      };
-
-      setParsedProfile(newProf);
     };
 
     reader.readAsText(file);
-  };
-
-  const handleConfirmImport = () => {
-    if (parsedProfile) {
-      let secretPayload: import("../../services/ipcBridge").ProfileSecretPayload | undefined;
-      if (parsedProfile.protocol === "wireguard" && parsedProfile.credentials?.privateKey) {
-        secretPayload = {
-          type: "wireguard",
-          private_key: parsedProfile.credentials.privateKey,
-          preshared_key: parsedProfile.credentials.presharedKey,
-        };
-      } else if (parsedProfile.rawConfig) {
-        secretPayload = {
-          type: "raw_ovpn_config",
-          config_content: parsedProfile.rawConfig,
-          username: parsedProfile.credentials?.username,
-          password: parsedProfile.credentials?.password,
-        };
-      }
-      addProfile(parsedProfile, secretPayload);
-      setParsedProfile(null);
-      onClose();
-    }
   };
 
   return (
@@ -134,172 +214,112 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({ opened, 
       onClose={onClose}
       title={
         <Group gap="xs">
-          <IconFileUpload size={18} color="var(--vpn-cyan)" />
+          {isWireGuardExpected ? (
+            <IconBolt size={20} color="var(--vpn-cyan)" />
+          ) : (
+            <IconShieldLock size={20} color="var(--vpn-emerald)" />
+          )}
           <Text fw={700} size="md" style={{ color: "#fff" }}>
-            Import VPN Profiles
+            {isWireGuardExpected ? "Import WireGuard (.conf)" : "Import OpenVPN (.ovpn)"}
           </Text>
+          <Badge size="xs" color={isWireGuardExpected ? "cyan" : "teal"} variant="light">
+            {isWireGuardExpected ? "WireGuard" : "OpenVPN"}
+          </Badge>
         </Group>
       }
       size="md"
       centered
       styles={{
         content: {
-          background: "rgba(17, 24, 39, 0.95)",
+          background: "rgba(17, 24, 39, 0.98)",
           backdropFilter: "blur(16px)",
           border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
+          borderRadius: 14,
         },
         header: {
           background: "transparent",
           borderBottom: "1px solid var(--vpn-border)",
+          paddingBottom: 12,
         },
       }}
     >
-      <Tabs defaultValue="file" color="cyan">
-        <Tabs.List mb="md">
-          <Tabs.Tab value="file" leftSection={<IconFileUpload size={14} />}>
-            File Drop (.ovpn / .conf)
-          </Tabs.Tab>
-          <Tabs.Tab value="url" leftSection={<IconLink size={14} />}>
-            Subscription URL
-          </Tabs.Tab>
-          <Tabs.Tab value="qr" leftSection={<IconQrcode size={14} />}>
-            Scan QR Code
-          </Tabs.Tab>
-        </Tabs.List>
+      <Stack gap="md">
+        {error && (
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="red"
+            variant="light"
+            styles={{ root: { padding: "8px 12px" } }}
+          >
+            {error}
+          </Alert>
+        )}
 
-        <Tabs.Panel value="file">
-          <Stack gap="md">
-            <Dropzone
-              onDrop={handleDrop}
-              maxSize={5 * 1024 * 1024}
-              accept={[
-                "text/plain",
-                "application/x-openvpn-profile",
-                "application/octet-stream",
-                ".ovpn",
-                ".conf",
-              ]}
-              style={{
-                background: "rgba(31, 41, 55, 0.4)",
-                border: "2px dashed var(--vpn-border)",
-                borderRadius: 10,
-                padding: "24px",
-                textAlign: "center",
-                cursor: "pointer",
-              }}
-            >
-              <Stack align="center" gap="xs">
-                <Box
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: "50%",
-                    background: "rgba(6, 182, 212, 0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <IconFileTypeTxt size={24} color="var(--vpn-cyan)" />
-                </Box>
-                <Text size="sm" fw={600} style={{ color: "#fff" }}>
-                  Drag & Drop .ovpn or .conf configuration files
-                </Text>
-                <Text size="xs" c="dimmed">
-                  Supports WireGuard config, OpenVPN 2.x/3.x profiles up to 5MB
-                </Text>
-              </Stack>
-            </Dropzone>
-
-            {parsedProfile && (
-              <Box
-                style={{
-                  padding: "12px",
-                  background: "rgba(16, 185, 129, 0.1)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                  borderRadius: 8,
-                }}
-              >
-                <Group justify="space-between" align="center">
-                  <Group gap="xs">
-                    <IconCheck size={16} color="var(--vpn-emerald)" />
-                    <Box>
-                      <Text size="xs" fw={700} style={{ color: "#fff" }}>
-                        Parsed Profile: {parsedProfile.name}
-                      </Text>
-                      <Text size="10px" c="dimmed">
-                        Protocol: {parsedProfile.protocol.toUpperCase()} • Endpoint:{" "}
-                        {parsedProfile.serverHost}:{parsedProfile.serverPort}
-                      </Text>
-                    </Box>
-                  </Group>
-                  <Button size="xs" color="teal" onClick={handleConfirmImport}>
-                    Import Now
-                  </Button>
-                </Group>
-              </Box>
-            )}
-          </Stack>
-        </Tabs.Panel>
-
-        <Tabs.Panel value="url">
-          <Stack gap="sm">
-            <TextInput
-              label="Remote Subscription / API Endpoint"
-              placeholder="https://vpn.corp.company.com/api/v1/profile.ovpn"
-              value={importUrl}
-              onChange={(e) => setImportUrl(e.currentTarget.value)}
-            />
-            <Button
-              color="cyan"
-              disabled={!importUrl}
-              onClick={() => {
-                const newProf: VpnProfile = {
-                  id: crypto.randomUUID(),
-                  name: "Corporate Managed Gateway",
-                  protocol: "wireguard",
-                  serverHost: "vpn.corp.company.com",
-                  serverPort: 51820,
-                  serverCountry: "Enterprise Cloud",
-                  serverCity: "Multi-Region",
-                  serverFlag: "🏢",
-                  virtualIp: "10.8.10.12/24",
-                  isFavorite: true,
-                  tags: ["Managed", "Corporate"],
-                  pingMs: 28,
-                };
-                addProfile(newProf);
-                onClose();
-              }}
-            >
-              Fetch & Sync Profile
-            </Button>
-          </Stack>
-        </Tabs.Panel>
-
-        <Tabs.Panel value="qr">
-          <Stack align="center" gap="sm" py="md">
+        <Dropzone
+          onDrop={handleDrop}
+          maxSize={5 * 1024 * 1024}
+          accept={
+            isWireGuardExpected
+              ? ["text/plain", ".conf"]
+              : [
+                  "text/plain",
+                  "application/x-openvpn-profile",
+                  "application/octet-stream",
+                  ".ovpn",
+                  ".conf",
+                ]
+          }
+          style={{
+            background: "rgba(31, 41, 55, 0.4)",
+            border: `2px dashed ${
+              isWireGuardExpected ? "rgba(6, 182, 212, 0.4)" : "rgba(16, 185, 129, 0.4)"
+            }`,
+            borderRadius: 12,
+            padding: "36px 20px",
+            textAlign: "center",
+            cursor: "pointer",
+            transition: "border-color 0.2s, background-color 0.2s",
+          }}
+        >
+          <Stack align="center" gap="sm">
             <Box
               style={{
-                width: 140,
-                height: 140,
-                border: "2px dashed var(--vpn-border)",
-                borderRadius: 12,
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background: isWireGuardExpected
+                  ? "rgba(6, 182, 212, 0.15)"
+                  : "rgba(16, 185, 129, 0.15)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "rgba(0, 0, 0, 0.3)",
               }}
             >
-              <IconQrcode size={64} color="var(--vpn-text-muted)" />
+              <IconFileTypeTxt
+                size={30}
+                color={isWireGuardExpected ? "var(--vpn-cyan)" : "var(--vpn-emerald)"}
+              />
             </Box>
-            <Text size="xs" c="dimmed" style={{ textAlign: "center" }}>
-              Point your camera or paste a QR code image to import tunnel credentials
+            <Text size="sm" fw={600} style={{ color: "#fff" }}>
+              {isWireGuardExpected
+                ? "Drag & Drop WireGuard .conf file here"
+                : "Drag & Drop OpenVPN .ovpn or .conf file here"}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {isWireGuardExpected
+                ? "Supports WireGuard standard config format (.conf) up to 5MB"
+                : "Supports OpenVPN 2.x/3.x unified format (.ovpn) up to 5MB"}
+            </Text>
+            <Text
+              size="11px"
+              c={isWireGuardExpected ? "cyan" : "teal"}
+              style={{ textDecoration: "underline" }}
+            >
+              or click to browse from your computer
             </Text>
           </Stack>
-        </Tabs.Panel>
-      </Tabs>
+        </Dropzone>
+      </Stack>
     </Modal>
   );
 };

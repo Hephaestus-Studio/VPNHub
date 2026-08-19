@@ -31,6 +31,12 @@ pub struct StoredCredentialsMetadata {
     pub has_password: bool,
     pub has_private_key: bool,
     pub has_client_cert: bool,
+    #[serde(default)]
+    pub has_ca_cert: bool,
+    #[serde(default)]
+    pub has_tls_auth: bool,
+    #[serde(default)]
+    pub has_tls_crypt: bool,
     pub has_raw_ovpn: bool,
 }
 
@@ -58,6 +64,11 @@ pub enum StoredProfileSecret {
         ca_cert: Option<String>,
         client_cert: Option<String>,
         client_key: Option<String>,
+        tls_auth_key: Option<String>,
+        tls_crypt_key: Option<String>,
+        key_direction: Option<String>,
+        remote_cert_tls_server: Option<bool>,
+        reneg_sec: Option<u32>,
         ovpn_config: Option<String>,
     },
     RawOvpnConfig {

@@ -22,6 +22,11 @@ export interface VpnConnectParams {
         ca_cert?: string;
         client_cert?: string;
         client_key?: string;
+        tls_auth_key?: string;
+        tls_crypt_key?: string;
+        key_direction?: string;
+        remote_cert_tls_server?: boolean;
+        reneg_sec?: number;
         ovpn_config?: string;
       }
     | {
@@ -51,6 +56,11 @@ export type ProfileSecretPayload =
       ca_cert?: string;
       client_cert?: string;
       client_key?: string;
+      tls_auth_key?: string;
+      tls_crypt_key?: string;
+      key_direction?: string;
+      remote_cert_tls_server?: boolean;
+      reneg_sec?: number;
       ovpn_config?: string;
     }
   | {
@@ -83,6 +93,9 @@ export interface FullStorageSnapshotPayload {
       has_password: boolean;
       has_private_key: boolean;
       has_client_cert: boolean;
+      has_ca_cert?: boolean;
+      has_tls_auth?: boolean;
+      has_tls_crypt?: boolean;
       has_raw_ovpn: boolean;
     };
   }>;
@@ -373,6 +386,16 @@ export class IpcBridge {
     }
   }
 
+  static async updateTrayStatus(state: string): Promise<void> {
+    if (this.isTauriEnvironment()) {
+      try {
+        await invoke("tray_set_status", { state });
+      } catch (err) {
+        console.warn("tray_set_status failed:", err);
+      }
+    }
+  }
+
   // Event Subscriptions
   static async onDaemonStatusChange(
     callback: (status: DaemonHealthStatus) => void
@@ -401,5 +424,16 @@ export class IpcBridge {
       });
     }
     return () => {};
+  }
+
+  static async pingHost(host: string, port: number): Promise<number | null> {
+    if (this.isTauriEnvironment()) {
+      try {
+        return await invoke<number>("ping_server", { host, port });
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 }

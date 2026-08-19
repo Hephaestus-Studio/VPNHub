@@ -49,3 +49,8 @@ pub async fn storage_save_split_rules(
 ) -> Result<(), AppError> {
     storage.save_split_rules(app_rules, ip_rules)
 }
+
+#[tauri::command]
+pub async fn read_text_file(path: String) -> Result<String, AppError> {
+    std::fs::read_to_string(&path).map_err(AppError::Io)
+}

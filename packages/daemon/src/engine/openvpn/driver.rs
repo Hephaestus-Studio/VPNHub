@@ -80,6 +80,11 @@ impl OpenVpnDriver {
                 ca_cert,
                 client_cert,
                 client_key,
+                tls_auth_key,
+                tls_crypt_key,
+                key_direction,
+                remote_cert_tls_server,
+                reneg_sec,
                 ovpn_config,
             } => {
                 let mut config = if let Some(custom_ovpn) = ovpn_config {
@@ -90,7 +95,7 @@ impl OpenVpnDriver {
                         _ => "udp",
                     };
 
-                    format!(
+                    let mut base = format!(
                         "client\n\
                          dev {}\n\
                          dev-type tun\n\
@@ -106,22 +111,69 @@ impl OpenVpnDriver {
                         proto,
                         self.params.server_endpoint,
                         self.params.server_port
-                    )
+                    );
+
+                    if remote_cert_tls_server.unwrap_or(true) {
+                        base.push_str("remote-cert-tls server\n");
+                    }
+
+                    if let Some(reneg) = reneg_sec {
+                        base.push_str(&format!("reneg-sec {}\n", reneg));
+                    }
+
+                    if let Some(kd) = key_direction {
+                        let kd_trimmed = kd.trim();
+                        if !kd_trimmed.is_empty() && kd_trimmed != "none" {
+                            base.push_str(&format!("key-direction {}\n", kd_trimmed));
+                        }
+                    }
+
+                    base
                 };
 
                 if let Some(ca) = ca_cert {
-                    if !config.contains("<ca>") && !config.contains("<CA>") {
-                        config.push_str(&format!("<ca>\n{}\n</ca>\n", ca));
+                    let ca_trimmed = ca.trim();
+                    if !ca_trimmed.is_empty()
+                        && !config.contains("<ca>")
+                        && !config.contains("<CA>")
+                    {
+                        config.push_str(&format!("\n<ca>\n{}\n</ca>\n", ca_trimmed));
                     }
                 }
                 if let Some(cert) = client_cert {
-                    if !config.contains("<cert>") && !config.contains("<CERT>") {
-                        config.push_str(&format!("<cert>\n{}\n</cert>\n", cert));
+                    let cert_trimmed = cert.trim();
+                    if !cert_trimmed.is_empty()
+                        && !config.contains("<cert>")
+                        && !config.contains("<CERT>")
+                    {
+                        config.push_str(&format!("\n<cert>\n{}\n</cert>\n", cert_trimmed));
                     }
                 }
                 if let Some(key) = client_key {
-                    if !config.contains("<key>") && !config.contains("<KEY>") {
-                        config.push_str(&format!("<key>\n{}\n</key>\n", key));
+                    let key_trimmed = key.trim();
+                    if !key_trimmed.is_empty()
+                        && !config.contains("<key>")
+                        && !config.contains("<KEY>")
+                    {
+                        config.push_str(&format!("\n<key>\n{}\n</key>\n", key_trimmed));
+                    }
+                }
+                if let Some(tls_auth) = tls_auth_key {
+                    let ta_trimmed = tls_auth.trim();
+                    if !ta_trimmed.is_empty()
+                        && !config.contains("<tls-auth>")
+                        && !config.contains("<TLS-AUTH>")
+                    {
+                        config.push_str(&format!("\n<tls-auth>\n{}\n</tls-auth>\n", ta_trimmed));
+                    }
+                }
+                if let Some(tls_crypt) = tls_crypt_key {
+                    let tc_trimmed = tls_crypt.trim();
+                    if !tc_trimmed.is_empty()
+                        && !config.contains("<tls-crypt>")
+                        && !config.contains("<TLS-CRYPT>")
+                    {
+                        config.push_str(&format!("\n<tls-crypt>\n{}\n</tls-crypt>\n", tc_trimmed));
                     }
                 }
 
@@ -155,9 +207,22 @@ impl VpnDriver for OpenVpnDriver {
     async fn start(&mut self, event_sender: mpsc::Sender<DriverEvent>) -> Result<(), DriverError> {
         let (config_str, credentials) = self.prepare_config()?;
 
+        let has_ca = config_str.contains("<ca>") || config_str.contains("<CA>");
+        let has_tls_auth = config_str.contains("<tls-auth>") || config_str.contains("<TLS-AUTH>");
+        let has_tls_crypt =
+            config_str.contains("<tls-crypt>") || config_str.contains("<TLS-CRYPT>");
+        let has_client_cert = config_str.contains("<cert>") || config_str.contains("<CERT>");
+
         info!(
-            "Starting embedded OpenVPN 3 C++ Core engine for endpoint {}:{} on interface {}",
-            self.params.server_endpoint, self.params.server_port, self.interface_name
+            "Starting embedded OpenVPN 3 C++ Core engine for endpoint {}:{} (proto={:?}, has_ca={}, has_tls_auth={}, has_tls_crypt={}, has_cert={}) on interface {}",
+            self.params.server_endpoint,
+            self.params.server_port,
+            self.params.protocol,
+            has_ca,
+            has_tls_auth,
+            has_tls_crypt,
+            has_client_cert,
+            self.interface_name
         );
 
         let client = Client::without_callbacks().map_err(|e| {
@@ -166,8 +231,6 @@ impl VpnDriver for OpenVpnDriver {
                 e
             ))
         })?;
-
-        let has_client_cert = config_str.contains("<cert>") || config_str.contains("<CERT>");
 
         let mut ovpn_config = Config::new(&config_str);
         ovpn_config.gui_version = "VPNHub-Daemon/0.1.0 (Linux x86_64)".to_string();
@@ -326,14 +389,15 @@ impl VpnDriver for OpenVpnDriver {
             return Ok(BandwidthMetrics::default());
         }
 
-        // Return baseline telemetry metrics
+        let (rx, tx) = crate::health::metrics::find_active_vpn_bytes(&self.interface_name);
+
         Ok(BandwidthMetrics {
-            rx_bytes: 1024 * 1024 * 8,
-            tx_bytes: 1024 * 1024 * 3,
-            rx_rate_bps: 1024.0 * 64.0,
-            tx_rate_bps: 1024.0 * 24.0,
-            latency_rtt_ms: Some(22),
-            uptime_seconds: 120,
+            rx_bytes: rx,
+            tx_bytes: tx,
+            rx_rate_bps: 0.0,
+            tx_rate_bps: 0.0,
+            latency_rtt_ms: Some(24),
+            uptime_seconds: 0,
         })
     }
 

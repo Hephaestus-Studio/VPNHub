@@ -122,3 +122,9 @@ pub async fn window_get_geometry(window: Window) -> Result<serde_json::Value, Ap
         "scale_factor": factor,
     }))
 }
+
+#[tauri::command]
+pub async fn tray_set_status(app: tauri::AppHandle, state: String) -> Result<(), AppError> {
+    crate::tray::update_tray_status(&app, &state);
+    Ok(())
+}

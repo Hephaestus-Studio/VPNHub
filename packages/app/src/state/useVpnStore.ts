@@ -26,6 +26,7 @@ interface VpnStoreState {
   activeTab: NavigationTab;
   profiles: VpnProfile[];
   telemetry: LiveTelemetry;
+  connectedAt: number | null;
   uptimeSeconds: number;
   logs: LogEntry[];
   securitySettings: SecuritySettings;
@@ -73,9 +74,9 @@ interface VpnStoreState {
   clearLogs: () => void;
   addLog: (level: LogEntry["level"], source: string, message: string) => void;
   tickTelemetry: () => void;
+  pingAllProfiles: () => Promise<void>;
 }
 
-let timerInterval: ReturnType<typeof setInterval> | null = null;
 let telemetryInterval: ReturnType<typeof setInterval> | null = null;
 let ipcSubscribed = false;
 
@@ -110,21 +111,12 @@ const setupIpcSubscriptions = async (
             "TUNNEL_ENGINE",
             `Tunnel established. Interface: ${snap.virtual_interface || "tun0"}, Assigned IP: ${snap.assigned_ip || "DHCP"}`
           );
-          if (!timerInterval) {
-            timerInterval = setInterval(() => {
-              set((s) => ({ uptimeSeconds: s.uptimeSeconds + 1 }));
-            }, 1000);
-          }
         } else if (daemonState === "error") {
           current.addLog(
             "ERROR",
             "TUNNEL_ENGINE",
             "VPN tunnel encountered a fatal error / authentication failure."
           );
-          if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-          }
         } else if (daemonState === "disconnected") {
           if (
             prevState === "connected" ||
@@ -133,17 +125,19 @@ const setupIpcSubscriptions = async (
           ) {
             current.addLog("INFO", "TUNNEL_ENGINE", "VPN tunnel disconnected.");
           }
-          if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-          }
         }
+
+        const now = Date.now();
+        const sessionSecs = snap.session_duration_secs || 0;
+        const connectedAt = daemonState === "connected" ? now - sessionSecs * 1000 : null;
 
         set({
           connectionState: daemonState,
-          uptimeSeconds:
-            daemonState === "connected" ? snap.session_duration_secs || current.uptimeSeconds : 0,
+          connectedAt,
+          uptimeSeconds: sessionSecs,
         });
+
+        IpcBridge.updateTrayStatus(daemonState);
       }
     }
   });
@@ -152,20 +146,39 @@ const setupIpcSubscriptions = async (
     if (!payload || typeof payload !== "object") return;
     if (payload.status === "metrics" && payload.result) {
       const m = payload.result;
-      const rxKbps = Math.round((m.rx_rate_bps || 0) / 1024);
-      const txKbps = Math.round((m.tx_rate_bps || 0) / 1024);
-      const ping = m.latency_rtt_ms || get().telemetry.currentPingMs;
+      // 1 Byte = 8 bits -> 1 KB/s = 8192 bps
+      const rxKbps = Math.round(((m.rx_rate_bps || 0) / 8192) * 10) / 10;
+      const txKbps = Math.round(((m.tx_rate_bps || 0) / 8192) * 10) / 10;
+      const ping = m.latency_rtt_ms || get().telemetry.currentPingMs || 24;
 
-      set((state) => ({
-        telemetry: {
-          ...state.telemetry,
-          currentDownloadKbps: rxKbps,
-          currentUploadKbps: txKbps,
-          totalDownloadedBytes: m.rx_bytes || state.telemetry.totalDownloadedBytes,
-          totalUploadedBytes: m.tx_bytes || state.telemetry.totalUploadedBytes,
-          currentPingMs: ping,
-        },
-      }));
+      set((state) => {
+        const newSparkline = [
+          ...state.telemetry.sparkline.slice(-29),
+          {
+            timestamp: Date.now(),
+            downloadSpeed: rxKbps,
+            uploadSpeed: txKbps,
+            ping: ping,
+          },
+        ];
+
+        const updatedProfiles = state.activeProfileId
+          ? state.profiles.map((p) => (p.id === state.activeProfileId ? { ...p, pingMs: ping } : p))
+          : state.profiles;
+
+        return {
+          profiles: updatedProfiles,
+          telemetry: {
+            ...state.telemetry,
+            currentDownloadKbps: rxKbps,
+            currentUploadKbps: txKbps,
+            totalDownloadedBytes: m.rx_bytes ?? state.telemetry.totalDownloadedBytes,
+            totalUploadedBytes: m.tx_bytes ?? state.telemetry.totalUploadedBytes,
+            currentPingMs: ping,
+            sparkline: newSparkline,
+          },
+        };
+      });
     }
   });
 };
@@ -211,6 +224,7 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
   activeProfileId: "",
   activeTab: "dashboard",
   profiles: [],
+  connectedAt: null,
   uptimeSeconds: 0,
   logs: [],
   isSpotlightOpen: false,
@@ -268,6 +282,15 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       let presharedKey: string | undefined = undefined;
       let rawConfig: string | undefined = undefined;
 
+      let caCert: string | undefined = undefined;
+      let clientCert: string | undefined = undefined;
+      let clientKey: string | undefined = undefined;
+      let tlsAuthKey: string | undefined = undefined;
+      let tlsCryptKey: string | undefined = undefined;
+      let keyDirection: string | undefined = undefined;
+      let remoteCertTlsServer: boolean | undefined = undefined;
+      let renegSec: number | undefined = undefined;
+
       if (secret) {
         if (secret.type === "wireguard") {
           privateKey = secret.private_key;
@@ -277,6 +300,14 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
           password = secret.password;
           totpSecret = secret.totp_secret;
           totpFormat = (secret.totp_format as "append" | "prefix" | "totp_only") || totpFormat;
+          caCert = secret.ca_cert;
+          clientCert = secret.client_cert;
+          clientKey = secret.client_key;
+          tlsAuthKey = secret.tls_auth_key;
+          tlsCryptKey = secret.tls_crypt_key;
+          keyDirection = secret.key_direction;
+          remoteCertTlsServer = secret.remote_cert_tls_server;
+          renegSec = secret.reneg_sec;
           rawConfig = secret.ovpn_config;
           if (totpSecret) {
             passwordMode =
@@ -319,9 +350,20 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
           totpFormat,
           privateKey,
           presharedKey,
+          caCert,
+          clientCert,
+          clientKey,
+          tlsAuthKey,
+          tlsCryptKey,
+          keyDirection,
+          remoteCertTlsServer,
+          renegSec,
           hasPassword: Boolean(password || p.credentials?.has_password),
           hasPrivateKey: Boolean(privateKey || p.credentials?.has_private_key),
-          hasCert: Boolean(p.credentials?.has_client_cert),
+          hasCert: Boolean(clientCert || p.credentials?.has_client_cert),
+          hasCaCert: Boolean(caCert || p.credentials?.has_ca_cert),
+          hasTlsAuth: Boolean(tlsAuthKey || p.credentials?.has_tls_auth),
+          hasTlsCrypt: Boolean(tlsCryptKey || p.credentials?.has_tls_crypt),
         },
         rawConfig,
       };
@@ -375,6 +417,9 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
 
     // Initialize real-time daemon IPC subscriptions
     await setupIpcSubscriptions(get, set);
+
+    // Trigger initial background ping for all profiles
+    get().pingAllProfiles();
   },
 
   setActiveTab: (tab) => set({ activeTab: tab }),
@@ -413,7 +458,33 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
           privateKey: secret.private_key,
           presharedKey: secret.preshared_key,
         };
-      } else if (secret.type === "user_password" || secret.type === "raw_ovpn_config") {
+      } else if (secret.type === "user_password") {
+        fullProfile.credentials = {
+          ...fullProfile.credentials,
+          username: secret.username || fullProfile.credentials?.username,
+          password: secret.password || fullProfile.credentials?.password,
+          totpSecret: secret.totp_secret || fullProfile.credentials?.totpSecret,
+          totpFormat:
+            (secret.totp_format as "append" | "prefix" | "totp_only") ||
+            fullProfile.credentials?.totpFormat ||
+            "append",
+          caCert: secret.ca_cert || fullProfile.credentials?.caCert,
+          clientCert: secret.client_cert || fullProfile.credentials?.clientCert,
+          clientKey: secret.client_key || fullProfile.credentials?.clientKey,
+          tlsAuthKey: secret.tls_auth_key || fullProfile.credentials?.tlsAuthKey,
+          tlsCryptKey: secret.tls_crypt_key || fullProfile.credentials?.tlsCryptKey,
+          keyDirection: secret.key_direction || fullProfile.credentials?.keyDirection,
+          remoteCertTlsServer:
+            secret.remote_cert_tls_server !== undefined
+              ? secret.remote_cert_tls_server
+              : fullProfile.credentials?.remoteCertTlsServer,
+          renegSec: secret.reneg_sec || fullProfile.credentials?.renegSec,
+          hasCaCert: Boolean(secret.ca_cert || fullProfile.credentials?.caCert),
+          hasTlsAuth: Boolean(secret.tls_auth_key || fullProfile.credentials?.tlsAuthKey),
+          hasTlsCrypt: Boolean(secret.tls_crypt_key || fullProfile.credentials?.tlsCryptKey),
+          hasCert: Boolean(secret.client_cert || fullProfile.credentials?.clientCert),
+        };
+      } else if (secret.type === "raw_ovpn_config") {
         fullProfile.credentials = {
           ...fullProfile.credentials,
           username: secret.username || fullProfile.credentials?.username,
@@ -424,9 +495,7 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
             fullProfile.credentials?.totpFormat ||
             "append",
         };
-        if (secret.type === "raw_ovpn_config") {
-          fullProfile.rawConfig = secret.config_content || fullProfile.rawConfig;
-        }
+        fullProfile.rawConfig = secret.config_content || fullProfile.rawConfig;
       }
     }
 
@@ -451,7 +520,33 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
           privateKey: secret.private_key,
           presharedKey: secret.preshared_key,
         };
-      } else if (secret.type === "user_password" || secret.type === "raw_ovpn_config") {
+      } else if (secret.type === "user_password") {
+        fullProfile.credentials = {
+          ...fullProfile.credentials,
+          username: secret.username || fullProfile.credentials?.username,
+          password: secret.password || fullProfile.credentials?.password,
+          totpSecret: secret.totp_secret || fullProfile.credentials?.totpSecret,
+          totpFormat:
+            (secret.totp_format as "append" | "prefix" | "totp_only") ||
+            fullProfile.credentials?.totpFormat ||
+            "append",
+          caCert: secret.ca_cert || fullProfile.credentials?.caCert,
+          clientCert: secret.client_cert || fullProfile.credentials?.clientCert,
+          clientKey: secret.client_key || fullProfile.credentials?.clientKey,
+          tlsAuthKey: secret.tls_auth_key || fullProfile.credentials?.tlsAuthKey,
+          tlsCryptKey: secret.tls_crypt_key || fullProfile.credentials?.tlsCryptKey,
+          keyDirection: secret.key_direction || fullProfile.credentials?.keyDirection,
+          remoteCertTlsServer:
+            secret.remote_cert_tls_server !== undefined
+              ? secret.remote_cert_tls_server
+              : fullProfile.credentials?.remoteCertTlsServer,
+          renegSec: secret.reneg_sec || fullProfile.credentials?.renegSec,
+          hasCaCert: Boolean(secret.ca_cert || fullProfile.credentials?.caCert),
+          hasTlsAuth: Boolean(secret.tls_auth_key || fullProfile.credentials?.tlsAuthKey),
+          hasTlsCrypt: Boolean(secret.tls_crypt_key || fullProfile.credentials?.tlsCryptKey),
+          hasCert: Boolean(secret.client_cert || fullProfile.credentials?.clientCert),
+        };
+      } else if (secret.type === "raw_ovpn_config") {
         fullProfile.credentials = {
           ...fullProfile.credentials,
           username: secret.username || fullProfile.credentials?.username,
@@ -462,9 +557,7 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
             fullProfile.credentials?.totpFormat ||
             "append",
         };
-        if (secret.type === "raw_ovpn_config") {
-          fullProfile.rawConfig = secret.config_content || fullProfile.rawConfig;
-        }
+        fullProfile.rawConfig = secret.config_content || fullProfile.rawConfig;
       }
     }
 
@@ -614,12 +707,22 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       profile.protocol === "wireguard"
         ? {
             auth_type: "wireguard_key" as const,
-            private_key: "",
+            private_key: profile.credentials?.privateKey || "",
+            preshared_key: profile.credentials?.presharedKey,
           }
         : {
             auth_type: "user_password" as const,
             username: profile.credentials?.username || "",
             password: finalAuthPassword,
+            ca_cert: profile.credentials?.caCert,
+            client_cert: profile.credentials?.clientCert,
+            client_key: profile.credentials?.clientKey,
+            tls_auth_key: profile.credentials?.tlsAuthKey,
+            tls_crypt_key: profile.credentials?.tlsCryptKey,
+            key_direction: profile.credentials?.keyDirection,
+            remote_cert_tls_server: profile.credentials?.remoteCertTlsServer,
+            reneg_sec: profile.credentials?.renegSec,
+            ovpn_config: profile.rawConfig,
           };
 
     try {
@@ -660,38 +763,43 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       "Disconnect request received. Tearing down tunnel interfaces..."
     );
 
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-
     try {
       await IpcBridge.disconnectVpn();
+      set({ connectionState: "disconnected", connectedAt: null, uptimeSeconds: 0 });
     } catch (err: any) {
       state.addLog("ERROR", "TUNNEL_ENGINE", `Disconnect error: ${err?.message || err}`);
-      set({ connectionState: "disconnected" });
+      set({ connectionState: "disconnected", connectedAt: null, uptimeSeconds: 0 });
     }
   },
 
   tickTelemetry: () => {
     const state = get();
     if (state.connectionState !== "connected") {
+      if (
+        state.telemetry.currentDownloadKbps !== 0 ||
+        state.telemetry.currentUploadKbps !== 0 ||
+        state.uptimeSeconds !== 0
+      ) {
+        set((s) => ({
+          uptimeSeconds: 0,
+          connectedAt: null,
+          telemetry: {
+            ...s.telemetry,
+            currentDownloadKbps: 0,
+            currentUploadKbps: 0,
+          },
+        }));
+      }
       return;
     }
 
     const activeProf = state.profiles.find((p) => p.id === state.activeProfileId);
-    const basePing = activeProf ? activeProf.pingMs : 25;
-    const currentPing = Math.max(12, Math.floor(basePing + (Math.random() * 8 - 4)));
-
-    // Fluctuating realistic speeds
-    const download = Math.max(
-      8000,
-      Math.floor(35000 + Math.sin(Date.now() / 4000) * 15000 + (Math.random() * 6000 - 3000))
-    );
-    const upload = Math.max(
-      1500,
-      Math.floor(7000 + Math.cos(Date.now() / 5000) * 3500 + (Math.random() * 2000 - 1000))
-    );
+    const currentPing = activeProf?.pingMs || state.telemetry.currentPingMs || 25;
+    const download = state.telemetry.currentDownloadKbps;
+    const upload = state.telemetry.currentUploadKbps;
+    const realUptime = state.connectedAt
+      ? Math.floor((Date.now() - state.connectedAt) / 1000)
+      : state.uptimeSeconds;
 
     set((s) => {
       const newSparkline = [
@@ -705,18 +813,31 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       ];
 
       return {
+        uptimeSeconds: realUptime,
         telemetry: {
-          currentDownloadKbps: download,
-          currentUploadKbps: upload,
-          totalDownloadedBytes: s.telemetry.totalDownloadedBytes + download * 1024 * 0.5,
-          totalUploadedBytes: s.telemetry.totalUploadedBytes + upload * 1024 * 0.5,
+          ...s.telemetry,
           currentPingMs: currentPing,
-          jitterMs: parseFloat((1.2 + Math.random() * 0.8).toFixed(1)),
-          packetLossPercent: 0,
           sparkline: newSparkline,
         },
       };
     });
+  },
+
+  pingAllProfiles: async () => {
+    const profiles = get().profiles;
+    if (!profiles || profiles.length === 0) return;
+
+    for (const prof of profiles) {
+      if (prof.serverHost && prof.serverPort) {
+        IpcBridge.pingHost(prof.serverHost, prof.serverPort).then((rtt) => {
+          if (rtt !== null && rtt > 0) {
+            set((state) => ({
+              profiles: state.profiles.map((p) => (p.id === prof.id ? { ...p, pingMs: rtt } : p)),
+            }));
+          }
+        });
+      }
+    }
   },
 }));
 

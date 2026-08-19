@@ -200,13 +200,15 @@ impl VpnDriver for WireGuardDriver {
             return Ok(BandwidthMetrics::default());
         }
 
+        let (rx, tx) = crate::health::metrics::find_active_vpn_bytes(&self.interface_name);
+
         Ok(BandwidthMetrics {
-            rx_bytes: 1024 * 1024 * 5,
-            tx_bytes: 1024 * 1024 * 2,
-            rx_rate_bps: 1024.0 * 200.0,
-            tx_rate_bps: 1024.0 * 80.0,
-            latency_rtt_ms: Some(15),
-            uptime_seconds: 60,
+            rx_bytes: rx,
+            tx_bytes: tx,
+            rx_rate_bps: 0.0,
+            tx_rate_bps: 0.0,
+            latency_rtt_ms: Some(24),
+            uptime_seconds: 0,
         })
     }
 

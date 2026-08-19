@@ -27,11 +27,42 @@
   --vpn-radius-xl: 24px;
 }
 
-* {
+/* =========================================================================
+   NATIVE DESKTOP BEHAVIOR: Disable Web Highlights, Image Drag & Text Selection
+   ========================================================================= */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+svg,
+a,
+button,
+div {
+  -webkit-user-drag: none;
+}
+
+/* Explicit opt-in for areas where text copy is essential */
+input,
+textarea,
+[contenteditable="true"],
+.selectable-text,
+.selectable-text * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Remove default focus outline rings on mouse clicks */
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 body,
@@ -45,6 +76,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeSpeed;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #root {
@@ -53,6 +86,8 @@ html {
   overflow: hidden;
   contain: strict;
   transform: translateZ(0);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* =========================================================================
@@ -75,21 +110,45 @@ body.is-resizing .glass-card {
 
 /* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.15);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+
+/* Micro Thin Horizontal Scrollbar */
+.slim-horizontal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.slim-horizontal-scrollbar::-webkit-scrollbar {
+  height: 3.5px !important;
+}
+
+.slim-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 999px !important;
+}
+
+.slim-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-radius: 999px !important;
+}
+
+.slim-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--vpn-cyan) !important;
 }
 
 /* Glassmorphism & Panel Styles */

@@ -1,4 +1,4 @@
-import { Box, Stack, UnstyledButton, Group, Text, Badge, Tooltip } from "@mantine/core";
+import { Box, Stack, UnstyledButton, Group, Text, Badge, Tooltip, ActionIcon } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
   IconBolt,
@@ -10,6 +10,8 @@ import {
   IconSettings,
   IconLifebuoy,
   IconShieldCheck,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
 } from "@tabler/icons-react";
 import { useVpnStore, NavigationTab } from "../../state/useVpnStore";
 
@@ -30,27 +32,74 @@ const NAV_ITEMS: NavItem[] = [
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isCompact?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onToggleCollapse }) => {
   const { activeTab, setActiveTab, daemonHealth, daemonVersion, profiles } = useVpnStore();
-  const isCompact = useMediaQuery("(max-width: 768px)");
+  const isMediaCompact = useMediaQuery("(max-width: 768px)");
+  const isCompact = propIsCompact !== undefined ? propIsCompact : isMediaCompact;
 
   return (
     <Box
       style={{
-        width: isCompact ? 62 : 210,
+        width: "100%",
         height: "100%",
         background: "var(--vpn-bg-surface)",
-        borderRight: "1px solid var(--vpn-border)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: isCompact ? "12px 6px" : "12px 8px",
-        transition: "width 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-        flexShrink: 0,
+        padding: isCompact ? "10px 6px" : "10px 8px",
+        overflowX: "hidden",
+        overflowY: "auto",
       }}
     >
-      {/* Navigation List */}
-      <Stack gap={4}>
+      {/* Top Section: Toggle Button & Navigation List */}
+      <Stack gap={3}>
+        <Group
+          justify={isCompact ? "center" : "space-between"}
+          align="center"
+          mb={4}
+          pb={4}
+          style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}
+        >
+          {!isCompact && (
+            <Text
+              size="sm"
+              fw={700}
+              style={{
+                color: "#ffffff",
+                fontSize: 13.5,
+                letterSpacing: "0.02em",
+                paddingLeft: 6,
+              }}
+            >
+              Menu
+            </Text>
+          )}
+          <Tooltip
+            label={isCompact ? "Expand Sidebar (Ctrl+B)" : "Collapse Sidebar (Ctrl+B)"}
+            position="right"
+            withArrow
+          >
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="sm"
+              onClick={onToggleCollapse}
+              style={{ color: "var(--vpn-text-secondary)" }}
+            >
+              {isCompact ? (
+                <IconLayoutSidebarLeftExpand size={16} />
+              ) : (
+                <IconLayoutSidebarLeftCollapse size={15} />
+              )}
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
