@@ -53,7 +53,14 @@ export type ProfileSecretPayload =
       client_key?: string;
       ovpn_config?: string;
     }
-  | { type: "raw_ovpn_config"; config_content: string; username?: string; password?: string };
+  | {
+      type: "raw_ovpn_config";
+      config_content: string;
+      username?: string;
+      password?: string;
+      totp_secret?: string;
+      totp_format?: string;
+    };
 
 export interface FullStorageSnapshotPayload {
   profiles: Array<{
@@ -79,6 +86,7 @@ export interface FullStorageSnapshotPayload {
       has_raw_ovpn: boolean;
     };
   }>;
+  secrets?: Record<string, ProfileSecretPayload>;
   security_settings: {
     kill_switch: "off" | "standard" | "strict";
     dns_protection: boolean;
@@ -140,10 +148,24 @@ export class IpcBridge {
         credentials: profile.credentials
           ? {
               username: profile.credentials.username,
-              has_password: Boolean(profile.credentials.hasPassword),
-              has_private_key: Boolean(profile.credentials.hasPrivateKey),
+              password_mode: profile.credentials.passwordMode || "static",
+              totp_format: profile.credentials.totpFormat || "append",
+              has_password: Boolean(
+                profile.credentials.hasPassword ||
+                profile.credentials.password ||
+                (secret && "password" in secret && secret.password)
+              ),
+              has_private_key: Boolean(
+                profile.credentials.hasPrivateKey ||
+                profile.credentials.privateKey ||
+                (secret && "private_key" in secret && secret.private_key)
+              ),
               has_client_cert: Boolean(profile.credentials.hasCert),
-              has_raw_ovpn: Boolean(profile.rawConfig),
+              has_raw_ovpn: Boolean(
+                profile.rawConfig ||
+                (secret && "config_content" in secret && secret.config_content) ||
+                (secret && "ovpn_config" in secret && secret.ovpn_config)
+              ),
             }
           : undefined,
       };

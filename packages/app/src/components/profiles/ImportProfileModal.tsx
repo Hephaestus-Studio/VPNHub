@@ -34,8 +34,19 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({ opened, 
         : "openvpn_udp";
       let serverHost = "";
       let serverPort = isWireGuard ? 51820 : 1194;
+      let privateKey: string | undefined = undefined;
+      let presharedKey: string | undefined = undefined;
+      let virtualIp = "10.8.0.50/24";
+      let username: string | undefined = undefined;
 
       if (isWireGuard) {
+        const privMatch = content.match(/PrivateKey\s*=\s*([^\s#]+)/i);
+        if (privMatch) privateKey = privMatch[1];
+        const pskMatch = content.match(/PresharedKey\s*=\s*([^\s#]+)/i);
+        if (pskMatch) presharedKey = pskMatch[1];
+        const addrMatch = content.match(/Address\s*=\s*([^\s#]+)/i);
+        if (addrMatch) virtualIp = addrMatch[1];
+
         const endpointMatch = content.match(/Endpoint\s*=\s*([^:\s]+):(\d+)/i);
         if (endpointMatch) {
           serverHost = endpointMatch[1];
@@ -63,7 +74,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({ opened, 
       }
 
       const newProf: VpnProfile = {
-        id: `imported-${Date.now()}`,
+        id: crypto.randomUUID(),
         name: file.name.replace(/\.(conf|ovpn)$/, ""),
         protocol,
         serverHost: serverHost || (isWireGuard ? "127.0.0.1" : "127.0.0.1"),
@@ -71,10 +82,20 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({ opened, 
         serverCountry: "Imported Gateway",
         serverCity: "Remote DC",
         serverFlag: "🌐",
-        virtualIp: "10.8.0.50/24",
+        virtualIp,
         isFavorite: false,
         tags: ["Imported", isWireGuard ? "WireGuard" : "OpenVPN"],
         pingMs: 32,
+        credentials: {
+          username,
+          passwordMode: "static",
+          totpFormat: "append",
+          hasPassword: false,
+          hasPrivateKey: Boolean(privateKey),
+          hasCert: content.includes("<cert>") || content.includes("cert "),
+          privateKey,
+          presharedKey,
+        },
         rawConfig: content,
       };
 
@@ -87,10 +108,18 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({ opened, 
   const handleConfirmImport = () => {
     if (parsedProfile) {
       let secretPayload: import("../../services/ipcBridge").ProfileSecretPayload | undefined;
-      if (parsedProfile.rawConfig) {
+      if (parsedProfile.protocol === "wireguard" && parsedProfile.credentials?.privateKey) {
+        secretPayload = {
+          type: "wireguard",
+          private_key: parsedProfile.credentials.privateKey,
+          preshared_key: parsedProfile.credentials.presharedKey,
+        };
+      } else if (parsedProfile.rawConfig) {
         secretPayload = {
           type: "raw_ovpn_config",
           config_content: parsedProfile.rawConfig,
+          username: parsedProfile.credentials?.username,
+          password: parsedProfile.credentials?.password,
         };
       }
       addProfile(parsedProfile, secretPayload);
@@ -227,7 +256,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({ opened, 
               disabled={!importUrl}
               onClick={() => {
                 const newProf: VpnProfile = {
-                  id: `sub-${Date.now()}`,
+                  id: crypto.randomUUID(),
                   name: "Corporate Managed Gateway",
                   protocol: "wireguard",
                   serverHost: "vpn.corp.company.com",

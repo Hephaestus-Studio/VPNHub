@@ -1,4 +1,4 @@
-import { Box, Group, Text, Badge, Button, ActionIcon, Menu } from "@mantine/core";
+import { Box, Group, Text, Badge, Button, ActionIcon, Menu, Loader } from "@mantine/core";
 import {
   IconStar,
   IconStarFilled,
@@ -10,6 +10,9 @@ import {
   IconCopy,
   IconTrash,
   IconPower,
+  IconShieldCheck,
+  IconAlertTriangle,
+  IconRefresh,
 } from "@tabler/icons-react";
 import { VpnProfile } from "../../types/vpn";
 import { useVpnStore } from "../../state/useVpnStore";
@@ -33,7 +36,10 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
 
   const isActive = profile.id === activeProfileId;
   const isConnected = isActive && connectionState === "connected";
-  const isConnecting = isActive && connectionState === "connecting";
+  const isConnecting =
+    isActive && (connectionState === "connecting" || connectionState === "reconnecting");
+  const isDisconnecting = isActive && connectionState === "disconnecting";
+  const isError = isActive && connectionState === "error";
 
   const handleConnectClick = () => {
     if (isConnected) {
@@ -46,7 +52,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
   const handleDuplicate = () => {
     const duplicated: VpnProfile = {
       ...profile,
-      id: `prof-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: `${profile.name} (Copy)`,
       isFavorite: false,
     };
@@ -71,20 +77,154 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     document.body.removeChild(element);
   };
 
+  let cardBg = "rgba(31, 41, 55, 0.5)";
+  let cardBorder = "1px solid var(--vpn-border)";
+  let cardShadow = "none";
+
+  if (isConnected) {
+    cardBg = "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(17, 24, 39, 0.95))";
+    cardBorder = "1px solid rgba(16, 185, 129, 0.5)";
+    cardShadow = "0 0 20px rgba(16, 185, 129, 0.2)";
+  } else if (isConnecting) {
+    cardBg = "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(17, 24, 39, 0.95))";
+    cardBorder = "1px solid rgba(245, 158, 11, 0.5)";
+    cardShadow = "0 0 20px rgba(245, 158, 11, 0.2)";
+  } else if (isError) {
+    cardBg = "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(17, 24, 39, 0.95))";
+    cardBorder = "1px solid rgba(239, 68, 68, 0.5)";
+    cardShadow = "0 0 20px rgba(239, 68, 68, 0.2)";
+  } else if (isActive) {
+    cardBg = "linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(17, 24, 39, 0.95))";
+    cardBorder = "1px solid rgba(6, 182, 212, 0.35)";
+  }
+
+  const renderStatusBadge = () => {
+    if (isConnected) {
+      return (
+        <Badge
+          size="xs"
+          color="teal"
+          variant="filled"
+          leftSection={<IconShieldCheck size={11} />}
+          style={{
+            background: "linear-gradient(135deg, #10b981, #059669)",
+            boxShadow: "0 0 10px rgba(16, 185, 129, 0.4)",
+            fontWeight: 700,
+          }}
+        >
+          CONNECTED
+        </Badge>
+      );
+    }
+    if (isConnecting) {
+      return (
+        <Badge
+          size="xs"
+          color="yellow"
+          variant="filled"
+          leftSection={<Loader size={10} color="#fff" />}
+          style={{
+            background: "linear-gradient(135deg, #f59e0b, #d97706)",
+            boxShadow: "0 0 10px rgba(245, 158, 11, 0.4)",
+            fontWeight: 700,
+          }}
+        >
+          CONNECTING...
+        </Badge>
+      );
+    }
+    if (isDisconnecting) {
+      return (
+        <Badge size="xs" color="gray" variant="light">
+          TEARING DOWN...
+        </Badge>
+      );
+    }
+    if (isError) {
+      return (
+        <Badge
+          size="xs"
+          color="red"
+          variant="filled"
+          leftSection={<IconAlertTriangle size={11} />}
+          style={{
+            background: "linear-gradient(135deg, #ef4444, #dc2626)",
+            boxShadow: "0 0 10px rgba(239, 68, 68, 0.4)",
+            fontWeight: 700,
+          }}
+        >
+          FAILED
+        </Badge>
+      );
+    }
+    return null;
+  };
+
+  const getButtonProps = () => {
+    if (isConnected) {
+      return {
+        children: "Disconnect",
+        color: "red",
+        variant: "filled" as const,
+        loading: false,
+        leftSection: <IconPower size={13} />,
+      };
+    }
+    if (isConnecting) {
+      return {
+        children: "Connecting...",
+        color: "yellow",
+        variant: "filled" as const,
+        loading: true,
+        leftSection: <IconPower size={13} />,
+      };
+    }
+    if (isDisconnecting) {
+      return {
+        children: "Disconnecting...",
+        color: "gray",
+        variant: "light" as const,
+        loading: true,
+        leftSection: <IconPower size={13} />,
+      };
+    }
+    if (isError) {
+      return {
+        children: "Retry",
+        color: "red",
+        variant: "light" as const,
+        loading: false,
+        leftSection: <IconRefresh size={13} />,
+      };
+    }
+    return {
+      children: "Connect",
+      color: isActive ? "cyan" : "gray",
+      variant: isActive ? ("filled" as const) : ("light" as const),
+      loading: false,
+      leftSection: <IconPower size={13} />,
+    };
+  };
+
+  const locationSubtitle =
+    [profile.serverCity, profile.serverCountry].filter(Boolean).join(", ") || "Remote Gateway";
+
+  const buttonProps = getButtonProps();
+
   return (
     <Box
       className="glass-card"
       style={{
         padding: "16px",
         borderRadius: 10,
-        background: isActive
-          ? "linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(17, 24, 39, 0.95))"
-          : "rgba(31, 41, 55, 0.5)",
-        border: isActive ? "1px solid rgba(6, 182, 212, 0.4)" : "1px solid var(--vpn-border)",
+        background: cardBg,
+        border: cardBorder,
+        boxShadow: cardShadow,
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
         minHeight: 180,
+        transition: "all 0.25s ease-in-out",
       }}
     >
       {/* Header */}
@@ -97,7 +237,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
                 {profile.name}
               </Text>
               <Text size="xs" c="dimmed">
-                {profile.serverCity}, {profile.serverCountry}
+                {locationSubtitle}
               </Text>
             </Box>
           </Group>
@@ -150,8 +290,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
           </Group>
         </Group>
 
-        {/* Server & Tags */}
-        <Group gap="xs" mb="xs">
+        {/* Server & Tags & Status */}
+        <Group gap="xs" mb="xs" wrap="wrap">
           <Badge
             size="xs"
             variant="outline"
@@ -160,6 +300,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
           >
             {profile.protocol.toUpperCase()}
           </Badge>
+
+          {renderStatusBadge()}
 
           {profile.tags.map((t) => (
             <Badge key={t} size="xs" variant="light" color="gray" style={{ fontSize: 9 }}>
@@ -192,14 +334,14 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
 
         <Button
           size="xs"
-          variant={isConnected ? "filled" : "light"}
-          color={isConnected ? "red" : isActive ? "cyan" : "gray"}
-          leftSection={<IconPower size={13} />}
+          variant={buttonProps.variant}
+          color={buttonProps.color}
+          leftSection={buttonProps.leftSection}
           onClick={handleConnectClick}
-          loading={isConnecting}
+          loading={buttonProps.loading}
           style={{ fontWeight: 600 }}
         >
-          {isConnected ? "Disconnect" : "Connect"}
+          {buttonProps.children}
         </Button>
       </Box>
     </Box>

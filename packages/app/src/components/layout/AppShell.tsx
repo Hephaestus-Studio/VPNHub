@@ -17,8 +17,18 @@ import { ConnectMfaModal } from "../profiles/ConnectMfaModal";
 import { useVpnStore } from "../../state/useVpnStore";
 
 export const AppShell: React.FC = () => {
-  const { activeTab, isCompactWidget, mfaPromptProfile, setMfaPromptProfile, connect } =
-    useVpnStore();
+  const {
+    activeTab,
+    isCompactWidget,
+    mfaPromptProfile,
+    setMfaPromptProfile,
+    connect,
+    loadStorage,
+  } = useVpnStore();
+
+  useEffect(() => {
+    loadStorage();
+  }, [loadStorage]);
 
   useEffect(() => {
     let resizeTimer: number;

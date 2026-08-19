@@ -106,6 +106,12 @@ impl EncryptedVault {
         cache.get(profile_id).cloned()
     }
 
+    /// Retrieves all decrypted secrets currently loaded in memory.
+    pub fn get_all_secrets(&self) -> HashMap<String, StoredProfileSecret> {
+        let cache = self.cache.lock().unwrap();
+        cache.clone()
+    }
+
     /// Removes a secret from the vault.
     pub fn remove_secret(&self, profile_id: &str) -> Result<(), AppError> {
         {

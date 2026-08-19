@@ -1,6 +1,7 @@
 //! # Storage Data Models & Schemas
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Persisted VPN Profile metadata (secrets are stored separately in the encrypted vault).
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,12 +24,22 @@ pub struct StoredProfile {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoredCredentialsMetadata {
     pub username: Option<String>,
+    #[serde(default = "default_password_mode")]
     pub password_mode: Option<String>, // "static" | "dynamic_prompt" | "totp_auto"
-    pub totp_format: Option<String>,   // "append" | "prefix" | "totp_only"
+    #[serde(default = "default_totp_format")]
+    pub totp_format: Option<String>, // "append" | "prefix" | "totp_only"
     pub has_password: bool,
     pub has_private_key: bool,
     pub has_client_cert: bool,
     pub has_raw_ovpn: bool,
+}
+
+fn default_password_mode() -> Option<String> {
+    Some("static".to_string())
+}
+
+fn default_totp_format() -> Option<String> {
+    Some("append".to_string())
 }
 
 /// Sensitive profile secret to be encrypted and decrypted by the Vault.
@@ -53,6 +64,8 @@ pub enum StoredProfileSecret {
         config_content: String,
         username: Option<String>,
         password: Option<String>,
+        totp_secret: Option<String>,
+        totp_format: Option<String>,
     },
 }
 
@@ -107,6 +120,7 @@ pub struct StoredIpRule {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FullStorageSnapshot {
     pub profiles: Vec<StoredProfile>,
+    pub secrets: HashMap<String, StoredProfileSecret>,
     pub security_settings: StoredSecuritySettings,
     pub app_rules: Vec<StoredAppRule>,
     pub ip_rules: Vec<StoredIpRule>,

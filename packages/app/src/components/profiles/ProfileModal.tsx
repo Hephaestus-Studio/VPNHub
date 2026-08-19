@@ -91,11 +91,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose, ini
       setServerCity(initialProfile.serverCity);
       setServerFlag(initialProfile.serverFlag);
       setVirtualIp(initialProfile.virtualIp);
+      setPrivateKey(initialProfile.credentials?.privateKey || "");
+      setPresharedKey(initialProfile.credentials?.presharedKey || "");
       setUsername(initialProfile.credentials?.username || "");
       setPassword(initialProfile.credentials?.password || "");
-      setPasswordMode(initialProfile.credentials?.passwordMode || "static");
-      setTotpSecret(initialProfile.credentials?.totpSecret || "");
+      const initTotp = initialProfile.credentials?.totpSecret || "";
+      setTotpSecret(initTotp);
       setTotpFormat(initialProfile.credentials?.totpFormat || "append");
+      if (initTotp) {
+        setPasswordMode(initialProfile.credentials?.passwordMode || "totp_auto");
+      } else {
+        setPasswordMode(initialProfile.credentials?.passwordMode || "static");
+      }
       setRawConfig(initialProfile.rawConfig || "");
     } else {
       setName("");
@@ -119,7 +126,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose, ini
 
   const handleSubmit = () => {
     const profileData: VpnProfile = {
-      id: initialProfile ? initialProfile.id : `prof-${Date.now()}`,
+      id: initialProfile ? initialProfile.id : crypto.randomUUID(),
       name: name || `${serverCountry} - ${protocol.toUpperCase()}`,
       protocol,
       serverHost,
@@ -139,6 +146,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose, ini
         totpFormat,
         hasPassword: Boolean(password),
         hasPrivateKey: Boolean(privateKey),
+        hasCert: Boolean(initialProfile?.credentials?.hasCert),
+        privateKey: privateKey || undefined,
+        presharedKey: presharedKey || undefined,
       },
       rawConfig: rawConfig || undefined,
     };
@@ -156,6 +166,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose, ini
         config_content: rawConfig,
         username: username || undefined,
         password: password || undefined,
+        totp_secret: totpSecret || undefined,
+        totp_format: totpFormat,
       };
     } else if (protocol.startsWith("openvpn") && (username || password || totpSecret)) {
       secretPayload = {

@@ -77,6 +77,98 @@ interface VpnStoreState {
 
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 let telemetryInterval: ReturnType<typeof setInterval> | null = null;
+let ipcSubscribed = false;
+
+const setupIpcSubscriptions = async (
+  get: () => VpnStoreState,
+  set: (
+    partial:
+      | VpnStoreState
+      | Partial<VpnStoreState>
+      | ((state: VpnStoreState) => VpnStoreState | Partial<VpnStoreState>)
+  ) => void
+) => {
+  if (ipcSubscribed) return;
+  ipcSubscribed = true;
+
+  await IpcBridge.onDaemonStatusChange((status) => {
+    get().setDaemonHealth(status);
+  });
+
+  await IpcBridge.onVpnStatusUpdate((payload: any) => {
+    if (!payload || typeof payload !== "object") return;
+    if (payload.status === "status" && payload.result) {
+      const snap = payload.result;
+      const daemonState = snap.state as ConnectionState;
+      const current = get();
+      const prevState = current.connectionState;
+
+      if (daemonState !== prevState) {
+        if (daemonState === "connected") {
+          current.addLog(
+            "INFO",
+            "TUNNEL_ENGINE",
+            `Tunnel established. Interface: ${snap.virtual_interface || "tun0"}, Assigned IP: ${snap.assigned_ip || "DHCP"}`
+          );
+          if (!timerInterval) {
+            timerInterval = setInterval(() => {
+              set((s) => ({ uptimeSeconds: s.uptimeSeconds + 1 }));
+            }, 1000);
+          }
+        } else if (daemonState === "error") {
+          current.addLog(
+            "ERROR",
+            "TUNNEL_ENGINE",
+            "VPN tunnel encountered a fatal error / authentication failure."
+          );
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+        } else if (daemonState === "disconnected") {
+          if (
+            prevState === "connected" ||
+            prevState === "connecting" ||
+            prevState === "disconnecting"
+          ) {
+            current.addLog("INFO", "TUNNEL_ENGINE", "VPN tunnel disconnected.");
+          }
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+        }
+
+        set({
+          connectionState: daemonState,
+          uptimeSeconds:
+            daemonState === "connected" ? snap.session_duration_secs || current.uptimeSeconds : 0,
+        });
+      }
+    }
+  });
+
+  await IpcBridge.onMetricsUpdate((payload: any) => {
+    if (!payload || typeof payload !== "object") return;
+    if (payload.status === "metrics" && payload.result) {
+      const m = payload.result;
+      const rxKbps = Math.round((m.rx_rate_bps || 0) / 1024);
+      const txKbps = Math.round((m.tx_rate_bps || 0) / 1024);
+      const ping = m.latency_rtt_ms || get().telemetry.currentPingMs;
+
+      set((state) => ({
+        telemetry: {
+          ...state.telemetry,
+          currentDownloadKbps: rxKbps,
+          currentUploadKbps: txKbps,
+          totalDownloadedBytes: m.rx_bytes || state.telemetry.totalDownloadedBytes,
+          totalUploadedBytes: m.tx_bytes || state.telemetry.totalUploadedBytes,
+          currentPingMs: ping,
+        },
+      }));
+    }
+  });
+};
 
 const INITIAL_DIAGNOSTICS_DATA: DiagnosticItem[] = [
   {
@@ -162,29 +254,78 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
     const snapshot = await IpcBridge.loadAllStorage();
     if (!snapshot) return;
 
-    const mappedProfiles: VpnProfile[] = snapshot.profiles.map((p) => ({
-      id: p.id,
-      name: p.name,
-      serverCountry: p.server_country,
-      serverCity: "",
-      serverFlag: p.server_flag,
-      serverHost: p.server_host,
-      serverPort: p.server_port,
-      protocol: p.protocol as VpnProfile["protocol"],
-      virtualIp: p.virtual_ip,
-      tags: p.tags,
-      isFavorite: p.is_favorite,
-      pingMs: p.ping_ms,
-      lastConnected: p.last_connected,
-      credentials: p.credentials
-        ? {
-            username: p.credentials.username,
-            hasPassword: p.credentials.has_password,
-            hasPrivateKey: p.credentials.has_private_key,
-            hasCert: p.credentials.has_client_cert,
+    const mappedProfiles: VpnProfile[] = snapshot.profiles.map((p) => {
+      const secret = snapshot.secrets ? snapshot.secrets[p.id] : undefined;
+
+      let username = p.credentials?.username;
+      let password: string | undefined = undefined;
+      let passwordMode: "static" | "dynamic_prompt" | "totp_auto" =
+        (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") || "static";
+      let totpSecret: string | undefined = undefined;
+      let totpFormat: "append" | "prefix" | "totp_only" =
+        (p.credentials?.totp_format as "append" | "prefix" | "totp_only") || "append";
+      let privateKey: string | undefined = undefined;
+      let presharedKey: string | undefined = undefined;
+      let rawConfig: string | undefined = undefined;
+
+      if (secret) {
+        if (secret.type === "wireguard") {
+          privateKey = secret.private_key;
+          presharedKey = secret.preshared_key;
+        } else if (secret.type === "user_password") {
+          username = secret.username || username;
+          password = secret.password;
+          totpSecret = secret.totp_secret;
+          totpFormat = (secret.totp_format as "append" | "prefix" | "totp_only") || totpFormat;
+          rawConfig = secret.ovpn_config;
+          if (totpSecret) {
+            passwordMode =
+              (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") ||
+              "totp_auto";
           }
-        : undefined,
-    }));
+        } else if (secret.type === "raw_ovpn_config") {
+          rawConfig = secret.config_content;
+          username = secret.username || username;
+          password = secret.password;
+          totpSecret = secret.totp_secret;
+          totpFormat = (secret.totp_format as "append" | "prefix" | "totp_only") || totpFormat;
+          if (totpSecret) {
+            passwordMode =
+              (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") ||
+              "totp_auto";
+          }
+        }
+      }
+
+      return {
+        id: p.id,
+        name: p.name,
+        serverCountry: p.server_country,
+        serverCity: "",
+        serverFlag: p.server_flag,
+        serverHost: p.server_host,
+        serverPort: p.server_port,
+        protocol: p.protocol as VpnProfile["protocol"],
+        virtualIp: p.virtual_ip,
+        tags: p.tags,
+        isFavorite: p.is_favorite,
+        pingMs: p.ping_ms,
+        lastConnected: p.last_connected,
+        credentials: {
+          username,
+          password,
+          passwordMode,
+          totpSecret,
+          totpFormat,
+          privateKey,
+          presharedKey,
+          hasPassword: Boolean(password || p.credentials?.has_password),
+          hasPrivateKey: Boolean(privateKey || p.credentials?.has_private_key),
+          hasCert: Boolean(p.credentials?.has_client_cert),
+        },
+        rawConfig,
+      };
+    });
 
     const mappedSettings: SecuritySettings = {
       killSwitch: snapshot.security_settings.kill_switch,
@@ -231,6 +372,9 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       "PERSISTENCE",
       `Loaded ${mappedProfiles.length} profiles and encrypted vault keys from disk`
     );
+
+    // Initialize real-time daemon IPC subscriptions
+    await setupIpcSubscriptions(get, set);
   },
 
   setActiveTab: (tab) => set({ activeTab: tab }),
@@ -261,24 +405,74 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
   },
 
   addProfile: (profile, secret) => {
+    const fullProfile = { ...profile };
+    if (secret) {
+      if (secret.type === "wireguard") {
+        fullProfile.credentials = {
+          ...fullProfile.credentials,
+          privateKey: secret.private_key,
+          presharedKey: secret.preshared_key,
+        };
+      } else if (secret.type === "user_password" || secret.type === "raw_ovpn_config") {
+        fullProfile.credentials = {
+          ...fullProfile.credentials,
+          username: secret.username || fullProfile.credentials?.username,
+          password: secret.password || fullProfile.credentials?.password,
+          totpSecret: secret.totp_secret || fullProfile.credentials?.totpSecret,
+          totpFormat:
+            (secret.totp_format as "append" | "prefix" | "totp_only") ||
+            fullProfile.credentials?.totpFormat ||
+            "append",
+        };
+        if (secret.type === "raw_ovpn_config") {
+          fullProfile.rawConfig = secret.config_content || fullProfile.rawConfig;
+        }
+      }
+    }
+
     set((state) => ({
-      profiles: [profile, ...state.profiles],
-      activeProfileId: profile.id,
+      profiles: [fullProfile, ...state.profiles],
+      activeProfileId: fullProfile.id,
     }));
-    IpcBridge.saveProfile(profile, secret);
+    IpcBridge.saveProfile(fullProfile, secret);
     get().addLog(
       "INFO",
       "PROFILE_MGR",
-      `Saved and encrypted profile: ${profile.name} (${profile.protocol})`
+      `Saved and encrypted profile: ${fullProfile.name} (${fullProfile.protocol})`
     );
   },
 
   updateProfile: (profile, secret) => {
+    const fullProfile = { ...profile };
+    if (secret) {
+      if (secret.type === "wireguard") {
+        fullProfile.credentials = {
+          ...fullProfile.credentials,
+          privateKey: secret.private_key,
+          presharedKey: secret.preshared_key,
+        };
+      } else if (secret.type === "user_password" || secret.type === "raw_ovpn_config") {
+        fullProfile.credentials = {
+          ...fullProfile.credentials,
+          username: secret.username || fullProfile.credentials?.username,
+          password: secret.password || fullProfile.credentials?.password,
+          totpSecret: secret.totp_secret || fullProfile.credentials?.totpSecret,
+          totpFormat:
+            (secret.totp_format as "append" | "prefix" | "totp_only") ||
+            fullProfile.credentials?.totpFormat ||
+            "append",
+        };
+        if (secret.type === "raw_ovpn_config") {
+          fullProfile.rawConfig = secret.config_content || fullProfile.rawConfig;
+        }
+      }
+    }
+
     set((state) => ({
-      profiles: state.profiles.map((p) => (p.id === profile.id ? profile : p)),
+      profiles: state.profiles.map((p) => (p.id === fullProfile.id ? fullProfile : p)),
     }));
-    IpcBridge.saveProfile(profile, secret);
-    get().addLog("INFO", "PROFILE_MGR", `Updated profile: ${profile.name}`);
+    IpcBridge.saveProfile(fullProfile, secret);
+    get().addLog("INFO", "PROFILE_MGR", `Updated profile: ${fullProfile.name}`);
   },
 
   deleteProfile: (profileId) => {
@@ -357,7 +551,7 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
     )}`;
 
     const newEntry: LogEntry = {
-      id: `log-${Date.now()}-${Math.random()}`,
+      id: crypto.randomUUID(),
       timestamp: timeStr,
       level,
       source,
@@ -428,38 +622,30 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
             password: finalAuthPassword,
           };
 
-    await IpcBridge.connectVpn({
-      profile_id: profile.id,
-      protocol: profile.protocol === "ipsec" ? "openvpn_udp" : profile.protocol,
-      server_endpoint: profile.serverHost,
-      server_port: profile.serverPort,
-      auth_config: authConfig,
-      enable_kill_switch: state.securitySettings.killSwitch !== "off",
-      custom_dns: state.securitySettings.dnsProtection ? ["1.1.1.1", "1.0.0.1"] : undefined,
-    });
+    try {
+      const response = (await IpcBridge.connectVpn({
+        profile_id: profile.id,
+        protocol: profile.protocol === "ipsec" ? "openvpn_udp" : profile.protocol,
+        server_endpoint: profile.serverHost,
+        server_port: profile.serverPort,
+        auth_config: authConfig,
+        enable_kill_switch: state.securitySettings.killSwitch !== "off",
+        custom_dns: state.securitySettings.dnsProtection ? ["1.1.1.1", "1.0.0.1"] : undefined,
+      })) as any;
 
-
-    // Handshake transition
-    setTimeout(() => {
-      state.addLog("INFO", "ROUTING", `Assigned virtual IP: ${profile.virtualIp}`);
-      state.addLog("INFO", "SECURITY", "Kill switch firewall rules confirmed: FAIL-CLOSED");
-      state.addLog(
-        "INFO",
-        "TUNNEL_ENGINE",
-        `Handshake verified. Tunnel wg0 UP (MTU: 1420, RTT: ${profile.pingMs}ms)`
-      );
-
-      set({
-        connectionState: "connected",
-        uptimeSeconds: 0,
-      });
-
-      if (!timerInterval) {
-        timerInterval = setInterval(() => {
-          set((s) => ({ uptimeSeconds: s.uptimeSeconds + 1 }));
-        }, 1000);
+      if (response && response.status === "error") {
+        const errorMsg = response.result?.message || "Connection request rejected by daemon";
+        state.addLog("ERROR", "TUNNEL_ENGINE", `Connection failed: ${errorMsg}`);
+        set({ connectionState: "error" });
       }
-    }, 1200);
+    } catch (err: any) {
+      state.addLog(
+        "ERROR",
+        "TUNNEL_ENGINE",
+        `Failed to invoke vpn_connect: ${err?.message || err}`
+      );
+      set({ connectionState: "error" });
+    }
   },
 
   disconnect: async () => {
@@ -479,22 +665,12 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       timerInterval = null;
     }
 
-    await IpcBridge.disconnectVpn();
-
-    setTimeout(() => {
-      state.addLog("INFO", "FIREWALL_NFT", "Releasing fail-closed firewall drop rules");
-      state.addLog("INFO", "TUNNEL_ENGINE", "Native routing table restored. State: DISCONNECTED");
-      set({
-        connectionState: "disconnected",
-        uptimeSeconds: 0,
-        telemetry: {
-          ...get().telemetry,
-          currentDownloadKbps: 0,
-          currentUploadKbps: 0,
-          currentPingMs: 0,
-        },
-      });
-    }, 800);
+    try {
+      await IpcBridge.disconnectVpn();
+    } catch (err: any) {
+      state.addLog("ERROR", "TUNNEL_ENGINE", `Disconnect error: ${err?.message || err}`);
+      set({ connectionState: "disconnected" });
+    }
   },
 
   tickTelemetry: () => {

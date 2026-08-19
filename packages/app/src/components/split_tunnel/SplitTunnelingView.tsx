@@ -34,7 +34,7 @@ export const SplitTunnelingView: React.FC = () => {
     if (!newTarget) return;
 
     const rule: IpDomainRule = {
-      id: `rule-${Date.now()}`,
+      id: crypto.randomUUID(),
       target: newTarget,
       type: newType,
       description: newDesc || (newType === "cidr" ? "Custom Subnet" : "Custom Domain Pattern"),

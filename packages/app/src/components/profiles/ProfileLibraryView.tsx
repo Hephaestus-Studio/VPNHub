@@ -246,17 +246,33 @@ export const ProfileLibraryView: React.FC = () => {
               {filteredProfiles.map((prof) => {
                 const isActive = prof.id === activeProfileId;
                 const isConnected = isActive && connectionState === "connected";
+                const isConnecting =
+                  isActive &&
+                  (connectionState === "connecting" || connectionState === "reconnecting");
+                const isDisconnecting = isActive && connectionState === "disconnecting";
+                const isError = isActive && connectionState === "error";
+                const locationText =
+                  [prof.serverCity, prof.serverCountry].filter(Boolean).join(", ") ||
+                  "Remote Gateway";
 
                 return (
                   <Table.Tr
                     key={prof.id}
                     style={{
-                      background: isActive ? "rgba(6, 182, 212, 0.08)" : "transparent",
+                      background: isConnected
+                        ? "rgba(16, 185, 129, 0.08)"
+                        : isConnecting
+                          ? "rgba(245, 158, 11, 0.08)"
+                          : isError
+                            ? "rgba(239, 68, 68, 0.08)"
+                            : isActive
+                              ? "rgba(6, 182, 212, 0.05)"
+                              : undefined,
                     }}
                   >
-                    <Table.Td>
+                    <Table.Td style={{ width: 40 }}>
                       <ActionIcon
-                        variant="transparent"
+                        variant="subtle"
                         size="xs"
                         onClick={() => toggleFavorite(prof.id)}
                       >
@@ -272,11 +288,28 @@ export const ProfileLibraryView: React.FC = () => {
                       <Group gap="xs">
                         <Text size="lg">{prof.serverFlag}</Text>
                         <Box>
-                          <Text size="sm" fw={600} style={{ color: "#fff" }}>
-                            {prof.name}
-                          </Text>
+                          <Group gap="xs" align="center">
+                            <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                              {prof.name}
+                            </Text>
+                            {isConnected && (
+                              <Badge size="xs" color="teal" variant="filled">
+                                ACTIVE
+                              </Badge>
+                            )}
+                            {isConnecting && (
+                              <Badge size="xs" color="yellow" variant="filled">
+                                CONNECTING...
+                              </Badge>
+                            )}
+                            {isError && (
+                              <Badge size="xs" color="red" variant="filled">
+                                FAILED
+                              </Badge>
+                            )}
+                          </Group>
                           <Text size="10px" c="dimmed">
-                            {prof.serverCity}, {prof.serverCountry}
+                            {locationText}
                           </Text>
                         </Box>
                       </Group>
@@ -345,14 +378,23 @@ export const ProfileLibraryView: React.FC = () => {
 
                         <Button
                           size="xs"
-                          color={isConnected ? "red" : "cyan"}
-                          variant={isConnected ? "filled" : "light"}
+                          color={
+                            isConnected ? "red" : isConnecting ? "yellow" : isError ? "red" : "cyan"
+                          }
+                          variant={isConnected || isConnecting ? "filled" : "light"}
+                          loading={isConnecting || isDisconnecting}
                           onClick={() => {
                             if (isConnected) disconnect();
                             else connect(prof.id);
                           }}
                         >
-                          {isConnected ? "Disconnect" : "Connect"}
+                          {isConnected
+                            ? "Disconnect"
+                            : isConnecting
+                              ? "Connecting..."
+                              : isError
+                                ? "Retry"
+                                : "Connect"}
                         </Button>
                       </Group>
                     </Table.Td>

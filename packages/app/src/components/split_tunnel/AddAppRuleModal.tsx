@@ -45,7 +45,7 @@ export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClos
     if (!appName || !appPath) return;
 
     const newRule: AppRule = {
-      id: `app-rule-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: appName,
       path: appPath,
       icon: appIcon,

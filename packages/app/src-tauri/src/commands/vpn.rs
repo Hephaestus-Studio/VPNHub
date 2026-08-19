@@ -60,6 +60,8 @@ pub async fn vpn_connect(
                 config_content,
                 username,
                 password,
+                totp_secret: _,
+                totp_format: _,
             } => {
                 let (final_username, final_password) = match &params.auth_config {
                     vpnhub_daemon::ipc::protocol::AuthConfig::UserPassword {

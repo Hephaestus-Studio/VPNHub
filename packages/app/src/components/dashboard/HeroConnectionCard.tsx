@@ -40,7 +40,7 @@ export const HeroConnectionCard: React.FC = () => {
   const handleToggle = () => {
     if (isConnected) {
       disconnect();
-    } else if (connectionState === "disconnected") {
+    } else if (connectionState === "disconnected" || connectionState === "error") {
       connect(activeProfile?.id);
     }
   };

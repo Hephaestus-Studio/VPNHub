@@ -312,12 +312,14 @@ impl StorageManager {
     /// Returns the full storage snapshot for the frontend.
     pub fn get_full_snapshot(&self) -> FullStorageSnapshot {
         let profiles = self.profiles.lock().unwrap().clone();
+        let secrets = self.vault.get_all_secrets();
         let security_settings = self.security_settings.lock().unwrap().clone();
         let app_rules = self.app_rules.lock().unwrap().clone();
         let ip_rules = self.ip_rules.lock().unwrap().clone();
 
         FullStorageSnapshot {
             profiles,
+            secrets,
             security_settings,
             app_rules,
             ip_rules,
@@ -327,9 +329,12 @@ impl StorageManager {
     /// Saves or updates a profile with optional secret persistence.
     pub fn save_profile(
         &self,
-        profile: StoredProfile,
+        mut profile: StoredProfile,
         secret: Option<StoredProfileSecret>,
     ) -> Result<StoredProfile, AppError> {
+        if profile.id.trim().is_empty() {
+            profile.id = uuid::Uuid::new_v4().to_string();
+        }
         let profile_id = profile.id.clone();
 
         // 1. Store secret if provided

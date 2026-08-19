@@ -33,6 +33,8 @@ export interface VpnProfile {
     hasPassword?: boolean;
     hasCert?: boolean;
     hasPrivateKey?: boolean;
+    privateKey?: string;
+    presharedKey?: string;
   };
   rawConfig?: string;
 }
