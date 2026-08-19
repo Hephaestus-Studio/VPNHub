@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(daemon)* Implement platform lifecycle and health diagnostics monitoring - ([9b85473](https://github.com/Hephaestus-Studio/VPNHub/commit/9b854736ca16c55e0c8c3518792f8ca31b630f83))
 - *(daemon)* Wire up main entrypoint with CLI and signal handlers - ([898b12c](https://github.com/Hephaestus-Studio/VPNHub/commit/898b12c5e943bbebaa0db478db82f0d48840aa82))
 - Implement full-stack desktop app and enhance driver engines - ([2f12a5e](https://github.com/Hephaestus-Studio/VPNHub/commit/2f12a5edf61164f7297af7baa9f0c30d39c0eb74))
+- Enhance profile vault persistence, live daemon sync, and log console - ([86332cf](https://github.com/Hephaestus-Studio/VPNHub/commit/86332cf6b23ce33d2fb86773e30a44ab7821ca47))
 
 ### Maintenance
 
