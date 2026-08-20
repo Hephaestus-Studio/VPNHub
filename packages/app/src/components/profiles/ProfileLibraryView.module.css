@@ -7,9 +7,42 @@
   gap: 16px;
 }
 
+@media (max-width: 640px) {
+  .root {
+    padding: 12px 10px 24px 10px;
+    gap: 12px;
+  }
+}
+
 .title {
   color: #ffffff;
   letter-spacing: -0.02em;
+  font-size: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .title {
+    font-size: 1.1rem;
+  }
+}
+
+.headerAddBtnMobile {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.headerAddBtnMobile:hover {
+  transform: scale(1.06);
 }
 
 .controlsPanel {
@@ -18,12 +51,35 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  border-radius: 12px;
+}
+
+@media (max-width: 640px) {
+  .controlsPanel {
+    padding: 10px;
+    gap: 8px;
+  }
 }
 
 .searchInput {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--vpn-border);
   color: #ffffff;
+}
+
+.pillsScrollContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.pillsScrollContainer::-webkit-scrollbar {
+  display: none;
 }
 
 .toggleCenter {
@@ -36,42 +92,108 @@
   padding: 0 10px;
   font-size: 11px;
   border-radius: 20px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--vpn-border);
+  background: rgba(17, 24, 39, 0.65);
 }
 
 .tablePanel {
-  background: rgba(17, 24, 39, 0.75);
-  border-radius: 8px;
-  overflow: hidden;
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
 }
 
 .tableHeader {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tableHeader th {
+  padding: 10px 12px !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vpn-text-muted) !important;
+  white-space: nowrap;
+}
+
+.tableRow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.tableRow:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.tableRow td {
+  padding: 10px 12px !important;
+  vertical-align: middle !important;
 }
 
 .rowConnected {
-  background: rgba(16, 185, 129, 0.08);
+  composes: tableRow;
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-left: 3px solid #10b981;
 }
 
 .rowConnecting {
-  background: rgba(245, 158, 11, 0.08);
+  composes: tableRow;
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-left: 3px solid #f59e0b;
 }
 
 .rowError {
-  background: rgba(239, 68, 68, 0.08);
+  composes: tableRow;
+  background: rgba(239, 68, 68, 0.08) !important;
+  border-left: 3px solid #ef4444;
 }
 
 .rowActive {
-  background: rgba(6, 182, 212, 0.05);
+  composes: tableRow;
+  background: rgba(6, 182, 212, 0.06) !important;
+  border-left: 3px solid #06b6d4;
 }
 
 .profileName {
   color: #ffffff;
+  font-weight: 600;
+  font-size: 13.5px;
 }
 
 .pingText {
   color: #34d399;
 }
 
-.tagBadge {
+.protocolBadge {
+  font-family:
+    JetBrains Mono,
+    monospace;
   font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.actionsGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.emptyState {
+  padding: 40px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Group,
@@ -12,7 +12,9 @@ import {
   ActionIcon,
   Tooltip,
   Center,
+  UnstyledButton,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconSearch,
   IconPlus,
@@ -23,6 +25,8 @@ import {
   IconBolt,
   IconEdit,
   IconQrcode,
+  IconFolderOff,
+  IconX,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import { VpnProfile } from "../../types/vpn";
@@ -35,6 +39,8 @@ import styles from "./ProfileLibraryView.module.css";
 export const ProfileLibraryView: React.FC = () => {
   const { profiles, activeProfileId, connectionState, connect, disconnect, toggleFavorite } =
     useVpnStore();
+
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -52,18 +58,17 @@ export const ProfileLibraryView: React.FC = () => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.serverCountry.toLowerCase().includes(search.toLowerCase()) ||
-      p.serverHost.toLowerCase().includes(search.toLowerCase()) ||
-      p.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+      p.serverHost.toLowerCase().includes(search.toLowerCase());
 
     if (!matchesSearch) return false;
 
     if (activeFilter === "favorites") return p.isFavorite;
     if (activeFilter === "wireguard") return p.protocol === "wireguard";
     if (activeFilter === "openvpn") return p.protocol.includes("openvpn");
-    if (activeFilter === "production") return p.tags.includes("Production");
-    if (activeFilter === "office") return p.tags.includes("Office");
     return true;
   });
+
+  const favoritesCount = profiles.filter((p) => p.isFavorite).length;
 
   const handleEdit = (profile: VpnProfile) => {
     setSelectedProfile(profile);
@@ -76,82 +81,126 @@ export const ProfileLibraryView: React.FC = () => {
     setQrModalOpen(true);
   };
 
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
+
+  const formatProtocolLabel = (proto: string) => {
+    if (proto === "wireguard") return "WG";
+    if (proto === "openvpn_tcp") return "OVPN TCP";
+    if (proto === "openvpn_udp") return "OVPN UDP";
+    if (proto === "openvpn") return "OVPN";
+    return proto.toUpperCase();
+  };
+
   return (
     <Box className={styles.root}>
       {/* Header Bar */}
-      <Group justify="space-between" align="center">
-        <Box>
-          <Text size="xl" fw={700} className={styles.title}>
-            Profile Library
-          </Text>
-          <Text size="xs" c="dimmed">
-            Manage WireGuard and OpenVPN server connection profiles ({profiles.length} total)
-          </Text>
+      <Group justify="space-between" align="center" wrap="nowrap">
+        <Box style={{ minWidth: 0, flex: 1 }}>
+          <Group gap="xs" align="center" wrap="nowrap">
+            <Text size={isMobile ? "md" : "xl"} fw={700} className={styles.title} truncate>
+              Profile Library
+            </Text>
+            {!isMobile && (
+              <Group gap={6}>
+                <Badge size="xs" variant="light" color="gray">
+                  {profiles.length} Total
+                </Badge>
+                {favoritesCount > 0 && (
+                  <Badge size="xs" variant="light" color="yellow">
+                    ★ {favoritesCount} Favorites
+                  </Badge>
+                )}
+              </Group>
+            )}
+          </Group>
+          {!isMobile && (
+            <Text size="xs" c="dimmed">
+              Manage WireGuard and OpenVPN server connection profiles
+            </Text>
+          )}
         </Box>
 
-        <Button
-          size="sm"
-          color="cyan"
-          leftSection={<IconPlus size={16} />}
-          onClick={() => setHubModalOpen(true)}
-        >
-          Add / Import Profile
-        </Button>
+        {isMobile ? (
+          <Tooltip label="Add Profile" position="left">
+            <UnstyledButton
+              onClick={() => setHubModalOpen(true)}
+              className={styles.headerAddBtnMobile}
+            >
+              <IconPlus size={18} stroke={2.5} />
+            </UnstyledButton>
+          </Tooltip>
+        ) : (
+          <Button
+            size="sm"
+            color="cyan"
+            leftSection={<IconPlus size={16} />}
+            onClick={() => setHubModalOpen(true)}
+          >
+            Add / Import Profile
+          </Button>
+        )}
       </Group>
 
       {/* Controls Bar: Search & Filter Pills & Grid/Table Toggle */}
       <Box className={`glass-panel ${styles.controlsPanel}`}>
-        <Group justify="space-between" align="center">
+        <Group justify="space-between" align="center" wrap="nowrap" gap="xs">
           <TextInput
-            placeholder="Search by profile name, IP, country, or tags..."
-            leftSection={<IconSearch size={16} color="var(--vpn-text-muted)" />}
+            placeholder={isMobile ? "Search profiles..." : "Search by name, IP, or country..."}
+            leftSection={<IconSearch size={15} color="var(--vpn-text-muted)" />}
+            rightSection={
+              search ? (
+                <ActionIcon size="xs" variant="subtle" color="gray" onClick={() => setSearch("")}>
+                  <IconX size={12} />
+                </ActionIcon>
+              ) : null
+            }
             value={search}
             onChange={(e) => setSearch(e.currentTarget.value)}
-            style={{ minWidth: 280, flex: 1 }}
+            style={{ flex: 1, minWidth: 0 }}
             size="xs"
             classNames={{
               input: styles.searchInput,
             }}
           />
 
-          <SegmentedControl
-            size="xs"
-            value={viewMode}
-            onChange={(val) => setViewMode(val as "grid" | "table")}
-            data={[
-              {
-                value: "grid",
-                label: (
-                  <Tooltip label="Grid View" position="bottom" withArrow>
-                    <Center className={styles.toggleCenter}>
-                      <IconLayoutGrid size={15} />
-                    </Center>
-                  </Tooltip>
-                ),
-              },
-              {
-                value: "table",
-                label: (
-                  <Tooltip label="Table View" position="bottom" withArrow>
-                    <Center className={styles.toggleCenter}>
-                      <IconList size={15} />
-                    </Center>
-                  </Tooltip>
-                ),
-              },
-            ]}
-          />
+          {!isMobile && (
+            <SegmentedControl
+              size="xs"
+              value={viewMode}
+              onChange={(val) => setViewMode(val as "grid" | "table")}
+              data={[
+                {
+                  value: "grid",
+                  label: (
+                    <Tooltip label="Grid View" position="bottom" withArrow>
+                      <Center className={styles.toggleCenter}>
+                        <IconLayoutGrid size={15} />
+                      </Center>
+                    </Tooltip>
+                  ),
+                },
+                {
+                  value: "table",
+                  label: (
+                    <Tooltip label="Table View" position="bottom" withArrow>
+                      <Center className={styles.toggleCenter}>
+                        <IconList size={15} />
+                      </Center>
+                    </Tooltip>
+                  ),
+                },
+              ]}
+            />
+          )}
         </Group>
 
-        {/* Filter Pills */}
-        <Group gap={6}>
+        {/* Horizontally Scrollable Filter Pills */}
+        <Box className={styles.pillsScrollContainer}>
           {[
-            { id: "all", label: "All Profiles" },
-            { id: "favorites", label: "★ Favorites" },
+            { id: "all", label: `All (${profiles.length})` },
+            { id: "favorites", label: `★ Favorites (${favoritesCount})` },
             { id: "wireguard", label: "WireGuard" },
             { id: "openvpn", label: "OpenVPN" },
-            { id: "production", label: "Production" },
-            { id: "office", label: "Office" },
           ].map((f) => (
             <Button
               key={f.id}
@@ -164,12 +213,41 @@ export const ProfileLibraryView: React.FC = () => {
               {f.label}
             </Button>
           ))}
-        </Group>
+        </Box>
       </Box>
 
       {/* Main Catalog View */}
-      {viewMode === "grid" ? (
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+      {filteredProfiles.length === 0 ? (
+        <Box className={`glass-panel ${styles.emptyState}`}>
+          <IconFolderOff size={36} color="var(--vpn-text-muted)" stroke={1.5} />
+          <Box>
+            <Text size="sm" fw={600} c="dimmed">
+              No profiles found matching your search
+            </Text>
+            {search && (
+              <Text size="xs" c="dimmed" mt={2}>
+                Try adjusting your search query or filters
+              </Text>
+            )}
+          </Box>
+          {search ? (
+            <Button size="xs" variant="light" color="gray" onClick={() => setSearch("")}>
+              Clear Search
+            </Button>
+          ) : (
+            <Button
+              size="xs"
+              variant="filled"
+              color="cyan"
+              leftSection={<IconPlus size={14} />}
+              onClick={() => setHubModalOpen(true)}
+            >
+              Add Your First Profile
+            </Button>
+          )}
+        </Box>
+      ) : effectiveViewMode === "grid" ? (
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing={{ base: "xs", sm: "sm", md: "md" }}>
           {filteredProfiles.map((profile) => (
             <ProfileCard
               key={profile.id}
@@ -180,17 +258,16 @@ export const ProfileLibraryView: React.FC = () => {
           ))}
         </SimpleGrid>
       ) : (
-        <Box className={`glass-panel ${styles.tablePanel}`}>
-          <Table verticalSpacing="xs" highlightOnHover>
+        <Box className={styles.tableWrapper}>
+          <Table className={styles.tablePanel} verticalSpacing="sm" highlightOnHover>
             <Table.Thead className={styles.tableHeader}>
               <Table.Tr>
-                <Table.Th style={{ width: 40 }}></Table.Th>
-                <Table.Th>Profile / Location</Table.Th>
-                <Table.Th>Protocol</Table.Th>
-                <Table.Th>Endpoint</Table.Th>
-                <Table.Th>Latency</Table.Th>
-                <Table.Th>Tags</Table.Th>
-                <Table.Th style={{ textAlign: "right" }}>Actions</Table.Th>
+                <Table.Th style={{ width: 40, textAlign: "center" }}></Table.Th>
+                <Table.Th style={{ minWidth: 200 }}>Profile / Location</Table.Th>
+                <Table.Th style={{ width: 100 }}>Protocol</Table.Th>
+                <Table.Th style={{ minWidth: 160 }}>Endpoint</Table.Th>
+                <Table.Th style={{ width: 90 }}>Latency</Table.Th>
+                <Table.Th style={{ width: 175, textAlign: "right" }}>Actions</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -206,53 +283,77 @@ export const ProfileLibraryView: React.FC = () => {
                   [prof.serverCity, prof.serverCountry].filter(Boolean).join(", ") ||
                   "Remote Gateway";
 
-                let rowClass = undefined;
+                let rowClass = styles.tableRow;
                 if (isConnected) rowClass = styles.rowConnected;
                 else if (isConnecting) rowClass = styles.rowConnecting;
                 else if (isError) rowClass = styles.rowError;
                 else if (isActive) rowClass = styles.rowActive;
 
+                const pingColor =
+                  prof.pingMs > 0 && prof.pingMs <= 50
+                    ? "#34d399"
+                    : prof.pingMs <= 100
+                      ? "#fbbf24"
+                      : "#f97316";
+
                 return (
                   <Table.Tr key={prof.id} className={rowClass}>
-                    <Table.Td style={{ width: 40 }}>
+                    <Table.Td style={{ width: 40, textAlign: "center" }}>
                       <ActionIcon
                         variant="subtle"
                         size="xs"
                         onClick={() => toggleFavorite(prof.id)}
                       >
                         {prof.isFavorite ? (
-                          <IconStarFilled size={14} color="#f59e0b" />
+                          <IconStarFilled size={15} color="#f59e0b" />
                         ) : (
-                          <IconStar size={14} color="var(--vpn-text-muted)" />
+                          <IconStar size={15} color="var(--vpn-text-muted)" />
                         )}
                       </ActionIcon>
                     </Table.Td>
 
                     <Table.Td>
-                      <Group gap="xs">
-                        <Text size="lg">{prof.serverFlag}</Text>
-                        <Box>
-                          <Group gap="xs" align="center">
-                            <Text size="sm" fw={600} className={styles.profileName}>
+                      <Group gap="xs" wrap="nowrap" align="center">
+                        <Text size="22px" style={{ flexShrink: 0, lineHeight: 1 }}>
+                          {prof.serverFlag}
+                        </Text>
+                        <Box style={{ minWidth: 0, flex: 1 }}>
+                          <Group gap={6} align="center" wrap="nowrap">
+                            <Text size="sm" fw={600} className={styles.profileName} truncate>
                               {prof.name}
                             </Text>
                             {isConnected && (
-                              <Badge size="xs" color="teal" variant="filled">
+                              <Badge
+                                size="xs"
+                                color="teal"
+                                variant="filled"
+                                style={{ flexShrink: 0 }}
+                              >
                                 ACTIVE
                               </Badge>
                             )}
                             {isConnecting && (
-                              <Badge size="xs" color="yellow" variant="filled">
+                              <Badge
+                                size="xs"
+                                color="yellow"
+                                variant="filled"
+                                style={{ flexShrink: 0 }}
+                              >
                                 CONNECTING...
                               </Badge>
                             )}
                             {isError && (
-                              <Badge size="xs" color="red" variant="filled">
+                              <Badge
+                                size="xs"
+                                color="red"
+                                variant="filled"
+                                style={{ flexShrink: 0 }}
+                              >
                                 FAILED
                               </Badge>
                             )}
                           </Group>
-                          <Text size="10px" c="dimmed">
+                          <Text size="11px" c="dimmed" truncate>
                             {locationText}
                           </Text>
                         </Box>
@@ -260,44 +361,38 @@ export const ProfileLibraryView: React.FC = () => {
                     </Table.Td>
 
                     <Table.Td>
-                      <Badge size="xs" variant="outline" color="cyan">
-                        {prof.protocol.toUpperCase()}
+                      <Badge
+                        size="xs"
+                        variant="outline"
+                        color="cyan"
+                        className={styles.protocolBadge}
+                      >
+                        {formatProtocolLabel(prof.protocol)}
                       </Badge>
                     </Table.Td>
 
                     <Table.Td>
-                      <Text size="xs" className="font-mono" c="dimmed">
+                      <Text size="xs" className="font-mono" c="dimmed" truncate>
                         {prof.serverHost}:{prof.serverPort}
                       </Text>
                     </Table.Td>
 
                     <Table.Td>
-                      <Group gap={4}>
-                        <IconBolt size={13} color="var(--vpn-emerald)" />
-                        <Text size="xs" fw={700} className={`font-mono ${styles.pingText}`}>
+                      <Group gap={4} wrap="nowrap" align="center">
+                        <IconBolt size={14} color={pingColor} />
+                        <Text
+                          size="xs"
+                          fw={700}
+                          className={`font-mono ${styles.pingText}`}
+                          style={{ color: pingColor }}
+                        >
                           {prof.pingMs} ms
                         </Text>
                       </Group>
                     </Table.Td>
 
-                    <Table.Td>
-                      <Group gap={4}>
-                        {prof.tags.map((t) => (
-                          <Badge
-                            key={t}
-                            size="xs"
-                            variant="light"
-                            color="gray"
-                            className={styles.tagBadge}
-                          >
-                            {t}
-                          </Badge>
-                        ))}
-                      </Group>
-                    </Table.Td>
-
                     <Table.Td style={{ textAlign: "right" }}>
-                      <Group gap={6} justify="flex-end">
+                      <Box className={styles.actionsGroup}>
                         <Tooltip label="QR Code">
                           <ActionIcon
                             size="sm"
@@ -328,19 +423,19 @@ export const ProfileLibraryView: React.FC = () => {
                           variant={isConnected || isConnecting ? "filled" : "light"}
                           loading={isConnecting || isDisconnecting}
                           onClick={() => {
-                            if (isConnected) disconnect();
+                            if (isConnected || isConnecting) disconnect();
                             else connect(prof.id);
                           }}
                         >
                           {isConnected
                             ? "Disconnect"
                             : isConnecting
-                              ? "Connecting..."
+                              ? "Cancel"
                               : isError
                                 ? "Retry"
                                 : "Connect"}
                         </Button>
-                      </Group>
+                      </Box>
                     </Table.Td>
                   </Table.Tr>
                 );

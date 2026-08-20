@@ -1,4 +1,5 @@
 import { Box, Group, Text, Badge, Button, ActionIcon, Menu, Loader } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconStar,
   IconStarFilled,
@@ -35,6 +36,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     addProfile,
   } = useVpnStore();
 
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
   const isActive = profile.id === activeProfileId;
   const isConnected = isActive && connectionState === "connected";
   const isConnecting =
@@ -43,7 +46,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
   const isError = isActive && connectionState === "error";
 
   const handleConnectClick = () => {
-    if (isConnected) {
+    if (isConnected || isConnecting) {
       disconnect();
     } else {
       connect(profile.id);
@@ -163,10 +166,10 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     }
     if (isConnecting) {
       return {
-        children: "Connecting...",
+        children: "Cancel",
         color: "yellow",
         variant: "filled" as const,
-        loading: true,
+        loading: false,
         leftSection: <IconPower size={13} />,
       };
     }
@@ -202,24 +205,33 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
 
   const buttonProps = getButtonProps();
 
+  const pingColor =
+    profile.pingMs > 0 && profile.pingMs <= 50
+      ? "#34d399"
+      : profile.pingMs <= 100
+        ? "#fbbf24"
+        : "#f97316";
+
   return (
     <Box className={`glass-card ${cardClass}`}>
       {/* Header */}
       <Box>
         <Group justify="space-between" align="flex-start" mb="xs">
-          <Group gap="xs">
-            <Text size="24px">{profile.serverFlag}</Text>
-            <Box>
-              <Text size="sm" fw={700} className={styles.title}>
+          <Group gap="xs" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+            <Text size={isMobile ? "22px" : "26px"} style={{ flexShrink: 0 }}>
+              {profile.serverFlag}
+            </Text>
+            <Box style={{ minWidth: 0, flex: 1 }}>
+              <Text size="sm" fw={700} className={styles.title} truncate>
                 {profile.name}
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="xs" c="dimmed" truncate>
                 {locationSubtitle}
               </Text>
             </Box>
           </Group>
 
-          <Group gap={4}>
+          <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
             <ActionIcon variant="subtle" size="sm" onClick={() => toggleFavorite(profile.id)}>
               {profile.isFavorite ? (
                 <IconStarFilled size={16} color="#f59e0b" />
@@ -261,22 +273,16 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
           </Group>
         </Group>
 
-        {/* Server & Tags & Status */}
+        {/* Server & Status */}
         <Group gap="xs" mb="xs" wrap="wrap">
           <Badge size="xs" variant="outline" color="cyan" className={styles.protocolBadge}>
             {profile.protocol.toUpperCase()}
           </Badge>
 
           {renderStatusBadge()}
-
-          {profile.tags.map((t) => (
-            <Badge key={t} size="xs" variant="light" color="gray" className={styles.tagBadge}>
-              {t}
-            </Badge>
-          ))}
         </Group>
 
-        <Text size="11px" c="dimmed" className="font-mono" mb="xs">
+        <Text size="11px" c="dimmed" className="font-mono" mb="xs" truncate>
           Endpoint: {profile.serverHost}:{profile.serverPort}
         </Text>
       </Box>
@@ -284,14 +290,19 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
       {/* Footer */}
       <Box className={styles.footer}>
         <Group gap={4}>
-          <IconBolt size={14} color="var(--vpn-emerald)" />
-          <Text size="xs" fw={700} className={`font-mono ${styles.pingText}`}>
+          <IconBolt size={14} color={pingColor} />
+          <Text
+            size="xs"
+            fw={700}
+            className={`font-mono ${styles.pingText}`}
+            style={{ color: pingColor }}
+          >
             {profile.pingMs} ms
           </Text>
         </Group>
 
         <Button
-          size="xs"
+          size={isMobile ? "sm" : "xs"}
           variant={buttonProps.variant}
           color={buttonProps.color}
           leftSection={buttonProps.leftSection}

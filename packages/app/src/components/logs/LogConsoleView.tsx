@@ -11,6 +11,7 @@ import {
   Tooltip,
   CopyButton,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconTerminal2,
   IconTrash,
@@ -27,6 +28,9 @@ import {
   IconArrowUp,
   IconPlus,
   IconSortDescending,
+  IconX,
+  IconFilterOff,
+  IconRotate,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import { LogLevel } from "../../types/vpn";
@@ -44,6 +48,9 @@ export const LogConsoleView: React.FC = () => {
     logSearchQuery,
     setLogSearchQuery,
   } = useVpnStore();
+
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
 
   const logContainerRef = useRef<HTMLDivElement>(null);
 
@@ -78,7 +85,6 @@ export const LogConsoleView: React.FC = () => {
     let warnCount = 0;
     let infoCount = 0;
     let debugCount = 0;
-
     for (const log of logs) {
       if (log.level === "ERROR") errorCount++;
       else if (log.level === "WARN") warnCount++;
@@ -153,110 +159,194 @@ export const LogConsoleView: React.FC = () => {
     }
   };
 
+  const levelFilterData = [
+    { id: "ALL", label: `ALL (${stats.total})`, color: "cyan" },
+    { id: "INFO", label: `INFO (${stats.info})`, color: "blue" },
+    { id: "WARN", label: `WARN (${stats.warn})`, color: "yellow" },
+    { id: "ERROR", label: `ERR (${stats.error})`, color: "red" },
+    { id: "DEBUG", label: `DEBUG (${stats.debug})`, color: "grape" },
+  ];
+
   return (
     <Box className={styles.root}>
-      {/* Header Bar */}
-      <Group justify="space-between" align="center" wrap="wrap" gap="xs">
-        <Box>
-          <Group gap="xs" align="center">
-            <IconTerminal2 size={22} color="var(--vpn-cyan)" />
-            <Text size="xl" fw={700} className={styles.title}>
-              Live Daemon & System Console
+      {/* Top Header Bar */}
+      <Group justify="space-between" align="center" wrap="nowrap">
+        <Box style={{ minWidth: 0, flex: 1 }}>
+          <Group gap="xs" align="center" wrap="nowrap">
+            <IconTerminal2 size={isMobile ? 18 : 22} color="var(--vpn-cyan)" />
+            <Text size={isMobile ? "md" : "xl"} fw={700} className={styles.title} truncate>
+              {isMobile ? "System Console" : "Live Daemon & System Console"}
             </Text>
-            <Badge size="xs" color="teal" variant="light">
+            <Badge size="xs" color="teal" variant="light" style={{ flexShrink: 0 }}>
               STREAM ACTIVE
             </Badge>
           </Group>
-          <Text size="xs" c="dimmed" mt={2}>
-            Real-time IPC telemetry, kernel events, routing state transitions, and diagnostics
-          </Text>
+          {!isMobile && (
+            <Text size="xs" c="dimmed" mt={2} truncate>
+              Real-time IPC telemetry, kernel events, routing state transitions, and diagnostics
+            </Text>
+          )}
         </Box>
 
-        {/* Global Toolbar Actions */}
-        <Group gap="xs">
-          <Tooltip label="Insert a test log event to verify stream responsiveness">
-            <Button
-              size="xs"
-              variant="subtle"
-              color="gray"
-              leftSection={<IconPlus size={14} />}
-              onClick={() =>
-                addLog(
-                  "INFO",
-                  "USER_EVENT",
-                  `Manual trigger test event at ${new Date().toLocaleTimeString()}`
-                )
-              }
-            >
-              Test Event
-            </Button>
-          </Tooltip>
+        {/* Action Controls */}
+        {isMobile ? (
+          <Box className={styles.mobileActionGroup}>
+            <Tooltip label={isLogAutoScroll ? "Pause Auto-scroll" : "Resume Auto-scroll"}>
+              <ActionIcon
+                size="md"
+                variant={isLogAutoScroll ? "light" : "subtle"}
+                color={isLogAutoScroll ? "cyan" : "gray"}
+                onClick={() => setLogAutoScroll(!isLogAutoScroll)}
+                className={styles.mobileActionBtn}
+              >
+                {isLogAutoScroll ? <IconPlayerPause size={16} /> : <IconPlayerPlay size={16} />}
+              </ActionIcon>
+            </Tooltip>
 
-          <Tooltip label={isLogAutoScroll ? "Pause automatic scrolling" : "Resume auto scroll"}>
-            <Button
-              size="xs"
-              variant={isLogAutoScroll ? "light" : "outline"}
-              color={isLogAutoScroll ? "cyan" : "gray"}
-              leftSection={
-                isLogAutoScroll ? <IconPlayerPause size={14} /> : <IconPlayerPlay size={14} />
-              }
-              onClick={() => setLogAutoScroll(!isLogAutoScroll)}
-            >
-              {isLogAutoScroll ? "Auto-scroll ON" : "Auto-scroll PAUSED"}
-            </Button>
-          </Tooltip>
+            <CopyButton value={getFullFormattedLogs()} timeout={2000}>
+              {({ copied, copy }) => (
+                <Tooltip label={copied ? "Copied all!" : "Copy all visible logs"}>
+                  <ActionIcon
+                    size="md"
+                    variant="subtle"
+                    color={copied ? "teal" : "gray"}
+                    onClick={copy}
+                    className={styles.mobileActionBtn}
+                  >
+                    {copied ? <IconCheck size={16} color="#10b981" /> : <IconCopy size={16} />}
+                  </ActionIcon>
+                </Tooltip>
+              )}
+            </CopyButton>
 
-          <CopyButton value={getFullFormattedLogs()} timeout={2000}>
-            {({ copied, copy }) => (
-              <Tooltip label={copied ? "Copied to clipboard!" : "Copy all visible logs"}>
+            <Tooltip label="Export logs (.txt)">
+              <ActionIcon
+                size="md"
+                variant="subtle"
+                color="gray"
+                onClick={handleExportLogs}
+                disabled={filteredLogs.length === 0}
+                className={styles.mobileActionBtn}
+              >
+                <IconDownload size={16} />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="Clear memory logs">
+              <ActionIcon
+                size="md"
+                variant="subtle"
+                color="red"
+                onClick={clearLogs}
+                disabled={logs.length === 0}
+                className={styles.mobileActionBtn}
+              >
+                <IconTrash size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </Box>
+        ) : (
+          <Group gap="xs">
+            {!isTablet && (
+              <Tooltip label="Insert a test log event">
                 <Button
                   size="xs"
-                  variant="default"
-                  leftSection={
-                    copied ? <IconCheck size={14} color="#10b981" /> : <IconCopy size={14} />
+                  variant="subtle"
+                  color="gray"
+                  leftSection={<IconPlus size={14} />}
+                  onClick={() =>
+                    addLog(
+                      "INFO",
+                      "USER_EVENT",
+                      `Manual trigger test event at ${new Date().toLocaleTimeString()}`
+                    )
                   }
-                  onClick={copy}
                 >
-                  {copied ? "Copied" : "Copy"}
+                  Test Event
                 </Button>
               </Tooltip>
             )}
-          </CopyButton>
 
-          <Tooltip label="Export visible logs as a .txt file">
-            <Button
-              size="xs"
-              variant="default"
-              leftSection={<IconDownload size={14} />}
-              onClick={handleExportLogs}
-              disabled={filteredLogs.length === 0}
-            >
-              Export
-            </Button>
-          </Tooltip>
+            <Tooltip label={isLogAutoScroll ? "Pause automatic scrolling" : "Resume auto scroll"}>
+              <Button
+                size="xs"
+                variant={isLogAutoScroll ? "light" : "outline"}
+                color={isLogAutoScroll ? "cyan" : "gray"}
+                leftSection={
+                  isLogAutoScroll ? <IconPlayerPause size={14} /> : <IconPlayerPlay size={14} />
+                }
+                onClick={() => setLogAutoScroll(!isLogAutoScroll)}
+              >
+                {isLogAutoScroll ? "Auto-scroll ON" : "PAUSED"}
+              </Button>
+            </Tooltip>
 
-          <Tooltip label="Clear all console logs from memory">
-            <Button
-              size="xs"
-              color="red"
-              variant="light"
-              leftSection={<IconTrash size={14} />}
-              onClick={clearLogs}
-              disabled={logs.length === 0}
-            >
-              Clear
-            </Button>
-          </Tooltip>
-        </Group>
+            <CopyButton value={getFullFormattedLogs()} timeout={2000}>
+              {({ copied, copy }) => (
+                <Tooltip label={copied ? "Copied!" : "Copy visible logs"}>
+                  <Button
+                    size="xs"
+                    variant="default"
+                    leftSection={
+                      copied ? <IconCheck size={14} color="#10b981" /> : <IconCopy size={14} />
+                    }
+                    onClick={copy}
+                  >
+                    {copied ? "Copied" : "Copy"}
+                  </Button>
+                </Tooltip>
+              )}
+            </CopyButton>
+
+            <Tooltip label="Export visible logs as .txt">
+              <Button
+                size="xs"
+                variant="default"
+                leftSection={<IconDownload size={14} />}
+                onClick={handleExportLogs}
+                disabled={filteredLogs.length === 0}
+              >
+                Export
+              </Button>
+            </Tooltip>
+
+            <Tooltip label="Clear all console logs">
+              <Button
+                size="xs"
+                color="red"
+                variant="light"
+                leftSection={<IconTrash size={14} />}
+                onClick={clearLogs}
+                disabled={logs.length === 0}
+              >
+                Clear
+              </Button>
+            </Tooltip>
+          </Group>
+        )}
       </Group>
 
-      {/* Filter and Stats Bar */}
-      <Group justify="space-between" align="center" wrap="wrap" gap="xs">
-        <Group gap="xs" className={styles.searchGroup}>
+      {/* Controls Bar: Search & Level Filter Pills */}
+      <Box className={`glass-panel ${styles.controlsPanel}`}>
+        <Group justify="space-between" align="center" wrap="nowrap" gap="xs">
           <TextInput
-            placeholder="Search logs by keyword, subsystem, error..."
+            placeholder={
+              isMobile ? "Search logs..." : "Search logs by keyword, subsystem, error..."
+            }
             size="xs"
-            leftSection={<IconSearch size={14} />}
+            leftSection={<IconSearch size={14} color="var(--vpn-text-muted)" />}
+            rightSection={
+              logSearchQuery ? (
+                <ActionIcon
+                  size="xs"
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => setLogSearchQuery("")}
+                >
+                  <IconX size={12} />
+                </ActionIcon>
+              ) : null
+            }
             value={logSearchQuery}
             onChange={(e) => setLogSearchQuery(e.currentTarget.value)}
             className={styles.searchInput}
@@ -265,72 +355,86 @@ export const LogConsoleView: React.FC = () => {
             }}
           />
 
-          <SegmentedControl
-            size="xs"
-            value={logFilterLevel}
-            onChange={(val) => setLogFilterLevel(val)}
-            data={[
-              {
-                value: "ALL",
-                label: (
-                  <Group gap={4} justify="center" wrap="nowrap">
-                    <IconTerminal2 size={12} color="var(--vpn-cyan)" />
-                    <span>ALL ({stats.total})</span>
-                  </Group>
-                ),
-              },
-              {
-                value: "INFO",
-                label: (
-                  <Group gap={4} justify="center" wrap="nowrap">
-                    <IconInfoCircle size={12} color="#38bdf8" />
-                    <span>INFO ({stats.info})</span>
-                  </Group>
-                ),
-              },
-              {
-                value: "WARN",
-                label: (
-                  <Group gap={4} justify="center" wrap="nowrap">
-                    <IconAlertTriangle size={12} color="#f59e0b" />
-                    <span>WARN ({stats.warn})</span>
-                  </Group>
-                ),
-              },
-              {
-                value: "ERROR",
-                label: (
-                  <Group gap={4} justify="center" wrap="nowrap">
-                    <IconAlertCircle size={12} color="#ef4444" />
-                    <span>ERR ({stats.error})</span>
-                  </Group>
-                ),
-              },
-              {
-                value: "DEBUG",
-                label: (
-                  <Group gap={4} justify="center" wrap="nowrap">
-                    <IconBug size={12} color="#a78bfa" />
-                    <span>DEBUG ({stats.debug})</span>
-                  </Group>
-                ),
-              },
-            ]}
-            classNames={{
-              root: styles.segmentedRoot,
-            }}
-          />
+          {!isMobile && (
+            <SegmentedControl
+              size="xs"
+              value={logFilterLevel}
+              onChange={(val) => setLogFilterLevel(val)}
+              data={[
+                {
+                  value: "ALL",
+                  label: (
+                    <Group gap={4} justify="center" wrap="nowrap">
+                      <IconTerminal2 size={12} color="var(--vpn-cyan)" />
+                      <span>ALL ({stats.total})</span>
+                    </Group>
+                  ),
+                },
+                {
+                  value: "INFO",
+                  label: (
+                    <Group gap={4} justify="center" wrap="nowrap">
+                      <IconInfoCircle size={12} color="#38bdf8" />
+                      <span>INFO ({stats.info})</span>
+                    </Group>
+                  ),
+                },
+                {
+                  value: "WARN",
+                  label: (
+                    <Group gap={4} justify="center" wrap="nowrap">
+                      <IconAlertTriangle size={12} color="#f59e0b" />
+                      <span>WARN ({stats.warn})</span>
+                    </Group>
+                  ),
+                },
+                {
+                  value: "ERROR",
+                  label: (
+                    <Group gap={4} justify="center" wrap="nowrap">
+                      <IconAlertCircle size={12} color="#ef4444" />
+                      <span>ERR ({stats.error})</span>
+                    </Group>
+                  ),
+                },
+                {
+                  value: "DEBUG",
+                  label: (
+                    <Group gap={4} justify="center" wrap="nowrap">
+                      <IconBug size={12} color="#a78bfa" />
+                      <span>DEBUG ({stats.debug})</span>
+                    </Group>
+                  ),
+                },
+              ]}
+              classNames={{
+                root: styles.segmentedRoot,
+              }}
+            />
+          )}
         </Group>
 
-        <Group gap="xs">
-          <Badge size="xs" variant="dot" color="teal">
-            Showing {filteredLogs.length} of {logs.length}
-          </Badge>
-        </Group>
-      </Group>
+        {/* On Mobile: Horizontal Scrollable Level Pills */}
+        {isMobile && (
+          <Box className={styles.pillsScrollContainer}>
+            {levelFilterData.map((lvl) => (
+              <Button
+                key={lvl.id}
+                size="xs"
+                variant={logFilterLevel === lvl.id ? "filled" : "subtle"}
+                color={logFilterLevel === lvl.id ? lvl.color : "gray"}
+                onClick={() => setLogFilterLevel(lvl.id)}
+                className={styles.filterPill}
+              >
+                {lvl.label}
+              </Button>
+            ))}
+          </Box>
+        )}
+      </Box>
 
       {/* Main Terminal Window Frame */}
-      <Box className={`glass-panel ${styles.terminalFrame}`}>
+      <Box className={styles.terminalFrame}>
         {/* Terminal Header Bar */}
         <Box className={styles.terminalHeader}>
           <Group gap={6}>
@@ -348,11 +452,9 @@ export const LogConsoleView: React.FC = () => {
             >
               NEWEST ON TOP
             </Badge>
-            {!isLogAutoScroll && (
-              <Badge size="xs" color="yellow" variant="light">
-                Scroll Lock Active
-              </Badge>
-            )}
+            <Badge size="xs" variant="dot" color="teal">
+              {filteredLogs.length} of {logs.length}
+            </Badge>
           </Group>
         </Box>
 
@@ -360,23 +462,51 @@ export const LogConsoleView: React.FC = () => {
         <Box ref={logContainerRef} className={styles.terminalBody}>
           {filteredLogs.length === 0 ? (
             <Box className={styles.emptyBox}>
-              <IconTerminal2 size={36} stroke={1.5} className={styles.emptyIcon} />
-              <Text size="sm" c="dimmed">
-                {logs.length === 0
-                  ? "No logs captured yet. System events will stream here automatically."
-                  : "No logs match the current filter or search criteria."}
+              <Box className={styles.emptyIconWrapper}>
+                {logs.length === 0 ? (
+                  <IconTerminal2 size={26} stroke={1.8} />
+                ) : (
+                  <IconFilterOff size={26} stroke={1.8} />
+                )}
+              </Box>
+              <Text className={styles.emptyTitle}>
+                {logs.length === 0 ? "Console Stream Idle" : "No Matching Logs"}
               </Text>
-              {logs.length > 0 && (
+              <Text className={styles.emptySubtitle}>
+                {logs.length === 0
+                  ? "System events, routing changes, and IPC telemetry will stream here automatically."
+                  : "No log records match your active search query or level filter."}
+              </Text>
+              {logs.length > 0 ? (
                 <Button
                   size="xs"
-                  variant="subtle"
+                  variant="light"
                   color="cyan"
+                  leftSection={<IconRotate size={14} />}
                   onClick={() => {
                     setLogFilterLevel("ALL");
                     setLogSearchQuery("");
                   }}
+                  className={styles.emptyActionBtn}
                 >
                   Reset Filters
+                </Button>
+              ) : (
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="cyan"
+                  leftSection={<IconPlus size={14} />}
+                  onClick={() =>
+                    addLog(
+                      "INFO",
+                      "SYSTEM",
+                      `Manual console trigger test event at ${new Date().toLocaleTimeString()}`
+                    )
+                  }
+                  className={styles.emptyActionBtn}
+                >
+                  Trigger Test Event
                 </Button>
               )}
             </Box>
@@ -387,6 +517,64 @@ export const LogConsoleView: React.FC = () => {
               if (log.level === "ERROR") msgClass = styles.messageError;
               else if (log.level === "WARN") msgClass = styles.messageWarn;
 
+              if (isMobile) {
+                // 2-Tier Layout on Mobile
+                return (
+                  <Box key={log.id} className={styles.mobileLogRow}>
+                    <Box className={styles.mobileMetaRow}>
+                      <Box className={styles.mobileMetaLeft}>
+                        <Text component="span" className={`font-mono ${styles.timestamp}`}>
+                          [{log.timestamp}]
+                        </Text>
+                        <Box
+                          className={styles.levelPill}
+                          style={{
+                            color: levelColor,
+                            background: `${levelColor}18`,
+                            border: `1px solid ${levelColor}30`,
+                          }}
+                        >
+                          {getLevelIcon(log.level)}
+                          <span>{log.level}</span>
+                        </Box>
+                        <Text component="span" className={`font-mono ${styles.sourceTag}`}>
+                          [{log.source}]
+                        </Text>
+                      </Box>
+
+                      <CopyButton
+                        value={`[${log.timestamp}] [${log.level}] [${log.source}]: ${log.message}`}
+                        timeout={1500}
+                      >
+                        {({ copied, copy }) => (
+                          <ActionIcon
+                            size={18}
+                            variant="subtle"
+                            color="gray"
+                            onClick={copy}
+                            className={styles.copyRowBtn}
+                          >
+                            {copied ? (
+                              <IconCheck size={12} color="#10b981" />
+                            ) : (
+                              <IconCopy size={12} />
+                            )}
+                          </ActionIcon>
+                        )}
+                      </CopyButton>
+                    </Box>
+
+                    <Text
+                      component="div"
+                      className={`font-mono ${styles.mobileMessageRow} ${msgClass}`}
+                    >
+                      {log.message}
+                    </Text>
+                  </Box>
+                );
+              }
+
+              // Desktop & Tablet: Standard 1-Line Row
               return (
                 <Box key={log.id} className={styles.logRow}>
                   {/* Timestamp */}
