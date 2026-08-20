@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Group, Text, Badge, Stack, SimpleGrid, UnstyledButton } from "@mantine/core";
+import { Box, Group, Text, Badge, Stack, SimpleGrid, UnstyledButton, Tooltip } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
   IconPower,
@@ -11,6 +11,7 @@ import {
   IconWorld,
   IconLock,
   IconArrowsSplit,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import styles from "./HeroCockpitBanner.module.css";
@@ -18,6 +19,7 @@ import styles from "./HeroCockpitBanner.module.css";
 export const HeroCockpitBanner: React.FC = () => {
   const {
     connectionState,
+    daemonHealth,
     activeProfileId,
     profiles,
     uptimeSeconds,
@@ -27,6 +29,7 @@ export const HeroCockpitBanner: React.FC = () => {
     ipRules,
     connect,
     disconnect,
+    retryDaemonIpc,
   } = useVpnStore();
 
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -37,6 +40,7 @@ export const HeroCockpitBanner: React.FC = () => {
   const isConnected = connectionState === "connected";
   const isConnecting = connectionState === "connecting" || connectionState === "reconnecting";
   const isDisconnecting = connectionState === "disconnecting";
+  const isDaemonOffline = daemonHealth === "offline";
 
   const activeRulesCount =
     appRules.filter((r) => r.enabled).length + ipRules.filter((r) => r.enabled).length;
@@ -65,12 +69,26 @@ export const HeroCockpitBanner: React.FC = () => {
   };
 
   const handleToggle = () => {
-    if (isConnected) {
+    if (isDaemonOffline) {
+      retryDaemonIpc();
+      return;
+    }
+    if (isConnected || isConnecting) {
       disconnect();
     } else if (connectionState === "disconnected" || connectionState === "error") {
       connect(activeProfile?.id);
     }
   };
+
+  const powerTooltip = isConnecting
+    ? "Connecting... Click to cancel"
+    : isConnected
+      ? "Connected • Click to disconnect"
+      : isDisconnecting
+        ? "Disconnecting..."
+        : isDaemonOffline
+          ? "Daemon offline • Click to retry probe"
+          : "Click to connect";
 
   // Sparkline generator
   const points = telemetry.sparkline || [];
@@ -127,25 +145,70 @@ export const HeroCockpitBanner: React.FC = () => {
               <Box className={styles.powerWrapperMobile}>
                 {isConnected && <Box className={styles.powerHaloMobileConnected} />}
                 {isConnecting && <Box className={styles.powerHaloMobileConnecting} />}
-                <UnstyledButton
-                  onClick={handleToggle}
-                  disabled={isConnecting || isDisconnecting}
-                  className={powerBtnClass}
-                >
-                  <IconPower size={25} color="#ffffff" stroke={2.4} />
-                </UnstyledButton>
+                <Tooltip label={powerTooltip} position="top">
+                  <UnstyledButton
+                    onClick={handleToggle}
+                    disabled={isDisconnecting}
+                    className={powerBtnClass}
+                    style={{ cursor: isDisconnecting ? "wait" : "pointer" }}
+                  >
+                    <IconPower size={25} color="#ffffff" stroke={2.4} />
+                  </UnstyledButton>
+                </Tooltip>
               </Box>
 
               <Box style={{ overflow: "hidden", minWidth: 0 }}>
                 <Group gap={5} align="center" wrap="nowrap">
-                  <Badge
-                    size="xs"
-                    variant={isConnected ? "filled" : isConnecting ? "filled" : "outline"}
-                    color={isConnected ? "teal" : isConnecting ? "yellow" : "gray"}
-                    style={{ fontSize: 9, height: 17, padding: "0 5px", fontWeight: 700 }}
-                  >
-                    {isConnected ? "CONNECTED" : isConnecting ? "CONNECTING..." : "DISCONNECTED"}
-                  </Badge>
+                  {isDaemonOffline ? (
+                    <Group gap={4} wrap="nowrap">
+                      <Badge
+                        size="xs"
+                        variant="filled"
+                        color="red"
+                        leftSection={<IconAlertTriangle size={10} />}
+                        style={{ fontSize: 9, height: 17, padding: "0 5px", fontWeight: 700 }}
+                      >
+                        DAEMON OFFLINE
+                      </Badge>
+                      <UnstyledButton onClick={retryDaemonIpc} className={styles.retryIpcBtn}>
+                        <Text size="9px" fw={700} c="red">
+                          Retry ↺
+                        </Text>
+                      </UnstyledButton>
+                    </Group>
+                  ) : (
+                    <Badge
+                      size="xs"
+                      variant={
+                        isConnected
+                          ? "filled"
+                          : isConnecting
+                            ? "filled"
+                            : connectionState === "error"
+                              ? "filled"
+                              : "outline"
+                      }
+                      color={
+                        isConnected
+                          ? "teal"
+                          : isConnecting
+                            ? "yellow"
+                            : connectionState === "error"
+                              ? "red"
+                              : "gray"
+                      }
+                      style={{ fontSize: 9, height: 17, padding: "0 5px", fontWeight: 700 }}
+                    >
+                      {isConnected
+                        ? "CONNECTED"
+                        : isConnecting
+                          ? "CONNECTING..."
+                          : connectionState === "error"
+                            ? "ERROR"
+                            : "DISCONNECTED"}
+                    </Badge>
+                  )}
+
                   <Badge
                     size="xs"
                     variant="light"
@@ -366,25 +429,70 @@ export const HeroCockpitBanner: React.FC = () => {
             <Box className={styles.powerWrapper}>
               {isConnected && <Box className={styles.powerHaloConnected} />}
               {isConnecting && <Box className={styles.powerHaloConnecting} />}
-              <UnstyledButton
-                onClick={handleToggle}
-                disabled={isConnecting || isDisconnecting}
-                className={powerBtnClass}
-              >
-                <IconPower size={26} color="#ffffff" stroke={2.4} />
-              </UnstyledButton>
+              <Tooltip label={powerTooltip} position="top">
+                <UnstyledButton
+                  onClick={handleToggle}
+                  disabled={isDisconnecting}
+                  className={powerBtnClass}
+                  style={{ cursor: isDisconnecting ? "wait" : "pointer" }}
+                >
+                  <IconPower size={26} color="#ffffff" stroke={2.4} />
+                </UnstyledButton>
+              </Tooltip>
             </Box>
 
             <Stack gap={3} style={{ overflow: "hidden", minWidth: 0, flex: 1 }}>
               <Group gap={6} align="center" wrap="wrap">
-                <Badge
-                  size="xs"
-                  variant="filled"
-                  color={isConnected ? "teal" : isConnecting ? "yellow" : "gray"}
-                  style={{ fontSize: 9.5, height: 17, padding: "0 5px", fontWeight: 700 }}
-                >
-                  {isConnected ? "CONNECTED" : isConnecting ? "CONNECTING..." : "DISCONNECTED"}
-                </Badge>
+                {isDaemonOffline ? (
+                  <Group gap={4} wrap="nowrap">
+                    <Badge
+                      size="xs"
+                      variant="filled"
+                      color="red"
+                      leftSection={<IconAlertTriangle size={10} />}
+                      style={{ fontSize: 9.5, height: 17, padding: "0 5px", fontWeight: 700 }}
+                    >
+                      DAEMON OFFLINE
+                    </Badge>
+                    <UnstyledButton onClick={retryDaemonIpc} className={styles.retryIpcBtn}>
+                      <Text size="9px" fw={700} c="red">
+                        Retry ↺
+                      </Text>
+                    </UnstyledButton>
+                  </Group>
+                ) : (
+                  <Badge
+                    size="xs"
+                    variant={
+                      isConnected
+                        ? "filled"
+                        : isConnecting
+                          ? "filled"
+                          : connectionState === "error"
+                            ? "filled"
+                            : "outline"
+                    }
+                    color={
+                      isConnected
+                        ? "teal"
+                        : isConnecting
+                          ? "yellow"
+                          : connectionState === "error"
+                            ? "red"
+                            : "gray"
+                    }
+                    style={{ fontSize: 9.5, height: 17, padding: "0 5px", fontWeight: 700 }}
+                  >
+                    {isConnected
+                      ? "CONNECTED"
+                      : isConnecting
+                        ? "CONNECTING..."
+                        : connectionState === "error"
+                          ? "ERROR"
+                          : "DISCONNECTED"}
+                  </Badge>
+                )}
+
                 <Badge
                   size="xs"
                   variant="light"
@@ -564,44 +672,89 @@ export const HeroCockpitBanner: React.FC = () => {
           <Box className={styles.powerWrapper}>
             {isConnected && <Box className={styles.powerHaloConnected} />}
             {isConnecting && <Box className={styles.powerHaloConnecting} />}
-            <UnstyledButton
-              onClick={handleToggle}
-              disabled={isConnecting || isDisconnecting}
-              className={powerBtnClass}
-              style={{
-                cursor: isConnecting || isDisconnecting ? "wait" : "pointer",
-              }}
-            >
-              <IconPower
-                size={26}
-                color={isConnected ? "#ffffff" : isConnecting ? "#ffffff" : "var(--vpn-text-muted)"}
-                stroke={2.5}
-              />
-            </UnstyledButton>
+            <Tooltip label={powerTooltip} position="top">
+              <UnstyledButton
+                onClick={handleToggle}
+                disabled={isDisconnecting}
+                className={powerBtnClass}
+                style={{
+                  cursor: isDisconnecting ? "wait" : "pointer",
+                }}
+              >
+                <IconPower
+                  size={26}
+                  color={
+                    isConnected ? "#ffffff" : isConnecting ? "#ffffff" : "var(--vpn-text-muted)"
+                  }
+                  stroke={2.5}
+                />
+              </UnstyledButton>
+            </Tooltip>
           </Box>
 
           <Stack gap={2} style={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
             {/* Top Badges Bar */}
             <Group gap={5} align="center" wrap="wrap">
-              <Badge
-                size="xs"
-                variant="filled"
-                color={isConnected ? "teal" : isConnecting ? "yellow" : "gray"}
-                leftSection={isConnected ? <IconShieldCheck size={10} /> : undefined}
-                style={{
-                  background: isConnected
-                    ? "linear-gradient(135deg, #10b981, #059669)"
+              {isDaemonOffline ? (
+                <Group gap={4} wrap="nowrap">
+                  <Badge
+                    size="xs"
+                    variant="filled"
+                    color="red"
+                    leftSection={<IconAlertTriangle size={10} />}
+                    style={{
+                      background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                      fontWeight: 700,
+                      fontSize: 8.5,
+                      height: 16,
+                      padding: "0 4px",
+                    }}
+                  >
+                    DAEMON OFFLINE
+                  </Badge>
+                  <UnstyledButton onClick={retryDaemonIpc} className={styles.retryIpcBtn}>
+                    <Text size="8.5px" fw={700} c="red">
+                      Retry ↺
+                    </Text>
+                  </UnstyledButton>
+                </Group>
+              ) : (
+                <Badge
+                  size="xs"
+                  variant="filled"
+                  color={
+                    isConnected
+                      ? "teal"
+                      : isConnecting
+                        ? "yellow"
+                        : connectionState === "error"
+                          ? "red"
+                          : "gray"
+                  }
+                  leftSection={isConnected ? <IconShieldCheck size={10} /> : undefined}
+                  style={{
+                    background: isConnected
+                      ? "linear-gradient(135deg, #10b981, #059669)"
+                      : isConnecting
+                        ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                        : connectionState === "error"
+                          ? "linear-gradient(135deg, #ef4444, #dc2626)"
+                          : undefined,
+                    fontWeight: 700,
+                    fontSize: 8.5,
+                    height: 16,
+                    padding: "0 4px",
+                  }}
+                >
+                  {isConnected
+                    ? "CONNECTED"
                     : isConnecting
-                      ? "linear-gradient(135deg, #f59e0b, #d97706)"
-                      : undefined,
-                  fontWeight: 700,
-                  fontSize: 8.5,
-                  height: 16,
-                  padding: "0 4px",
-                }}
-              >
-                {isConnected ? "CONNECTED" : isConnecting ? "CONNECTING" : "DISCONNECTED"}
-              </Badge>
+                      ? "CONNECTING"
+                      : connectionState === "error"
+                        ? "ERROR"
+                        : "DISCONNECTED"}
+                </Badge>
+              )}
 
               <Badge
                 size="xs"

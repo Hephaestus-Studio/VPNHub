@@ -29,7 +29,7 @@ export const MiniTrayWidget: React.FC = () => {
   };
 
   const handleToggle = () => {
-    if (isConnected) disconnect();
+    if (isConnected || isConnecting) disconnect();
     else connect(activeProfile?.id);
   };
 
@@ -79,7 +79,11 @@ export const MiniTrayWidget: React.FC = () => {
             {activeProfile?.serverFlag} {activeProfile?.name}
           </Text>
           <Text size="11px" c="dimmed">
-            {isConnected ? `Connected • ${formatUptime(uptimeSeconds)}` : "Click button to connect"}
+            {isConnected
+              ? `Connected • ${formatUptime(uptimeSeconds)}`
+              : isConnecting
+                ? "Connecting... Click to cancel"
+                : "Click button to connect"}
           </Text>
         </Box>
       </Stack>

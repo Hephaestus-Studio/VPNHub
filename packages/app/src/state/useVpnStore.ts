@@ -71,6 +71,7 @@ interface VpnStoreState {
   toggleIpRule: (id: string) => void;
   deleteIpRule: (id: string) => void;
 
+  retryDaemonIpc: () => Promise<boolean>;
   clearLogs: () => void;
   addLog: (level: LogEntry["level"], source: string, message: string) => void;
   tickTelemetry: () => void;
@@ -94,7 +95,38 @@ const setupIpcSubscriptions = async (
   ipcSubscribed = true;
 
   await IpcBridge.onDaemonStatusChange((status) => {
-    get().setDaemonHealth(status);
+    const current = get();
+    const prevDaemon = current.daemonHealth;
+    current.setDaemonHealth(status);
+
+    if (status === "offline") {
+      if (current.connectionState === "connected" || current.connectionState === "connecting") {
+        current.addLog(
+          "ERROR",
+          "DAEMON_IPC",
+          "Daemon process terminated unexpectedly or IPC socket unreachable. Tunnel state invalidated."
+        );
+        set((state) => ({
+          connectionState: "error",
+          uptimeSeconds: 0,
+          connectedAt: null,
+          telemetry: {
+            ...state.telemetry,
+            currentDownloadKbps: 0,
+            currentUploadKbps: 0,
+            currentPingMs: 0,
+          },
+        }));
+        IpcBridge.updateTrayStatus("disconnected");
+      }
+    } else if (status === "connected" && prevDaemon === "offline") {
+      current.addLog("INFO", "DAEMON_IPC", "Daemon IPC connection restored. System operational.");
+      IpcBridge.getDaemonStatus().then((res: any) => {
+        if (res && res.result && res.result.state) {
+          set({ connectionState: res.result.state });
+        }
+      });
+    }
   });
 
   await IpcBridge.onVpnStatusUpdate((payload: any) => {
@@ -796,6 +828,20 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
     if (state.connectionState === "disconnected" || state.connectionState === "disconnecting")
       return;
 
+    const wasConnecting = state.connectionState === "connecting";
+
+    if (wasConnecting) {
+      set({ connectionState: "disconnected", connectedAt: null, uptimeSeconds: 0 });
+      state.addLog("WARN", "TUNNEL_ENGINE", "Connection handshake aborted by user.");
+      IpcBridge.updateTrayStatus("disconnected");
+      try {
+        await IpcBridge.disconnectVpn(true);
+      } catch (err: any) {
+        console.warn("Abort connect failed:", err);
+      }
+      return;
+    }
+
     set({ connectionState: "disconnecting" });
     state.addLog(
       "WARN",
@@ -810,6 +856,23 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       state.addLog("ERROR", "TUNNEL_ENGINE", `Disconnect error: ${err?.message || err}`);
       set({ connectionState: "disconnected", connectedAt: null, uptimeSeconds: 0 });
     }
+  },
+
+  retryDaemonIpc: async () => {
+    const state = get();
+    const alive = await IpcBridge.pingDaemon();
+    const newHealth: DaemonHealthStatus = alive ? "connected" : "offline";
+    set({ daemonHealth: newHealth });
+
+    if (alive) {
+      state.addLog("INFO", "DAEMON_IPC", "Daemon probe succeeded: IPC socket online.");
+      if (state.connectionState === "error") {
+        set({ connectionState: "disconnected" });
+      }
+    } else {
+      state.addLog("ERROR", "DAEMON_IPC", "Daemon probe failed: IPC socket still unreachable.");
+    }
+    return alive;
   },
 
   tickTelemetry: () => {

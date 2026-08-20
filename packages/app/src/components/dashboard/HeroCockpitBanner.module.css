@@ -179,6 +179,10 @@
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.powerButtonMobile:hover {
+  transform: scale(1.04);
+}
+
 .powerButtonMobileConnected {
   composes: powerButtonMobile;
   background: linear-gradient(135deg, #10b981, #059669);
@@ -213,6 +217,10 @@
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.powerButton:hover {
+  transform: scale(1.05);
+}
+
 .powerButtonConnected {
   composes: powerButton;
   background: linear-gradient(135deg, #10b981, #059669);
@@ -243,4 +251,21 @@
 .dnsHighlight {
   color: #fbbf24;
   font-weight: 600;
+}
+
+.retryIpcBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.retryIpcBtn:hover {
+  background: rgba(239, 68, 68, 0.28);
+  border-color: rgba(239, 68, 68, 0.6);
 }
