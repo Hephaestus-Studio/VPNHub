@@ -342,6 +342,8 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
         isFavorite: p.is_favorite,
         pingMs: p.ping_ms,
         lastConnected: p.last_connected,
+        useOnlyForNetworkResources: p.intranet_only ?? false,
+        customSubnets: p.custom_subnets ?? [],
         credentials: {
           username,
           password,
@@ -375,9 +377,11 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
       customDnsProvider:
         (snapshot.security_settings.custom_dns_provider as SecuritySettings["customDnsProvider"]) ||
         "cloudflare",
+      customDnsServers: snapshot.security_settings.custom_dns_servers || ["1.1.1.1", "1.0.0.1"],
       ipv6LeakProtection: snapshot.security_settings.ipv6_leak_protection,
       webRtcProtection: snapshot.security_settings.webrtc_leak_protection,
       lanBypass: snapshot.security_settings.lan_traffic_bypass,
+      defaultUseOnlyForNetworkResources: snapshot.security_settings.default_intranet_only ?? false,
     };
 
     const mappedAppRules: AppRule[] = snapshot.app_rules.map((r) => ({
@@ -582,7 +586,7 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
     const newSettings = { ...get().securitySettings, killSwitch: mode };
     set({ securitySettings: newSettings });
     IpcBridge.saveSecuritySettings(newSettings);
-    IpcBridge.setKillSwitch(mode !== "off");
+    IpcBridge.setKillSwitch(mode !== "off", mode);
     get().addLog("INFO", "SECURITY_SHIELD", `Kill switch policy persisted: ${mode.toUpperCase()}`);
   },
 
@@ -725,6 +729,20 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
             ovpn_config: profile.rawConfig,
           };
 
+    const isIntranetOnly =
+      profile.useOnlyForNetworkResources !== undefined
+        ? profile.useOnlyForNetworkResources
+        : (state.securitySettings.defaultUseOnlyForNetworkResources ?? false);
+
+    const customDnsIps =
+      state.securitySettings.customDnsProvider === "cloudflare"
+        ? ["1.1.1.1", "1.0.0.1"]
+        : state.securitySettings.customDnsProvider === "google"
+          ? ["8.8.8.8", "8.8.4.4"]
+          : state.securitySettings.customDnsProvider === "quad9"
+            ? ["9.9.9.9", "149.112.112.112"]
+            : state.securitySettings.customDnsServers || ["1.1.1.1"];
+
     try {
       const response = (await IpcBridge.connectVpn({
         profile_id: profile.id,
@@ -733,7 +751,20 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
         server_port: profile.serverPort,
         auth_config: authConfig,
         enable_kill_switch: state.securitySettings.killSwitch !== "off",
-        custom_dns: state.securitySettings.dnsProtection ? ["1.1.1.1", "1.0.0.1"] : undefined,
+        custom_dns: state.securitySettings.dnsProtection ? customDnsIps : undefined,
+        security_policy: {
+          kill_switch_mode: state.securitySettings.killSwitch,
+          dns_protection: state.securitySettings.dnsProtection,
+          custom_dns_provider: state.securitySettings.customDnsProvider,
+          custom_dns_servers: customDnsIps,
+          ipv6_leak_protection: state.securitySettings.ipv6LeakProtection,
+          webrtc_protection: state.securitySettings.webRtcProtection,
+          lan_bypass: state.securitySettings.lanBypass,
+        },
+        routing_policy: {
+          intranet_only: isIntranetOnly,
+          custom_subnets: profile.customSubnets || [],
+        },
       })) as any;
 
       if (response && response.status === "error") {

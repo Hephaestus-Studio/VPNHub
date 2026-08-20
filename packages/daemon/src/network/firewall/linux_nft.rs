@@ -1,7 +1,8 @@
 //! # Linux Fail-Closed Firewall & Kill Switch (`nftables` / `iptables`)
 //!
 //! Enforces an atomic fail-closed Kill Switch table on Linux, preventing any outbound
-//! traffic from escaping to the physical interface when the VPN tunnel drops.
+//! traffic from escaping to the physical interface when the VPN tunnel drops, with
+//! support for Full-Tunnel vs Intranet-Only leak suppression, WebRTC STUN blocks, and Smart LAN bypass.
 
 use crate::error::FirewallError;
 use tracing::{debug, info, warn};
@@ -26,31 +27,88 @@ impl LinuxFirewallManager {
         Self { is_active: false }
     }
 
-    /// Activates fail-closed Kill Switch rules.
+    /// Activates fail-closed Kill Switch, WebRTC shields, and Smart LAN exemptions.
     pub fn enable_kill_switch(
         &mut self,
         server_ip: &str,
         server_port: u16,
         tunnel_iface: &str,
+        intranet_only: bool,
+        vpn_subnets: &[String],
+        webrtc_protection: bool,
+        local_lan_subnet: Option<&str>,
     ) -> Result<(), FirewallError> {
         info!(
-            "Enabling fail-closed Kill Switch on Linux (Server: {}:{}, Interface: {})",
-            server_ip, server_port, tunnel_iface
+            "Enabling Firewall Shields on Linux (Server: {}:{}, Interface: {}, IntranetOnly: {}, WebRTC: {})",
+            server_ip, server_port, tunnel_iface, intranet_only, webrtc_protection
         );
 
-        // Define atomic nftables ruleset
-        let ruleset = format!(
-            "table inet {} {{\n\
-                chain output {{\n\
-                    type filter hook output priority 0; policy drop;\n\
-                    oif \"lo\" accept\n\
-                    oif \"{}\" accept\n\
-                    ip daddr {} th dport {} accept\n\
-                    ct state established,related accept\n\
-                }}\n\
-            }}",
-            NFT_TABLE_NAME, tunnel_iface, server_ip, server_port
-        );
+        let mut ruleset = String::new();
+        ruleset.push_str(&format!("table inet {} {{\n", NFT_TABLE_NAME));
+        ruleset.push_str("    chain output {\n");
+
+        if intranet_only {
+            // Intranet-Only Mode: Policy is accept for general internet,
+            // but DROP leaks to corporate subnets or WebRTC leaks if routed outside VPN tunnel
+            ruleset.push_str("        type filter hook output priority 0; policy accept;\n");
+            ruleset.push_str("        oif \"lo\" accept\n");
+            ruleset.push_str(&format!("        oif \"{}\" accept\n", tunnel_iface));
+
+            // Smart LAN exemption
+            if let Some(lan) = local_lan_subnet {
+                ruleset.push_str(&format!("        ip daddr {} accept\n", lan));
+            }
+
+            // WebRTC STUN drop outside tunnel
+            if webrtc_protection {
+                ruleset.push_str(&format!(
+                    "        udp dport {{ 3478, 5349, 19302, 19303, 19304, 19305, 19306, 19307, 19308, 19309 }} oif != \"{}\" oif != \"lo\" drop\n",
+                    tunnel_iface
+                ));
+            }
+
+            // Drop any packet destined for VPN corporate subnets if not going through the tunnel
+            for subnet in vpn_subnets {
+                if !subnet.trim().is_empty() {
+                    ruleset.push_str(&format!(
+                        "        ip daddr {} oif != \"{}\" oif != \"lo\" drop\n",
+                        subnet.trim(),
+                        tunnel_iface
+                    ));
+                }
+            }
+
+            ruleset.push_str("        ct state established,related accept\n");
+        } else {
+            // Full-Tunnel Fail-Closed Kill Switch
+            ruleset.push_str("        type filter hook output priority 0; policy drop;\n");
+            ruleset.push_str("        oif \"lo\" accept\n");
+            ruleset.push_str(&format!("        oif \"{}\" accept\n", tunnel_iface));
+            ruleset.push_str(&format!(
+                "        ip daddr {} th dport {} accept\n",
+                server_ip, server_port
+            ));
+
+            // Smart LAN physical subnet accept
+            if let Some(lan) = local_lan_subnet {
+                ruleset.push_str(&format!("        ip daddr {} accept\n", lan));
+                ruleset.push_str("        ip daddr 255.255.255.255 accept\n");
+                ruleset.push_str("        ip daddr 224.0.0.0/4 accept\n");
+            }
+
+            // WebRTC STUN drop outside tunnel
+            if webrtc_protection {
+                ruleset.push_str(&format!(
+                    "        udp dport {{ 3478, 5349, 19302, 19303, 19304, 19305, 19306, 19307, 19308, 19309 }} oif != \"{}\" oif != \"lo\" drop\n",
+                    tunnel_iface
+                ));
+            }
+
+            ruleset.push_str("        ct state established,related accept\n");
+        }
+
+        ruleset.push_str("    }\n");
+        ruleset.push_str("}\n");
 
         debug!("Applying nftables ruleset:\n{}", ruleset);
 
@@ -83,7 +141,7 @@ impl LinuxFirewallManager {
         }
 
         // Fallback to iptables if nftables command fails
-        self.apply_iptables_fallback(server_ip, server_port, tunnel_iface)?;
+        self.apply_iptables_fallback(server_ip, server_port, tunnel_iface, local_lan_subnet)?;
         self.is_active = true;
 
         Ok(())
@@ -120,6 +178,7 @@ impl LinuxFirewallManager {
         server_ip: &str,
         server_port: u16,
         tunnel_iface: &str,
+        local_lan_subnet: Option<&str>,
     ) -> Result<(), FirewallError> {
         warn!("Applying iptables fallback rules for Kill Switch");
 
@@ -146,6 +205,13 @@ impl LinuxFirewallManager {
                 "ACCEPT",
             ])
             .status();
+
+        if let Some(lan) = local_lan_subnet {
+            let _ = std::process::Command::new("iptables")
+                .args(["-A", "VPNHUB_OUTPUT", "-d", lan, "-j", "ACCEPT"])
+                .status();
+        }
+
         let _ = std::process::Command::new("iptables")
             .args([
                 "-A",

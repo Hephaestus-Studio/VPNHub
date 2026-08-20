@@ -274,8 +274,12 @@ export const SecurityHubView: React.FC = () => {
             <Text size="10px" c="dimmed">
               Protection active on wg0/tun0
             </Text>
-            <Badge size="xs" color="teal" variant="dot">
-              Enforced
+            <Badge
+              size="xs"
+              color={securitySettings.ipv6LeakProtection ? "teal" : "gray"}
+              variant="dot"
+            >
+              {securitySettings.ipv6LeakProtection ? "Enforced" : "Disabled"}
             </Badge>
           </Group>
         </Box>
@@ -286,56 +290,88 @@ export const SecurityHubView: React.FC = () => {
           style={{
             padding: "16px",
             background: "rgba(17, 24, 39, 0.75)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
-          <Group justify="space-between" mb="xs">
-            <Group gap="xs">
-              <IconRadioactive size={18} color="var(--vpn-amber)" />
-              <Text size="sm" fw={700} style={{ color: "#fff" }}>
-                WebRTC STUN / TURN Shield
-              </Text>
+          <Stack gap="xs">
+            <Group justify="space-between" mb="xs">
+              <Group gap="xs">
+                <IconRadioactive size={18} color="var(--vpn-amber)" />
+                <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                  WebRTC STUN / TURN Shield
+                </Text>
+              </Group>
+              <Switch
+                checked={securitySettings.webRtcProtection}
+                onChange={(e) =>
+                  updateSecuritySettings({ webRtcProtection: e.currentTarget.checked })
+                }
+                color="yellow"
+              />
             </Group>
-            <Switch
-              checked={securitySettings.webRtcProtection}
-              onChange={(e) =>
-                updateSecuritySettings({ webRtcProtection: e.currentTarget.checked })
-              }
-              color="yellow"
-            />
-          </Group>
 
-          <Text size="xs" c="dimmed">
-            Prevents web browsers (Chrome, Firefox, Brave) from leaking real public and local IP
-            addresses via WebRTC STUN requests.
-          </Text>
+            <Text size="xs" c="dimmed">
+              Prevents web browsers (Chrome, Firefox, Brave) from leaking real public and local IP
+              addresses via WebRTC STUN requests (blocks outbound UDP STUN probes).
+            </Text>
+          </Stack>
+
+          <Group justify="space-between" mt="md">
+            <Text size="10px" c="dimmed">
+              STUN Port Filter (3478/5349/19302)
+            </Text>
+            <Badge
+              size="xs"
+              color={securitySettings.webRtcProtection ? "yellow" : "gray"}
+              variant="light"
+            >
+              {securitySettings.webRtcProtection ? "Protected" : "Pass-through"}
+            </Badge>
+          </Group>
         </Box>
 
-        {/* LAN Access Bypass */}
+        {/* Smart LAN Access Bypass */}
         <Box
           className="glass-panel"
           style={{
             padding: "16px",
             background: "rgba(17, 24, 39, 0.75)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
-          <Group justify="space-between" mb="xs">
-            <Group gap="xs">
-              <IconNetwork size={18} color="var(--vpn-cyan)" />
-              <Text size="sm" fw={700} style={{ color: "#fff" }}>
-                Local Network (LAN) Bypass
-              </Text>
+          <Stack gap="xs">
+            <Group justify="space-between" mb="xs">
+              <Group gap="xs">
+                <IconNetwork size={18} color="var(--vpn-cyan)" />
+                <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                  Smart Local Network (LAN) Bypass
+                </Text>
+              </Group>
+              <Switch
+                checked={securitySettings.lanBypass}
+                onChange={(e) => updateSecuritySettings({ lanBypass: e.currentTarget.checked })}
+                color="cyan"
+              />
             </Group>
-            <Switch
-              checked={securitySettings.lanBypass}
-              onChange={(e) => updateSecuritySettings({ lanBypass: e.currentTarget.checked })}
-              color="cyan"
-            />
-          </Group>
 
-          <Text size="xs" c="dimmed">
-            Allows access to local network devices (printers, NAS, local servers in 192.168.x.x /
-            10.x.x.x) without going through the VPN tunnel.
-          </Text>
+            <Text size="xs" c="dimmed">
+              Allows access to local physical network devices (home/office printers, NAS, router in
+              local subnet e.g. 192.168.1.0/24) directly without interfering with VPN subnets.
+            </Text>
+          </Stack>
+
+          <Group justify="space-between" mt="md">
+            <Text size="10px" c="dimmed">
+              Dynamic Physical Subnet Exemption
+            </Text>
+            <Badge size="xs" color={securitySettings.lanBypass ? "cyan" : "gray"} variant="light">
+              {securitySettings.lanBypass ? "Active (Smart LAN)" : "Full Tunneling"}
+            </Badge>
+          </Group>
         </Box>
       </SimpleGrid>
 

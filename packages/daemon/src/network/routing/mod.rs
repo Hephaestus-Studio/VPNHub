@@ -24,6 +24,11 @@ impl MockRouteManager {
         &mut self,
         _server_ip: &str,
         _tunnel_iface: &str,
+        _assigned_ip: Option<&str>,
+        _intranet_only: bool,
+        _pushed_routes: &[String],
+        _custom_subnets: &[String],
+        _lan_bypass: bool,
     ) -> Result<(), crate::error::NetworkError> {
         Ok(())
     }
@@ -33,6 +38,9 @@ impl MockRouteManager {
         _tunnel_iface: &str,
     ) -> Result<(), crate::error::NetworkError> {
         Ok(())
+    }
+    pub fn local_lan_subnet(&self) -> Option<&str> {
+        None
     }
 }
 

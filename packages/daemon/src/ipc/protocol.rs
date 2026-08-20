@@ -70,6 +70,78 @@ pub enum AuthConfig {
     },
 }
 
+/// Kill Switch operational enforcement mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum KillSwitchMode {
+    /// Kill Switch disabled.
+    #[default]
+    Off,
+    /// Auto/Standard: Activates blocking only upon unexpected disconnect / reconnecting.
+    Standard,
+    /// Strict: Blocks all non-VPN internet traffic completely.
+    Strict,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_dns_provider() -> String {
+    "cloudflare".to_string()
+}
+
+/// Comprehensive Security and Leak Protection Policy.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityPolicy {
+    /// Kill switch enforcement mode.
+    #[serde(default)]
+    pub kill_switch_mode: KillSwitchMode,
+    /// Whether DNS leak protection is enabled.
+    #[serde(default = "default_true")]
+    pub dns_protection: bool,
+    /// Custom DNS provider name ("cloudflare", "google", "quad9", "custom").
+    #[serde(default = "default_dns_provider")]
+    pub custom_dns_provider: String,
+    /// Custom DNS server IPs if provider is "custom" or explicit override.
+    #[serde(default)]
+    pub custom_dns_servers: Vec<String>,
+    /// Whether IPv6 blackhole leak protection is enabled.
+    #[serde(default = "default_true")]
+    pub ipv6_leak_protection: bool,
+    /// Whether WebRTC STUN/TURN leak protection is enabled.
+    #[serde(default = "default_true")]
+    pub webrtc_protection: bool,
+    /// Whether Smart Local Network (LAN) bypass is enabled.
+    #[serde(default = "default_true")]
+    pub lan_bypass: bool,
+}
+
+impl Default for SecurityPolicy {
+    fn default() -> Self {
+        Self {
+            kill_switch_mode: KillSwitchMode::Strict,
+            dns_protection: true,
+            custom_dns_provider: "cloudflare".to_string(),
+            custom_dns_servers: vec!["1.1.1.1".to_string(), "1.0.0.1".to_string()],
+            ipv6_leak_protection: true,
+            webrtc_protection: true,
+            lan_bypass: true,
+        }
+    }
+}
+
+/// Routing policy determining whether full-tunnel or intranet-only routes are active.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RoutingPolicy {
+    /// "Use this connection only for resources on its network" (Intranet-Only).
+    #[serde(default)]
+    pub intranet_only: bool,
+    /// Additional custom corporate subnets/CIDRs to route into VPN (e.g. `["10.0.0.0/8", "192.168.10.0/24"]`).
+    #[serde(default)]
+    pub custom_subnets: Vec<String>,
+}
+
 /// Client parameters supplied when requesting a new connection.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectParams {
@@ -83,10 +155,18 @@ pub struct ConnectParams {
     pub server_port: u16,
     /// Secret authentication payload.
     pub auth_config: AuthConfig,
-    /// Whether to enable fail-closed Kill Switch firewall protection.
+    /// Whether to enable fail-closed Kill Switch firewall protection (backward compat).
+    #[serde(default)]
     pub enable_kill_switch: bool,
-    /// Custom DNS server IPs (e.g. `["1.1.1.1", "1.0.0.1"]`) to enforce in tunnel.
+    /// Custom DNS server IPs (e.g. `["1.1.1.1", "1.0.0.1"]`) to enforce in tunnel (backward compat).
+    #[serde(default)]
     pub custom_dns: Option<Vec<String>>,
+    /// Comprehensive security policy.
+    #[serde(default)]
+    pub security_policy: Option<SecurityPolicy>,
+    /// Routing policy (Full Tunnel vs Intranet-Only).
+    #[serde(default)]
+    pub routing_policy: Option<RoutingPolicy>,
 }
 
 /// Split tunneling configuration options.
@@ -123,7 +203,11 @@ pub enum DaemonRequest {
     /// Retrieve latest bandwidth telemetry and RTT counters.
     GetMetrics,
     /// Dynamically toggle Kill Switch firewall state.
-    SetKillSwitch { enabled: bool },
+    SetKillSwitch {
+        enabled: bool,
+        #[serde(default)]
+        mode: Option<KillSwitchMode>,
+    },
     /// Apply split tunneling policy.
     SetSplitTunneling(SplitTunnelConfig),
     /// Export system network diagnostics (routes, DNS, firewall, recent logs).
@@ -194,6 +278,12 @@ pub struct DaemonStatusSnapshot {
     pub dns_servers: Vec<String>,
     /// Uptime in seconds of the current active session.
     pub session_duration_secs: u64,
+    /// Whether IPv6 blackhole leak protection is currently active.
+    #[serde(default)]
+    pub ipv6_protected: bool,
+    /// Whether intranet-only (split routing) mode is active.
+    #[serde(default)]
+    pub intranet_only: bool,
 }
 
 /// Real-time throughput and byte counter telemetry.

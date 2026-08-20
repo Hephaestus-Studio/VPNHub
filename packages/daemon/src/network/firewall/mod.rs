@@ -27,6 +27,10 @@ impl MockFirewallManager {
         _server_ip: &str,
         _server_port: u16,
         _tunnel_iface: &str,
+        _intranet_only: bool,
+        _vpn_subnets: &[String],
+        _webrtc_protection: bool,
+        _local_lan_subnet: Option<&str>,
     ) -> Result<(), crate::error::FirewallError> {
         self.is_active = true;
         Ok(())

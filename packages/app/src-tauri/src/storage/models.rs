@@ -19,6 +19,10 @@ pub struct StoredProfile {
     pub ping_ms: u32,
     pub last_connected: Option<String>,
     pub credentials: Option<StoredCredentialsMetadata>,
+    #[serde(default)]
+    pub intranet_only: bool,
+    #[serde(default)]
+    pub custom_subnets: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,9 +90,12 @@ pub struct StoredSecuritySettings {
     pub kill_switch: String, // "off" | "standard" | "strict"
     pub dns_protection: bool,
     pub custom_dns_provider: String,
+    pub custom_dns_servers: Option<Vec<String>>,
     pub ipv6_leak_protection: bool,
     pub webrtc_leak_protection: bool,
     pub lan_traffic_bypass: bool,
+    #[serde(default)]
+    pub default_intranet_only: bool,
 }
 
 impl Default for StoredSecuritySettings {
@@ -97,9 +104,11 @@ impl Default for StoredSecuritySettings {
             kill_switch: "strict".to_string(),
             dns_protection: true,
             custom_dns_provider: "cloudflare".to_string(),
+            custom_dns_servers: Some(vec!["1.1.1.1".to_string(), "1.0.0.1".to_string()]),
             ipv6_leak_protection: true,
             webrtc_leak_protection: true,
             lan_traffic_bypass: true,
+            default_intranet_only: false,
         }
     }
 }

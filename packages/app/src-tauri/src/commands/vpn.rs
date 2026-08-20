@@ -129,9 +129,10 @@ pub async fn get_metrics(client: State<'_, Arc<DaemonClient>>) -> Result<DaemonR
 pub async fn set_kill_switch(
     client: State<'_, Arc<DaemonClient>>,
     enabled: bool,
+    mode: Option<vpnhub_daemon::ipc::protocol::KillSwitchMode>,
 ) -> Result<DaemonResponse, AppError> {
     client
-        .send_request(DaemonRequest::SetKillSwitch { enabled })
+        .send_request(DaemonRequest::SetKillSwitch { enabled, mode })
         .await
 }
 

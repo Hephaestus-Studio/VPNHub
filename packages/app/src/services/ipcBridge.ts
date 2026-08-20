@@ -37,6 +37,19 @@ export interface VpnConnectParams {
       };
   enable_kill_switch: boolean;
   custom_dns?: string[];
+  security_policy?: {
+    kill_switch_mode: "off" | "standard" | "strict";
+    dns_protection: boolean;
+    custom_dns_provider: string;
+    custom_dns_servers: string[];
+    ipv6_leak_protection: boolean;
+    webrtc_protection: boolean;
+    lan_bypass: boolean;
+  };
+  routing_policy?: {
+    intranet_only: boolean;
+    custom_subnets: string[];
+  };
 }
 
 export interface SplitTunnelConfigPayload {
@@ -98,15 +111,19 @@ export interface FullStorageSnapshotPayload {
       has_tls_crypt?: boolean;
       has_raw_ovpn: boolean;
     };
+    intranet_only?: boolean;
+    custom_subnets?: string[];
   }>;
   secrets?: Record<string, ProfileSecretPayload>;
   security_settings: {
     kill_switch: "off" | "standard" | "strict";
     dns_protection: boolean;
-    custom_dns_provider: "cloudflare" | "google" | "quad9" | "custom";
+    custom_dns_provider: string;
+    custom_dns_servers?: string[];
     ipv6_leak_protection: boolean;
     webrtc_leak_protection: boolean;
     lan_traffic_bypass: boolean;
+    default_intranet_only?: boolean;
   };
   app_rules: Array<{
     id: string;
@@ -158,6 +175,8 @@ export class IpcBridge {
         is_favorite: profile.isFavorite,
         ping_ms: profile.pingMs,
         last_connected: profile.lastConnected,
+        intranet_only: profile.useOnlyForNetworkResources ?? false,
+        custom_subnets: profile.customSubnets || [],
         credentials: profile.credentials
           ? {
               username: profile.credentials.username,
@@ -207,9 +226,11 @@ export class IpcBridge {
         kill_switch: settings.killSwitch,
         dns_protection: settings.dnsProtection,
         custom_dns_provider: settings.customDnsProvider,
+        custom_dns_servers: settings.customDnsServers || [],
         ipv6_leak_protection: settings.ipv6LeakProtection,
         webrtc_leak_protection: settings.webRtcProtection,
         lan_traffic_bypass: settings.lanBypass,
+        default_intranet_only: settings.defaultUseOnlyForNetworkResources ?? false,
       };
       try {
         await invoke("storage_save_security_settings", { settings: payload });
@@ -277,9 +298,12 @@ export class IpcBridge {
     return null;
   }
 
-  static async setKillSwitch(enabled: boolean): Promise<unknown> {
+  static async setKillSwitch(
+    enabled: boolean,
+    mode?: "off" | "standard" | "strict"
+  ): Promise<unknown> {
     if (this.isTauriEnvironment()) {
-      return await invoke("set_kill_switch", { enabled });
+      return await invoke("set_kill_switch", { enabled, mode });
     }
     return { status: "success" };
   }

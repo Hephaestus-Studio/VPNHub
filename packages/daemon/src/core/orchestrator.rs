@@ -81,9 +81,9 @@ impl DaemonOrchestrator {
                 }
             },
 
-            DaemonRequest::SetKillSwitch { enabled } => {
+            DaemonRequest::SetKillSwitch { enabled, mode } => {
                 let mut net = self.network_mgr.lock().await;
-                match net.set_kill_switch(enabled) {
+                match net.set_kill_switch(enabled, mode) {
                     Ok(_) => DaemonResponse::Success,
                     Err(e) => DaemonResponse::Error {
                         code: 102,
@@ -150,12 +150,15 @@ impl DaemonOrchestrator {
 
         // Start telemetry collector loop
         self.metrics_collector
-            .start(1000, iface, self.state_mgr.event_sender());
+            .start(1000, iface.clone(), self.state_mgr.event_sender());
 
         // Spawn driver event monitoring task
         let state_mgr = self.state_mgr.clone();
         let network_mgr = self.network_mgr.clone();
-        let enable_kill_switch = params.enable_kill_switch;
+        let active_driver = self.active_driver.clone();
+        let active_session = self.active_session.clone();
+        let params_clone = params.clone();
+        let iface_name = iface.clone();
 
         tokio::spawn(async move {
             while let Some(event) = driver_rx.recv().await {
@@ -164,10 +167,48 @@ impl DaemonOrchestrator {
                         let current = state_mgr.current_state();
                         if current != new_st {
                             if new_st == SessionState::Connected {
-                                // Tunnel is confirmed active
-                                if enable_kill_switch {
-                                    let mut net = network_mgr.lock().await;
-                                    let _ = net.set_kill_switch(true);
+                                // Tunnel is confirmed active -> Setup network routes, DNS, IPv6 blackhole & firewalls
+                                let assigned = {
+                                    let guard = active_driver.lock().await;
+                                    guard.as_ref().and_then(|d| d.assigned_ip())
+                                };
+
+                                {
+                                    let mut s_guard = active_session.lock().await;
+                                    if let Some(ref mut sess) = *s_guard {
+                                        if assigned.is_some() {
+                                            sess.assigned_ip = assigned.clone();
+                                        }
+                                    }
+                                }
+
+                                let sec_policy =
+                                    params_clone.security_policy.clone().unwrap_or_else(|| {
+                                        let mut p = crate::ipc::protocol::SecurityPolicy::default();
+                                        if !params_clone.enable_kill_switch {
+                                            p.kill_switch_mode =
+                                                crate::ipc::protocol::KillSwitchMode::Off;
+                                        }
+                                        p
+                                    });
+
+                                let route_policy =
+                                    params_clone.routing_policy.clone().unwrap_or_default();
+                                let custom_dns =
+                                    params_clone.custom_dns.clone().unwrap_or_default();
+
+                                let mut net = network_mgr.lock().await;
+                                if let Err(e) = net.setup_vpn_network(
+                                    &params_clone.server_endpoint,
+                                    params_clone.server_port,
+                                    &iface_name,
+                                    assigned.as_deref(),
+                                    &custom_dns,
+                                    &[], // pushed routes
+                                    &sec_policy,
+                                    &route_policy,
+                                ) {
+                                    error!("Failed to setup VPN network state: {}", e);
                                 }
                             }
                             let _ = state_mgr.transition_to(new_st, None);
@@ -243,6 +284,8 @@ impl DaemonOrchestrator {
                 kill_switch_active: net_guard.is_kill_switch_active(),
                 dns_servers: session.dns_servers.clone(),
                 session_duration_secs: self.state_mgr.session_duration_secs(),
+                ipv6_protected: net_guard.is_ipv6_protected(),
+                intranet_only: net_guard.is_intranet_only(),
             }
         } else {
             DaemonStatusSnapshot {
@@ -253,6 +296,8 @@ impl DaemonOrchestrator {
                 kill_switch_active: net_guard.is_kill_switch_active(),
                 dns_servers: vec![],
                 session_duration_secs: 0,
+                ipv6_protected: false,
+                intranet_only: false,
             }
         }
     }

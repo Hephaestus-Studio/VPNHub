@@ -48,6 +48,8 @@ export interface VpnProfile {
     renegSec?: number;
   };
   rawConfig?: string;
+  useOnlyForNetworkResources?: boolean;
+  customSubnets?: string[];
 }
 
 export interface TelemetryPoint {
@@ -101,9 +103,11 @@ export interface SecuritySettings {
   dnsProtection: boolean;
   customDnsProvider: "cloudflare" | "google" | "quad9" | "custom";
   customDnsIp?: string;
+  customDnsServers?: string[];
   ipv6LeakProtection: boolean;
   webRtcProtection: boolean;
   lanBypass: boolean;
+  defaultUseOnlyForNetworkResources?: boolean;
 }
 
 export interface DiagnosticItem {

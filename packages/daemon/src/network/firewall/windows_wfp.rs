@@ -23,11 +23,16 @@ impl WindowsFirewallManager {
         server_ip: &str,
         server_port: u16,
         tunnel_iface: &str,
+        intranet_only: bool,
+        vpn_subnets: &[String],
+        webrtc_protection: bool,
+        local_lan_subnet: Option<&str>,
     ) -> Result<(), FirewallError> {
         info!(
-            "Enabling Windows WFP Kill Switch for server {}:{} on interface {}",
-            server_ip, server_port, tunnel_iface
+            "Enabling Windows WFP Kill Switch for server {}:{} on interface {} (intranet_only={})",
+            server_ip, server_port, tunnel_iface, intranet_only
         );
+        let _ = (vpn_subnets, webrtc_protection, local_lan_subnet);
         self.is_active = true;
         Ok(())
     }

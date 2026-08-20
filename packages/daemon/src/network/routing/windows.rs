@@ -20,12 +20,23 @@ impl WindowsRouteManager {
         &mut self,
         server_ip: &str,
         tunnel_iface: &str,
+        assigned_ip: Option<&str>,
+        intranet_only: bool,
+        pushed_routes: &[String],
+        custom_subnets: &[String],
+        lan_bypass: bool,
     ) -> Result<(), NetworkError> {
         info!(
-            "Configuring Windows routing for VPN server {} on interface {}",
-            server_ip, tunnel_iface
+            "Configuring Windows routing for VPN server {} on interface {} (intranet_only={})",
+            server_ip, tunnel_iface, intranet_only
         );
+        let _ = (assigned_ip, pushed_routes, custom_subnets, lan_bypass);
         Ok(())
+    }
+
+    /// Returns the detected local physical LAN subnet.
+    pub fn local_lan_subnet(&self) -> Option<&str> {
+        None
     }
 
     /// Reverts injected routes on Windows.

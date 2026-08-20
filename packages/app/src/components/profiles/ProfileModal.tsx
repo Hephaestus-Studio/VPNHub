@@ -15,6 +15,7 @@ import {
   RingProgress,
   Center,
   Divider,
+  Switch,
 } from "@mantine/core";
 import {
   IconKey,
@@ -25,6 +26,7 @@ import {
   IconLock,
   IconCertificate,
   IconAdjustments,
+  IconNetwork,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import { VpnProfile, ProtocolType } from "../../types/vpn";
@@ -59,6 +61,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [virtualIp, setVirtualIp] = useState("10.8.0.2/24");
   const [privateKey, setPrivateKey] = useState("");
   const [presharedKey, setPresharedKey] = useState("");
+
+  // Intranet-Only Routing & Subnets
+  const [useOnlyForNetworkResources, setUseOnlyForNetworkResources] = useState(false);
+  const [customSubnetsInput, setCustomSubnetsInput] = useState("");
 
   // Password & Dynamic 2FA TOTP state
   const [username, setUsername] = useState("");
@@ -111,6 +117,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setVirtualIp(initialProfile.virtualIp || "10.8.0.2/24");
       setPrivateKey(initialProfile.credentials?.privateKey || "");
       setPresharedKey(initialProfile.credentials?.presharedKey || "");
+      setUseOnlyForNetworkResources(initialProfile.useOnlyForNetworkResources ?? false);
+      setCustomSubnetsInput((initialProfile.customSubnets || []).join(", "));
       setUsername(initialProfile.credentials?.username || "");
       setPassword(initialProfile.credentials?.password || "");
       const initTotp = initialProfile.credentials?.totpSecret || "";
@@ -144,6 +152,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setVirtualIp(initialProto === "wireguard" ? "10.8.0.2/24" : "10.8.0.50/24");
       setPrivateKey("");
       setPresharedKey("");
+      setUseOnlyForNetworkResources(false);
+      setCustomSubnetsInput("");
       setUsername("");
       setPassword("");
       setPasswordMode("static");
@@ -163,6 +173,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const handleSubmit = () => {
     const profileId = isEdit && initialProfile ? initialProfile.id : crypto.randomUUID();
 
+    const subnetsList = customSubnetsInput
+      .split(/[\s,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
     const profileData: VpnProfile = {
       id: profileId,
       name: name || `${protocol === "wireguard" ? "WireGuard" : "OpenVPN"} Profile`,
@@ -176,6 +191,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       isFavorite: initialProfile ? initialProfile.isFavorite : false,
       tags: initialProfile?.tags || ["Custom", protocol === "wireguard" ? "WireGuard" : "OpenVPN"],
       pingMs: initialProfile?.pingMs || Math.floor(20 + Math.random() * 40),
+      useOnlyForNetworkResources,
+      customSubnets: subnetsList,
       credentials: {
         username: username || undefined,
         password: password || undefined,
@@ -372,6 +389,62 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 required
               />
             )}
+
+            {/* Section: Routing & Split Gateway (Intranet-Only) */}
+            <Box
+              style={{
+                background: "rgba(17, 24, 39, 0.6)",
+                border: useOnlyForNetworkResources
+                  ? "1px solid rgba(6, 182, 212, 0.3)"
+                  : "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: 10,
+                padding: "12px 14px",
+                marginTop: "4px",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <Group
+                justify="space-between"
+                align="center"
+                mb={useOnlyForNetworkResources ? "xs" : 0}
+              >
+                <Group gap="xs">
+                  <IconNetwork size={18} color="var(--vpn-cyan)" />
+                  <Box>
+                    <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                      Use this connection only for resources on its network
+                    </Text>
+                    <Text size="10px" c="dimmed">
+                      Intranet-Only: Routes only corporate subnets; native web browsing stays direct
+                    </Text>
+                  </Box>
+                </Group>
+                <Switch
+                  checked={useOnlyForNetworkResources}
+                  onChange={(e) => setUseOnlyForNetworkResources(e.currentTarget.checked)}
+                  color="cyan"
+                  size="sm"
+                />
+              </Group>
+
+              {useOnlyForNetworkResources && (
+                <Stack gap="xs" mt="xs">
+                  <TextInput
+                    size="xs"
+                    label="Custom Internal Subnets (CIDR)"
+                    placeholder="e.g. 10.0.0.0/8, 192.168.10.0/24, 172.16.0.0/12"
+                    value={customSubnetsInput}
+                    onChange={(e) => setCustomSubnetsInput(e.currentTarget.value)}
+                    className="font-mono"
+                    description="Private subnets to route into this VPN tunnel (comma-separated)"
+                  />
+                  <Text size="10px" c="dimmed" style={{ fontStyle: "italic" }}>
+                    💡 Routes pushed by the VPN server & the assigned tunnel IP are automatically
+                    included.
+                  </Text>
+                </Stack>
+              )}
+            </Box>
           </Stack>
         </Box>
 
