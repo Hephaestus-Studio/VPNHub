@@ -2,6 +2,7 @@ import { Box, Group, Text, Badge } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { IconShieldCheck, IconShieldX, IconNetwork, IconLock, IconCpu } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./BottomStatusBar.module.css";
 
 export const BottomStatusBar: React.FC = () => {
   const { securitySettings, connectionState, daemonLatencyMs, activeProfileId, profiles } =
@@ -41,21 +42,7 @@ export const BottomStatusBar: React.FC = () => {
   const KsIcon = ksInfo.icon;
 
   return (
-    <Box
-      style={{
-        height: "28px",
-        background: "#090d16",
-        borderTop: "1px solid var(--vpn-border)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 10px",
-        fontSize: "11px",
-        color: "var(--vpn-text-secondary)",
-        flexShrink: 0,
-        overflow: "hidden",
-      }}
-    >
+    <Box className={styles.root}>
       <Group gap="sm" wrap="nowrap">
         {/* Kill Switch */}
         <Group gap={4} wrap="nowrap">
@@ -68,14 +55,14 @@ export const BottomStatusBar: React.FC = () => {
           <Text
             size="11px"
             fw={600}
-            style={{ color: ksInfo.color === "teal" ? "#34d399" : "#f87171" }}
+            className={ksInfo.color === "teal" ? styles.ksTeal : styles.ksRed}
             truncate
           >
             {ksInfo.label}
           </Text>
         </Group>
 
-        <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
+        <Box className={styles.divider} />
 
         {/* IPv6 */}
         <Group gap={4} wrap="nowrap">
@@ -85,13 +72,13 @@ export const BottomStatusBar: React.FC = () => {
           <Text
             size="11px"
             fw={500}
-            style={{ color: securitySettings.ipv6LeakProtection ? "#38bdf8" : "#f59e0b" }}
+            className={securitySettings.ipv6LeakProtection ? styles.ipv6Blocked : styles.ipv6Pass}
           >
             {securitySettings.ipv6LeakProtection ? "BLOCKED" : "PASS"}
           </Text>
         </Group>
 
-        <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
+        <Box className={styles.divider} />
 
         {/* DNS */}
         <Group gap={4} wrap="nowrap">
@@ -99,17 +86,17 @@ export const BottomStatusBar: React.FC = () => {
           <Text size="11px" c="dimmed">
             DNS:
           </Text>
-          <Text size="11px" fw={500} style={{ color: "#67e8f9" }}>
+          <Text size="11px" fw={500} className={styles.dnsSecured}>
             SECURED
           </Text>
         </Group>
 
         {connectionState === "connected" && (
           <>
-            <Box style={{ width: 1, height: 12, background: "var(--vpn-border)" }} />
+            <Box className={styles.divider} />
             <Group gap={4} wrap="nowrap">
               <IconNetwork size={12} color="var(--vpn-emerald)" />
-              <Text size="11px" fw={600} className="font-mono" style={{ color: "#fff" }}>
+              <Text size="11px" fw={600} className={`font-mono ${styles.interfaceText}`}>
                 {interfaceName}
               </Text>
             </Group>
@@ -126,17 +113,7 @@ export const BottomStatusBar: React.FC = () => {
         </Group>
 
         {!isMobile && (
-          <Badge
-            size="xs"
-            variant="outline"
-            color="gray"
-            style={{
-              fontSize: 9,
-              height: 16,
-              padding: "0 4px",
-              border: "1px solid var(--vpn-border)",
-            }}
-          >
+          <Badge size="xs" variant="outline" color="gray" className={styles.versionBadge}>
             v0.1.0
           </Badge>
         )}

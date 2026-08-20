@@ -1,0 +1,175 @@
+.modalContent {
+  background: rgba(17, 24, 39, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--vpn-border);
+  border-radius: 14px;
+}
+
+.modalHeader {
+  background: transparent;
+  border-bottom: 1px solid var(--vpn-border);
+  padding-bottom: 12px;
+}
+
+.modalBody {
+  padding: 20px;
+}
+
+.modalTitle {
+  color: #ffffff;
+}
+
+.sectionHeader {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dropzone {
+  border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropzoneIdle {
+  composes: dropzone;
+  background: rgba(31, 41, 55, 0.45);
+  border: 2px dashed rgba(6, 182, 212, 0.35);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.dropzoneDragging {
+  composes: dropzone;
+  background: rgba(6, 182, 212, 0.16);
+  border: 2px dashed var(--vpn-cyan);
+  box-shadow:
+    0 0 30px rgba(6, 182, 212, 0.4),
+    inset 0 0 20px rgba(6, 182, 212, 0.15);
+  transform: scale(1.015);
+  cursor: pointer;
+}
+
+.dropzoneLoading {
+  composes: dropzone;
+  background: rgba(6, 182, 212, 0.08);
+  border: 2px solid rgba(6, 182, 212, 0.6);
+  box-shadow: none;
+  cursor: wait;
+}
+
+.loadingIconBox {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingTitle {
+  color: var(--vpn-cyan);
+}
+
+.loadingFileName {
+  color: #ffffff;
+  font-family: monospace;
+}
+
+.dropzoneIconBox {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.dropzoneIconBoxDragging {
+  composes: dropzoneIconBox;
+  background: rgba(6, 182, 212, 0.3);
+  transform: scale(1.15);
+}
+
+.dropzoneText {
+  color: #ffffff;
+}
+
+.cyanHighlight {
+  color: var(--vpn-cyan);
+}
+
+.browseLink {
+  text-decoration: underline;
+}
+
+.dividerText {
+  letter-spacing: 0.05em;
+}
+
+/* Manual Cards */
+.wireguardCard {
+  padding: 16px;
+  background: rgba(6, 182, 212, 0.04);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wireguardCard:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: var(--vpn-cyan);
+  transform: translateY(-2px);
+}
+
+.wireguardIconBox {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(6, 182, 212, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.openvpnCard {
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.openvpnCard:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--vpn-emerald);
+  transform: translateY(-2px);
+}
+
+.openvpnIconBox {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  color: #ffffff;
+}
+
+.chevronIcon {
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 4px;
+}

@@ -1,24 +1,16 @@
 import { Box, Group, Text, Badge, Button, Table, SimpleGrid } from "@mantine/core";
 import { IconCheck, IconAlertTriangle, IconRefresh } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./DiagnosticsView.module.css";
 
 export const DiagnosticsView: React.FC = () => {
   const { diagnostics, daemonVersion, daemonLatencyMs } = useVpnStore();
 
   return (
-    <Box
-      style={{
-        padding: "16px",
-        height: "100%",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-      }}
-    >
+    <Box className={styles.root}>
       <Group justify="space-between" align="center">
         <Box>
-          <Text size="xl" fw={700} style={{ color: "#fff", letterSpacing: "-0.02em" }}>
+          <Text size="xl" fw={700} className={styles.title}>
             System Diagnostics & Daemon Health
           </Text>
           <Text size="xs" c="dimmed">
@@ -34,19 +26,16 @@ export const DiagnosticsView: React.FC = () => {
 
       {/* Summary Cards */}
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-        <Box
-          className="glass-panel"
-          style={{ padding: "16px", background: "rgba(17, 24, 39, 0.75)" }}
-        >
+        <Box className={`glass-panel ${styles.summaryCard}`}>
           <Group justify="space-between">
-            <Text size="xs" c="dimmed" fw={600} style={{ textTransform: "uppercase" }}>
+            <Text size="xs" c="dimmed" fw={600} className={styles.summaryHeader}>
               Daemon Health
             </Text>
             <Badge size="xs" color="teal" variant="dot">
               Online
             </Badge>
           </Group>
-          <Text size="lg" fw={700} style={{ color: "#34d399", marginTop: 4 }}>
+          <Text size="lg" fw={700} className={styles.daemonValue}>
             Active ({daemonVersion})
           </Text>
           <Text size="11px" c="dimmed" mt={2}>
@@ -54,19 +43,16 @@ export const DiagnosticsView: React.FC = () => {
           </Text>
         </Box>
 
-        <Box
-          className="glass-panel"
-          style={{ padding: "16px", background: "rgba(17, 24, 39, 0.75)" }}
-        >
+        <Box className={`glass-panel ${styles.summaryCard}`}>
           <Group justify="space-between">
-            <Text size="xs" c="dimmed" fw={600} style={{ textTransform: "uppercase" }}>
+            <Text size="xs" c="dimmed" fw={600} className={styles.summaryHeader}>
               Kernel Driver
             </Text>
             <Badge size="xs" color="teal" variant="light">
               WireGuard / TUN
             </Badge>
           </Group>
-          <Text size="lg" fw={700} style={{ color: "#38bdf8", marginTop: 4 }}>
+          <Text size="lg" fw={700} className={styles.kernelValue}>
             In-Tree Kernel Module
           </Text>
           <Text size="11px" c="dimmed" mt={2}>
@@ -74,19 +60,16 @@ export const DiagnosticsView: React.FC = () => {
           </Text>
         </Box>
 
-        <Box
-          className="glass-panel"
-          style={{ padding: "16px", background: "rgba(17, 24, 39, 0.75)" }}
-        >
+        <Box className={`glass-panel ${styles.summaryCard}`}>
           <Group justify="space-between">
-            <Text size="xs" c="dimmed" fw={600} style={{ textTransform: "uppercase" }}>
+            <Text size="xs" c="dimmed" fw={600} className={styles.summaryHeader}>
               Firewall Subsystem
             </Text>
             <Badge size="xs" color="teal" variant="light">
               nftables
             </Badge>
           </Group>
-          <Text size="lg" fw={700} style={{ color: "#fff", marginTop: 4 }}>
+          <Text size="lg" fw={700} className={styles.firewallValue}>
             Fail-Closed Ready
           </Text>
           <Text size="11px" c="dimmed" mt={2}>
@@ -96,16 +79,9 @@ export const DiagnosticsView: React.FC = () => {
       </SimpleGrid>
 
       {/* Diagnostics Table */}
-      <Box
-        className="glass-panel"
-        style={{
-          background: "rgba(17, 24, 39, 0.75)",
-          borderRadius: 8,
-          overflowX: "auto",
-        }}
-      >
+      <Box className={`glass-panel ${styles.tablePanel}`}>
         <Table verticalSpacing="sm">
-          <Table.Thead style={{ background: "rgba(0, 0, 0, 0.3)" }}>
+          <Table.Thead className={styles.tableHeader}>
             <Table.Tr>
               <Table.Th style={{ width: 40 }}></Table.Th>
               <Table.Th>Diagnostic Component</Table.Th>
@@ -124,7 +100,7 @@ export const DiagnosticsView: React.FC = () => {
                   )}
                 </Table.Td>
                 <Table.Td>
-                  <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                  <Text size="sm" fw={600} className={styles.diagName}>
                     {d.name}
                   </Text>
                 </Table.Td>

@@ -1,0 +1,36 @@
+.modalContent {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--vpn-border);
+  border-radius: 12px;
+}
+
+.modalHeader {
+  background: transparent;
+  border-bottom: 1px solid var(--vpn-border);
+}
+
+.modalTitle {
+  color: #ffffff;
+}
+
+.qrContainer {
+  width: 180px;
+  height: 180px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.qrSvg {
+  width: 100%;
+  height: 100%;
+}
+
+.profileName {
+  color: #ffffff;
+}

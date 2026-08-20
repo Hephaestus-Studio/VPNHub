@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
+import styles from "./SplitPaneLayout.module.css";
 
 interface SplitPaneLayoutProps {
   sidebar: (props: {
@@ -152,27 +153,14 @@ export const SplitPaneLayout: React.FC<SplitPaneLayoutProps> = ({
   }, [isDragging, minWidth, maxWidth, storageWidthKey]);
 
   return (
-    <Box
-      ref={containerRef}
-      style={{
-        display: "flex",
-        flex: 1,
-        overflow: "hidden",
-        position: "relative",
-        width: "100%",
-        height: "100%",
-      }}
-    >
+    <Box ref={containerRef} className={styles.container}>
       {/* Sidebar Pane with Smooth Width Transition */}
       {!isMobile && (
         <Box
+          className={styles.sidebarWrapper}
           style={{
             width: currentWidth,
-            height: "100%",
-            flexShrink: 0,
-            position: "relative",
             transition: isDragging ? "none" : "width 0.22s cubic-bezier(0.16, 1, 0.3, 1)",
-            overflow: "hidden",
           }}
         >
           {sidebar({
@@ -194,44 +182,15 @@ export const SplitPaneLayout: React.FC<SplitPaneLayoutProps> = ({
               ? "Double click to expand sidebar"
               : "Drag to resize sidebar / Double click to collapse"
           }
-          style={{
-            width: 6,
-            height: "100%",
-            cursor: "col-resize",
-            position: "relative",
-            zIndex: 40,
-            marginLeft: -3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            userSelect: "none",
-            flexShrink: 0,
-          }}
+          className={styles.splitter}
         >
           {/* Visual Divider Line */}
-          <Box
-            style={{
-              width: isDragging ? 2 : 1,
-              height: "100%",
-              background: isDragging ? "var(--vpn-cyan)" : "var(--vpn-border)",
-              boxShadow: isDragging ? "0 0 10px rgba(6, 182, 212, 0.85)" : "none",
-              transition: "all 0.15s ease",
-            }}
-          />
+          <Box className={isDragging ? styles.splitterLineDragging : styles.splitterLine} />
         </Box>
       )}
 
       {/* Main Workspace Pane */}
-      <Box
-        component="main"
-        style={{
-          flex: 1,
-          height: "100%",
-          overflow: "hidden",
-          background: "var(--vpn-bg-base)",
-          position: "relative",
-        }}
-      >
+      <Box component="main" className={styles.mainWorkspace}>
         {children}
       </Box>
     </Box>

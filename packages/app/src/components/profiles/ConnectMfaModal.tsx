@@ -12,6 +12,7 @@ import {
 } from "@mantine/core";
 import { IconShieldLock, IconBolt, IconKey } from "@tabler/icons-react";
 import { VpnProfile } from "../../types/vpn";
+import styles from "./ConnectMfaModal.module.css";
 
 interface ConnectMfaModalProps {
   opened: boolean;
@@ -66,41 +67,26 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
       title={
         <Group gap="xs">
           <IconShieldLock size={20} color="var(--vpn-amber)" />
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             2FA / Dynamic Authentication Required
           </Text>
         </Group>
       }
       size="sm"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.96)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
       }}
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
-          <Box
-            style={{
-              background: "rgba(31, 41, 55, 0.5)",
-              border: "1px solid var(--vpn-border)",
-              borderRadius: 8,
-              padding: "10px 12px",
-            }}
-          >
+          <Box className={styles.profileBox}>
             <Group justify="space-between">
               <Group gap="xs">
                 <Text size="lg">{profile.serverFlag}</Text>
                 <Box>
-                  <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                  <Text size="sm" fw={600} className={styles.profileName}>
                     {profile.name}
                   </Text>
                   <Text size="xs" c="dimmed">
@@ -138,14 +124,8 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
             required
             className="font-mono"
             description="Enter the dynamic code from your Authenticator app (Google Authenticator, YubiKey, etc.)"
-            styles={{
-              input: {
-                fontSize: 16,
-                letterSpacing: "0.15em",
-                fontWeight: 600,
-                textAlign: "center",
-                borderColor: "var(--vpn-cyan)",
-              },
+            classNames={{
+              input: styles.totpInput,
             }}
           />
 

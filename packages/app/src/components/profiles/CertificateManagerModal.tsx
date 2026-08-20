@@ -26,6 +26,7 @@ import {
   IconCheck,
   IconFileText,
 } from "@tabler/icons-react";
+import styles from "./CertificateManagerModal.module.css";
 
 export interface TlsSecurityConfig {
   caCert?: string;
@@ -128,29 +129,17 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
       title={
         <Group gap="xs">
           <IconShieldLock size={20} color="var(--vpn-cyan)" />
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             TLS & Certificate Security Manager
           </Text>
         </Group>
       }
       size="lg"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.98)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-          minHeight: 520,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-          paddingBottom: 12,
-        },
-        body: {
-          padding: "16px 20px",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
+        body: styles.modalBody,
       }}
     >
       <Stack gap="md">
@@ -158,19 +147,9 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
           value={activeTab}
           onChange={setActiveTab}
           color="cyan"
-          styles={{
-            list: {
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-            },
-            tab: {
-              color: "rgba(255, 255, 255, 0.7)",
-              fontWeight: 500,
-              fontSize: 13,
-              "&[data-active]": {
-                color: "var(--vpn-cyan)",
-                borderColor: "var(--vpn-cyan)",
-              },
-            },
+          classNames={{
+            list: styles.tabsList,
+            tab: styles.tabItem,
           }}
         >
           <Tabs.List>
@@ -222,17 +201,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
           {/* TAB 1: ROOT CA */}
           <Tabs.Panel value="ca" pt="md">
             <Stack gap="sm">
-              <Paper
-                p="xs"
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
-                  borderRadius: 8,
-                }}
-              >
+              <Paper p="xs" className={styles.paperBox}>
                 <Group justify="space-between" align="center">
                   <Box>
-                    <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                    <Text size="xs" fw={600} className={styles.paperTitle}>
                       Certificate Authority (&lt;ca&gt;)
                     </Text>
                     <Text size="11px" c="dimmed">
@@ -277,10 +249,8 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                 maxRows={10}
                 autosize
                 className="font-mono"
-                styles={{
-                  input: {
-                    fontSize: 11,
-                  },
+                classNames={{
+                  input: styles.codeTextareaInput,
                 }}
               />
             </Stack>
@@ -306,17 +276,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
 
               {tlsMode === "tls-auth" && (
                 <Stack gap="xs" mt="xs">
-                  <Paper
-                    p="xs"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                      borderRadius: 8,
-                    }}
-                  >
+                  <Paper p="xs" className={styles.paperBox}>
                     <Group justify="space-between" align="center">
                       <Box>
-                        <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                        <Text size="xs" fw={600} className={styles.paperTitle}>
                           TLS-Auth Static Key
                         </Text>
                         <Text size="11px" c="dimmed">
@@ -362,10 +325,8 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                       maxRows={8}
                       autosize
                       className="font-mono"
-                      styles={{
-                        input: {
-                          fontSize: 11,
-                        },
+                      classNames={{
+                        input: styles.codeTextareaInput,
                       }}
                     />
 
@@ -379,7 +340,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                         { value: "0", label: "0 (Client / Incoming)" },
                         { value: "1", label: "1 (Server / Outgoing)" },
                       ]}
-                      style={{ maxWidth: 200 }}
+                      className={styles.selectKeyDirection}
                     />
                   </Group>
                 </Stack>
@@ -387,17 +348,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
 
               {tlsMode === "tls-crypt" && (
                 <Stack gap="xs" mt="xs">
-                  <Paper
-                    p="xs"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                      borderRadius: 8,
-                    }}
-                  >
+                  <Paper p="xs" className={styles.paperBox}>
                     <Group justify="space-between" align="center">
                       <Box>
-                        <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                        <Text size="xs" fw={600} className={styles.paperTitle}>
                           TLS-Crypt Symmetric Key
                         </Text>
                         <Text size="11px" c="dimmed">
@@ -444,10 +398,8 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                     maxRows={8}
                     autosize
                     className="font-mono"
-                    styles={{
-                      input: {
-                        fontSize: 11,
-                      },
+                    classNames={{
+                      input: styles.codeTextareaInput,
                     }}
                   />
                 </Stack>
@@ -464,18 +416,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
 
               {/* Client Cert */}
               <Box>
-                <Paper
-                  p="xs"
-                  mb="xs"
-                  style={{
-                    background: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
-                    borderRadius: 8,
-                  }}
-                >
+                <Paper p="xs" mb="xs" className={styles.paperBox}>
                   <Group justify="space-between" align="center">
                     <Box>
-                      <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                      <Text size="xs" fw={600} className={styles.paperTitle}>
                         Client Certificate (&lt;cert&gt;)
                       </Text>
                       <Text size="11px" c="dimmed">
@@ -521,28 +465,18 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                   maxRows={5}
                   autosize
                   className="font-mono"
-                  styles={{
-                    input: {
-                      fontSize: 11,
-                    },
+                  classNames={{
+                    input: styles.codeTextareaInput,
                   }}
                 />
               </Box>
 
               {/* Client Key */}
               <Box>
-                <Paper
-                  p="xs"
-                  mb="xs"
-                  style={{
-                    background: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
-                    borderRadius: 8,
-                  }}
-                >
+                <Paper p="xs" mb="xs" className={styles.paperBox}>
                   <Group justify="space-between" align="center">
                     <Box>
-                      <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                      <Text size="xs" fw={600} className={styles.paperTitle}>
                         Client Private Key (&lt;key&gt;)
                       </Text>
                       <Text size="11px" c="dimmed">
@@ -586,10 +520,8 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                   maxRows={5}
                   autosize
                   className="font-mono"
-                  styles={{
-                    input: {
-                      fontSize: 11,
-                    },
+                  classNames={{
+                    input: styles.codeTextareaInput,
                   }}
                 />
               </Box>
@@ -599,17 +531,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
           {/* TAB 4: ADVANCED SETTINGS */}
           <Tabs.Panel value="advanced" pt="md">
             <Stack gap="md">
-              <Paper
-                p="sm"
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
-                  borderRadius: 8,
-                }}
-              >
+              <Paper p="sm" className={styles.paperBox}>
                 <Group justify="space-between" align="center">
                   <Box>
-                    <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                    <Text size="xs" fw={600} className={styles.paperTitle}>
                       Verify Server Certificate
                     </Text>
                     <Text size="11px" c="dimmed">
@@ -634,7 +559,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                   setRenegSec(val !== "" && val !== undefined ? Number(val) : undefined)
                 }
                 min={0}
-                style={{ maxWidth: 280 }}
+                className={styles.renegInput}
               />
             </Stack>
           </Tabs.Panel>

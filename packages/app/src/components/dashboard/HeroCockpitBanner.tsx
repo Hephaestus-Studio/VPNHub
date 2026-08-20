@@ -13,6 +13,7 @@ import {
   IconArrowsSplit,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./HeroCockpitBanner.module.css";
 
 export const HeroCockpitBanner: React.FC = () => {
   const {
@@ -108,56 +109,32 @@ export const HeroCockpitBanner: React.FC = () => {
   // RENDER: MOBILE LAYOUT (< 640px)
   // -------------------------------------------------------------
   if (isMobile) {
+    let mobileBannerClass = styles.mobileBanner;
+    if (isConnected) mobileBannerClass = styles.mobileBannerConnected;
+    else if (isConnecting) mobileBannerClass = styles.mobileBannerConnecting;
+
+    let powerBtnClass = styles.powerButtonMobile;
+    if (isConnected) powerBtnClass = styles.powerButtonMobileConnected;
+    else if (isConnecting) powerBtnClass = styles.powerButtonMobileConnecting;
+
     return (
       <Box style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {/* 1. Main Hero Connection & Wave Card */}
-        <Box
-          className="glass-panel"
-          style={{
-            padding: "14px 16px",
-            background: isConnected
-              ? "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(17, 24, 39, 0.94) 50%, rgba(6, 182, 212, 0.06) 100%)"
-              : "linear-gradient(135deg, rgba(17, 24, 39, 0.94) 0%, rgba(15, 23, 42, 0.96) 100%)",
-            border: isConnected
-              ? "1px solid rgba(16, 185, 129, 0.35)"
-              : isConnecting
-                ? "1px solid rgba(245, 158, 11, 0.35)"
-                : "1px solid var(--vpn-border)",
-            borderRadius: "14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-          }}
-        >
+        <Box className={`glass-panel ${mobileBannerClass}`}>
           {/* Top: Power Button & Profile Header */}
           <Group justify="space-between" align="center" wrap="nowrap">
-            <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
-              <UnstyledButton
-                onClick={handleToggle}
-                disabled={isConnecting || isDisconnecting}
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  background: isConnected
-                    ? "linear-gradient(135deg, #10b981, #059669)"
-                    : isConnecting
-                      ? "linear-gradient(135deg, #f59e0b, #d97706)"
-                      : "linear-gradient(135deg, rgba(31, 41, 55, 0.8), rgba(17, 24, 39, 0.95))",
-                  border: isConnected
-                    ? "2px solid #34d399"
-                    : isConnecting
-                      ? "2px solid #fbbf24"
-                      : "2px solid rgba(255, 255, 255, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  boxShadow: isConnected ? "0 0 18px rgba(16, 185, 129, 0.45)" : "none",
-                }}
-              >
-                <IconPower size={25} color="#ffffff" stroke={2.4} />
-              </UnstyledButton>
+            <Group gap="sm" wrap="nowrap" style={{ minWidth: 0, flex: 1, overflow: "visible" }}>
+              <Box className={styles.powerWrapperMobile}>
+                {isConnected && <Box className={styles.powerHaloMobileConnected} />}
+                {isConnecting && <Box className={styles.powerHaloMobileConnecting} />}
+                <UnstyledButton
+                  onClick={handleToggle}
+                  disabled={isConnecting || isDisconnecting}
+                  className={powerBtnClass}
+                >
+                  <IconPower size={25} color="#ffffff" stroke={2.4} />
+                </UnstyledButton>
+              </Box>
 
               <Box style={{ overflow: "hidden", minWidth: 0 }}>
                 <Group gap={5} align="center" wrap="nowrap">
@@ -197,8 +174,8 @@ export const HeroCockpitBanner: React.FC = () => {
                 <Text
                   size="10px"
                   fw={600}
-                  className="font-mono"
-                  style={{ color: "#34d399", marginTop: 2 }}
+                  className={`font-mono ${styles.uptimeText}`}
+                  style={{ marginTop: 2 }}
                 >
                   {formatUptime(uptimeSeconds)}
                 </Text>
@@ -373,54 +350,30 @@ export const HeroCockpitBanner: React.FC = () => {
   // RENDER: TABLET & COMPACT DESKTOP (641px - 1180px) -> 2 COLUMNS
   // -------------------------------------------------------------
   if (isTablet) {
+    let tabletBannerClass = styles.tabletBanner;
+    if (isConnected) tabletBannerClass = styles.tabletBannerConnected;
+    else if (isConnecting) tabletBannerClass = styles.tabletBannerConnecting;
+
+    let powerBtnClass = styles.powerButton;
+    if (isConnected) powerBtnClass = styles.powerButtonConnected;
+    else if (isConnecting) powerBtnClass = styles.powerButtonConnecting;
+
     return (
-      <Box
-        className="glass-panel"
-        style={{
-          padding: "16px 18px",
-          background: isConnected
-            ? "linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(17, 24, 39, 0.92) 50%, rgba(6, 182, 212, 0.05) 100%)"
-            : "linear-gradient(135deg, rgba(17, 24, 39, 0.92) 0%, rgba(15, 23, 42, 0.95) 100%)",
-          border: isConnected
-            ? "1px solid rgba(16, 185, 129, 0.35)"
-            : isConnecting
-              ? "1px solid rgba(245, 158, 11, 0.35)"
-              : "1px solid var(--vpn-border)",
-          borderRadius: "14px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-        }}
-      >
+      <Box className={`glass-panel ${tabletBannerClass}`}>
         <SimpleGrid cols={2} spacing="md" style={{ alignItems: "center" }}>
           {/* Left Column: Power Button + Details + IP chips */}
           <Group gap="md" wrap="nowrap">
-            <UnstyledButton
-              onClick={handleToggle}
-              disabled={isConnecting || isDisconnecting}
-              style={{
-                width: 60,
-                height: 60,
-                borderRadius: "50%",
-                background: isConnected
-                  ? "linear-gradient(135deg, #10b981, #059669)"
-                  : isConnecting
-                    ? "linear-gradient(135deg, #f59e0b, #d97706)"
-                    : "linear-gradient(135deg, rgba(31, 41, 55, 0.8), rgba(17, 24, 39, 0.95))",
-                border: isConnected
-                  ? "2px solid #34d399"
-                  : isConnecting
-                    ? "2px solid #fbbf24"
-                    : "2px solid rgba(255, 255, 255, 0.12)",
-                boxShadow: isConnected ? "0 0 20px rgba(16, 185, 129, 0.45)" : "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <IconPower size={26} color="#ffffff" stroke={2.4} />
-            </UnstyledButton>
+            <Box className={styles.powerWrapper}>
+              {isConnected && <Box className={styles.powerHaloConnected} />}
+              {isConnecting && <Box className={styles.powerHaloConnecting} />}
+              <UnstyledButton
+                onClick={handleToggle}
+                disabled={isConnecting || isDisconnecting}
+                className={powerBtnClass}
+              >
+                <IconPower size={26} color="#ffffff" stroke={2.4} />
+              </UnstyledButton>
+            </Box>
 
             <Stack gap={3} style={{ overflow: "hidden", minWidth: 0, flex: 1 }}>
               <Group gap={6} align="center" wrap="wrap">
@@ -441,7 +394,7 @@ export const HeroCockpitBanner: React.FC = () => {
                   {activeProfile?.protocol === "wireguard" ? "WireGuard" : "OpenVPN"}
                 </Badge>
                 {isConnected && (
-                  <Text size="11px" fw={700} className="font-mono" style={{ color: "#34d399" }}>
+                  <Text size="11px" fw={700} className={`font-mono ${styles.uptimeText}`}>
                     {formatUptime(uptimeSeconds)}
                   </Text>
                 )}
@@ -571,7 +524,7 @@ export const HeroCockpitBanner: React.FC = () => {
                 </span>
               </Text>
               <Text size="9.5px" c="dimmed">
-                DNS: <span style={{ color: "#fbbf24", fontWeight: 600 }}>1.1.1.1</span>
+                DNS: <span className={styles.dnsHighlight}>1.1.1.1</span>
               </Text>
             </Group>
           </Box>
@@ -583,27 +536,16 @@ export const HeroCockpitBanner: React.FC = () => {
   // -------------------------------------------------------------
   // RENDER: WIDE DESKTOP COCKPIT LAYOUT (> 1180px) -> 3 COLUMNS
   // -------------------------------------------------------------
+  let desktopBannerClass = styles.desktopBanner;
+  if (isConnected) desktopBannerClass = styles.desktopBannerConnected;
+  else if (isConnecting) desktopBannerClass = styles.desktopBannerConnecting;
+
+  let powerBtnClass = styles.powerButton;
+  if (isConnected) powerBtnClass = styles.powerButtonConnected;
+  else if (isConnecting) powerBtnClass = styles.powerButtonConnecting;
+
   return (
-    <Box
-      className="glass-panel"
-      style={{
-        padding: "16px 20px",
-        background: isConnected
-          ? "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(17, 24, 39, 0.94) 45%, rgba(6, 182, 212, 0.07) 100%)"
-          : "linear-gradient(135deg, rgba(17, 24, 39, 0.94) 0%, rgba(15, 23, 42, 0.96) 100%)",
-        border: isConnected
-          ? "1.5px solid rgba(16, 185, 129, 0.45)"
-          : isConnecting
-            ? "1.5px solid rgba(245, 158, 11, 0.45)"
-            : "1px solid var(--vpn-border)",
-        boxShadow: isConnected
-          ? "0 10px 30px -10px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08)"
-          : "0 10px 25px -10px rgba(0, 0, 0, 0.5)",
-        borderRadius: "14px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
+    <Box className={`glass-panel ${desktopBannerClass}`}>
       <Box
         style={{
           display: "flex",
@@ -613,43 +555,21 @@ export const HeroCockpitBanner: React.FC = () => {
           width: "100%",
         }}
       >
-        {/* ========================================================= */}
-        {/* ZONE 1 (Left): Connection Power Button & Profile Details  */}
-        {/* ========================================================= */}
+        {/* ZONE 1 (Left): Connection Power Button & Profile Details */}
         <Group
           gap={12}
           wrap="nowrap"
-          style={{ flex: "1 1 30%", minWidth: 260, overflow: "hidden" }}
+          style={{ flex: "1 1 30%", minWidth: 260, overflow: "visible" }}
         >
-          <Box style={{ position: "relative", flexShrink: 0 }}>
+          <Box className={styles.powerWrapper}>
+            {isConnected && <Box className={styles.powerHaloConnected} />}
+            {isConnecting && <Box className={styles.powerHaloConnecting} />}
             <UnstyledButton
               onClick={handleToggle}
               disabled={isConnecting || isDisconnecting}
+              className={powerBtnClass}
               style={{
-                width: 60,
-                height: 60,
-                borderRadius: "50%",
-                background: isConnected
-                  ? "linear-gradient(135deg, #10b981, #059669)"
-                  : isConnecting
-                    ? "linear-gradient(135deg, #f59e0b, #d97706)"
-                    : "linear-gradient(135deg, rgba(31, 41, 55, 0.8), rgba(17, 24, 39, 0.95))",
-                border: isConnected
-                  ? "2.5px solid #34d399"
-                  : isConnecting
-                    ? "2.5px solid #fbbf24"
-                    : "2px solid rgba(255, 255, 255, 0.15)",
-                boxShadow: isConnected
-                  ? "0 0 25px rgba(16, 185, 129, 0.55), inset 0 2px 4px rgba(255, 255, 255, 0.3)"
-                  : isConnecting
-                    ? "0 0 25px rgba(245, 158, 11, 0.55)"
-                    : "0 4px 15px rgba(0, 0, 0, 0.4)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 cursor: isConnecting || isDisconnecting ? "wait" : "pointer",
-                transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
-                transform: "scale(1)",
               }}
             >
               <IconPower
@@ -661,7 +581,7 @@ export const HeroCockpitBanner: React.FC = () => {
           </Box>
 
           <Stack gap={2} style={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
-            {/* Top Badges Bar: Wrap enabled to prevent truncation */}
+            {/* Top Badges Bar */}
             <Group gap={5} align="center" wrap="wrap">
               <Badge
                 size="xs"
@@ -697,7 +617,7 @@ export const HeroCockpitBanner: React.FC = () => {
               </Badge>
 
               {isConnected && (
-                <Text size="10px" fw={700} className="font-mono" style={{ color: "#34d399" }}>
+                <Text size="10px" fw={700} className={`font-mono ${styles.uptimeText}`}>
                   {formatUptime(uptimeSeconds)}
                 </Text>
               )}
@@ -725,9 +645,7 @@ export const HeroCockpitBanner: React.FC = () => {
           style={{ width: 1, height: 68, background: "rgba(255, 255, 255, 0.08)", flexShrink: 0 }}
         />
 
-        {/* ========================================================= */}
-        {/* ZONE 2 (Middle): Security & Network Telemetry Grid        */}
-        {/* ========================================================= */}
+        {/* ZONE 2 (Middle): Security & Network Telemetry Grid */}
         <Box
           style={{
             flex: "1 1 38%",
@@ -857,9 +775,7 @@ export const HeroCockpitBanner: React.FC = () => {
           style={{ width: 1, height: 68, background: "rgba(255, 255, 255, 0.08)", flexShrink: 0 }}
         />
 
-        {/* ========================================================= */}
-        {/* ZONE 3 (Right): Live Throughput & Wide Sparkline Wave     */}
-        {/* ========================================================= */}
+        {/* ZONE 3 (Right): Live Throughput & Wide Sparkline Wave */}
         <Box
           style={{
             flex: "1 1 32%",

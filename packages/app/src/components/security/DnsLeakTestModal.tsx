@@ -8,6 +8,7 @@ import {
   IconLock,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./DnsLeakTestModal.module.css";
 
 interface DnsLeakTestModalProps {
   opened: boolean;
@@ -89,24 +90,16 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
       title={
         <Group gap="xs">
           <IconLock size={18} color="var(--vpn-cyan)" />
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             DNS Leak & Privacy Diagnostic
           </Text>
         </Group>
       }
       size="md"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.95)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
       }}
     >
       <Stack gap="md">
@@ -121,7 +114,7 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
               <Text size="xs" c="dimmed">
                 Resolving test probes across global root resolvers...
               </Text>
-              <Text size="xs" fw={700} className="font-mono" style={{ color: "var(--vpn-cyan)" }}>
+              <Text size="xs" fw={700} className={`font-mono ${styles.progressText}`}>
                 {progress}%
               </Text>
             </Group>
@@ -131,14 +124,7 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
 
         {results && (
           <Stack gap="sm">
-            <Box
-              style={{
-                padding: "12px 16px",
-                borderRadius: 8,
-                background: isProtected ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.12)",
-                border: `1px solid ${isProtected ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)"}`,
-              }}
-            >
+            <Box className={isProtected ? styles.resultBoxProtected : styles.resultBoxLeaking}>
               <Group gap="sm">
                 {isProtected ? (
                   <IconShieldCheck size={28} color="var(--vpn-emerald)" />
@@ -146,7 +132,7 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
                   <IconAlertTriangle size={28} color="var(--vpn-crimson)" />
                 )}
                 <Box>
-                  <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                  <Text size="sm" fw={700} className={styles.resultTitle}>
                     {isProtected ? "NO DNS LEAKS DETECTED" : "WARNING: DNS QUERIES ARE LEAKING"}
                   </Text>
                   <Text size="xs" c="dimmed">
@@ -169,11 +155,9 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
               <Table.Tbody>
                 {results.map((r, i) => (
                   <Table.Tr key={i}>
-                    <Table.Td className="font-mono" style={{ fontSize: 12 }}>
-                      {r.ip}
-                    </Table.Td>
-                    <Table.Td style={{ fontSize: 12 }}>{r.isp}</Table.Td>
-                    <Table.Td style={{ fontSize: 12 }}>
+                    <Table.Td className={`font-mono ${styles.tableCell}`}>{r.ip}</Table.Td>
+                    <Table.Td className={styles.tableCell}>{r.isp}</Table.Td>
+                    <Table.Td className={styles.tableCell}>
                       {r.flag} {r.country}
                     </Table.Td>
                   </Table.Tr>

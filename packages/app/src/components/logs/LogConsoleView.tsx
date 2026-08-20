@@ -30,6 +30,7 @@ import {
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import { LogLevel } from "../../types/vpn";
+import styles from "./LogConsoleView.module.css";
 
 export const LogConsoleView: React.FC = () => {
   const {
@@ -153,22 +154,13 @@ export const LogConsoleView: React.FC = () => {
   };
 
   return (
-    <Box
-      style={{
-        padding: "16px",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        overflow: "hidden",
-      }}
-    >
+    <Box className={styles.root}>
       {/* Header Bar */}
       <Group justify="space-between" align="center" wrap="wrap" gap="xs">
         <Box>
           <Group gap="xs" align="center">
             <IconTerminal2 size={22} color="var(--vpn-cyan)" />
-            <Text size="xl" fw={700} style={{ color: "#fff", letterSpacing: "-0.02em" }}>
+            <Text size="xl" fw={700} className={styles.title}>
               Live Daemon & System Console
             </Text>
             <Badge size="xs" color="teal" variant="light">
@@ -260,20 +252,16 @@ export const LogConsoleView: React.FC = () => {
 
       {/* Filter and Stats Bar */}
       <Group justify="space-between" align="center" wrap="wrap" gap="xs">
-        <Group gap="xs" style={{ flex: 1, minWidth: 260 }}>
+        <Group gap="xs" className={styles.searchGroup}>
           <TextInput
             placeholder="Search logs by keyword, subsystem, error..."
             size="xs"
             leftSection={<IconSearch size={14} />}
             value={logSearchQuery}
             onChange={(e) => setLogSearchQuery(e.currentTarget.value)}
-            style={{ flex: 1, maxWidth: 360 }}
-            styles={{
-              input: {
-                background: "rgba(17, 24, 39, 0.75)",
-                borderColor: "var(--vpn-border)",
-                color: "#fff",
-              },
+            className={styles.searchInput}
+            classNames={{
+              input: styles.searchInputField,
             }}
           />
 
@@ -328,11 +316,8 @@ export const LogConsoleView: React.FC = () => {
                 ),
               },
             ]}
-            styles={{
-              root: {
-                background: "rgba(17, 24, 39, 0.75)",
-                border: "1px solid var(--vpn-border)",
-              },
+            classNames={{
+              root: styles.segmentedRoot,
             }}
           />
         </Group>
@@ -345,36 +330,13 @@ export const LogConsoleView: React.FC = () => {
       </Group>
 
       {/* Main Terminal Window Frame */}
-      <Box
-        className="glass-panel"
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          background: "rgba(8, 12, 20, 0.95)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 8,
-          overflow: "hidden",
-          position: "relative",
-          boxShadow: "inset 0 1px 3px rgba(0, 0, 0, 0.5)",
-        }}
-      >
+      <Box className={`glass-panel ${styles.terminalFrame}`}>
         {/* Terminal Header Bar */}
-        <Box
-          style={{
-            padding: "8px 12px",
-            background: "rgba(0, 0, 0, 0.45)",
-            borderBottom: "1px solid var(--vpn-border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            userSelect: "none",
-          }}
-        >
+        <Box className={styles.terminalHeader}>
           <Group gap={6}>
-            <Box style={{ width: 10, height: 10, borderRadius: "50%", background: "#ef4444" }} />
-            <Box style={{ width: 10, height: 10, borderRadius: "50%", background: "#f59e0b" }} />
-            <Box style={{ width: 10, height: 10, borderRadius: "50%", background: "#10b981" }} />
+            <Box className={styles.dotRed} />
+            <Box className={styles.dotYellow} />
+            <Box className={styles.dotGreen} />
           </Group>
 
           <Group gap="xs">
@@ -395,36 +357,10 @@ export const LogConsoleView: React.FC = () => {
         </Box>
 
         {/* Terminal Body Scroll Area */}
-        <Box
-          ref={logContainerRef}
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
-            padding: "10px 12px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            userSelect: "text",
-            fontFamily: "'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace",
-            fontSize: 12,
-            lineHeight: 1.6,
-          }}
-        >
+        <Box ref={logContainerRef} className={styles.terminalBody}>
           {filteredLogs.length === 0 ? (
-            <Box
-              style={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--vpn-text-muted)",
-                gap: 8,
-                userSelect: "none",
-              }}
-            >
-              <IconTerminal2 size={36} stroke={1.5} color="rgba(255, 255, 255, 0.2)" />
+            <Box className={styles.emptyBox}>
+              <IconTerminal2 size={36} stroke={1.5} className={styles.emptyIcon} />
               <Text size="sm" c="dimmed">
                 {logs.length === 0
                   ? "No logs captured yet. System events will stream here automatically."
@@ -447,54 +383,24 @@ export const LogConsoleView: React.FC = () => {
           ) : (
             filteredLogs.map((log) => {
               const levelColor = getLevelColor(log.level);
+              let msgClass = styles.messageInfo;
+              if (log.level === "ERROR") msgClass = styles.messageError;
+              else if (log.level === "WARN") msgClass = styles.messageWarn;
+
               return (
-                <Box
-                  key={log.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 8,
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                    transition: "background 0.1s ease",
-                    position: "relative",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
+                <Box key={log.id} className={styles.logRow}>
                   {/* Timestamp */}
-                  <Text
-                    component="span"
-                    className="font-mono"
-                    style={{
-                      color: "rgba(255, 255, 255, 0.35)",
-                      fontSize: 11,
-                      flexShrink: 0,
-                      userSelect: "text",
-                    }}
-                  >
+                  <Text component="span" className={`font-mono ${styles.timestamp}`}>
                     [{log.timestamp}]
                   </Text>
 
                   {/* Level Pill */}
                   <Box
+                    className={styles.levelPill}
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 3,
-                      padding: "0 5px",
-                      borderRadius: 3,
-                      fontSize: 10,
-                      fontWeight: 700,
                       color: levelColor,
                       background: `${levelColor}18`,
                       border: `1px solid ${levelColor}30`,
-                      flexShrink: 0,
-                      lineHeight: "16px",
                     }}
                   >
                     {getLevelIcon(log.level)}
@@ -502,36 +408,12 @@ export const LogConsoleView: React.FC = () => {
                   </Box>
 
                   {/* Source Module */}
-                  <Text
-                    component="span"
-                    className="font-mono"
-                    style={{
-                      color: "var(--vpn-cyan)",
-                      fontSize: 11,
-                      fontWeight: 600,
-                      flexShrink: 0,
-                      opacity: 0.9,
-                    }}
-                  >
+                  <Text component="span" className={`font-mono ${styles.sourceTag}`}>
                     [{log.source}]
                   </Text>
 
                   {/* Log Message Content */}
-                  <Text
-                    component="span"
-                    className="font-mono"
-                    style={{
-                      color:
-                        log.level === "ERROR"
-                          ? "#fca5a5"
-                          : log.level === "WARN"
-                            ? "#fde68a"
-                            : "#e5e7eb",
-                      fontSize: 11.5,
-                      wordBreak: "break-all",
-                      flex: 1,
-                    }}
-                  >
+                  <Text component="span" className={`font-mono ${styles.logMessage} ${msgClass}`}>
                     {log.message}
                   </Text>
 
@@ -547,13 +429,7 @@ export const LogConsoleView: React.FC = () => {
                           variant="subtle"
                           color="gray"
                           onClick={copy}
-                          style={{
-                            opacity: 0.3,
-                            flexShrink: 0,
-                            transition: "opacity 0.15s ease",
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.3")}
+                          className={styles.copyRowBtn}
                         >
                           {copied ? (
                             <IconCheck size={12} color="#10b981" />
@@ -582,13 +458,7 @@ export const LogConsoleView: React.FC = () => {
                 logContainerRef.current.scrollTop = 0;
               }
             }}
-            style={{
-              position: "absolute",
-              bottom: 12,
-              right: 20,
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-              zIndex: 10,
-            }}
+            className={styles.scrollButton}
           >
             Scroll to Top
           </Button>

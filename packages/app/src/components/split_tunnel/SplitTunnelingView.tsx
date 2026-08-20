@@ -17,6 +17,7 @@ import { IconApps, IconNetwork, IconPlus, IconTrash } from "@tabler/icons-react"
 import { useVpnStore } from "../../state/useVpnStore";
 import { AddAppRuleModal } from "./AddAppRuleModal";
 import { IpDomainRule } from "../../types/vpn";
+import styles from "./SplitTunnelingView.module.css";
 
 export const SplitTunnelingView: React.FC = () => {
   const { appRules, toggleAppRule, deleteAppRule, ipRules, toggleIpRule, deleteIpRule, addIpRule } =
@@ -48,20 +49,11 @@ export const SplitTunnelingView: React.FC = () => {
   };
 
   return (
-    <Box
-      style={{
-        padding: "16px",
-        height: "100%",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-      }}
-    >
+    <Box className={styles.root}>
       {/* Header */}
       <Group justify="space-between" align="center">
         <Box>
-          <Text size="xl" fw={700} style={{ color: "#fff", letterSpacing: "-0.02em" }}>
+          <Text size="xl" fw={700} className={styles.title}>
             Split Tunneling Policy Manager
           </Text>
           <Text size="xs" c="dimmed">
@@ -84,17 +76,10 @@ export const SplitTunnelingView: React.FC = () => {
 
         {/* Tab 1: Apps */}
         <Tabs.Panel value="apps">
-          <Box
-            className="glass-panel"
-            style={{
-              padding: "16px",
-              background: "rgba(17, 24, 39, 0.75)",
-              overflowX: "auto",
-            }}
-          >
+          <Box className={`glass-panel ${styles.panel}`}>
             <Group justify="space-between" align="center" mb="md">
               <Box>
-                <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                <Text size="sm" fw={700} className={styles.cardTitle}>
                   Application-Specific Tunnel Rules
                 </Text>
                 <Text size="xs" c="dimmed">
@@ -114,7 +99,7 @@ export const SplitTunnelingView: React.FC = () => {
             </Group>
 
             <Table verticalSpacing="xs">
-              <Table.Thead style={{ background: "rgba(0, 0, 0, 0.3)" }}>
+              <Table.Thead className={styles.tableHeader}>
                 <Table.Tr>
                   <Table.Th style={{ width: 40 }}>Status</Table.Th>
                   <Table.Th>Application</Table.Th>
@@ -137,7 +122,7 @@ export const SplitTunnelingView: React.FC = () => {
                     <Table.Td>
                       <Group gap="xs">
                         <Text size="md">{rule.icon || "📦"}</Text>
-                        <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                        <Text size="sm" fw={600} className={styles.appName}>
                           {rule.name}
                         </Text>
                       </Group>
@@ -177,19 +162,8 @@ export const SplitTunnelingView: React.FC = () => {
         <Tabs.Panel value="ip-domain">
           <Stack gap="md">
             {/* Quick Add Form */}
-            <Box
-              className="glass-panel"
-              style={{
-                padding: "16px",
-                background: "rgba(17, 24, 39, 0.75)",
-              }}
-            >
-              <Text
-                size="xs"
-                fw={700}
-                style={{ textTransform: "uppercase", color: "#fff" }}
-                mb="xs"
-              >
+            <Box className={`glass-panel ${styles.panel}`}>
+              <Text size="xs" fw={700} className={styles.cardTitle} mb="xs">
                 Add Subnet CIDR or Domain Rule
               </Text>
               <Group grow align="flex-end">
@@ -210,7 +184,7 @@ export const SplitTunnelingView: React.FC = () => {
                   ]}
                   value={newType}
                   onChange={(val) => setNewType(val as any)}
-                  style={{ maxWidth: 180 }}
+                  className={styles.selectType}
                 />
                 <Select
                   size="xs"
@@ -221,7 +195,7 @@ export const SplitTunnelingView: React.FC = () => {
                   ]}
                   value={newMode}
                   onChange={(val) => setNewMode(val as any)}
-                  style={{ maxWidth: 160 }}
+                  className={styles.selectMode}
                 />
                 <TextInput
                   size="xs"
@@ -235,7 +209,7 @@ export const SplitTunnelingView: React.FC = () => {
                   color="cyan"
                   onClick={handleAddIpRule}
                   disabled={!newTarget}
-                  style={{ maxWidth: 100 }}
+                  className={styles.addButton}
                 >
                   Add
                 </Button>
@@ -243,16 +217,9 @@ export const SplitTunnelingView: React.FC = () => {
             </Box>
 
             {/* List Table */}
-            <Box
-              className="glass-panel"
-              style={{
-                padding: "16px",
-                background: "rgba(17, 24, 39, 0.75)",
-                overflowX: "auto",
-              }}
-            >
+            <Box className={`glass-panel ${styles.panel}`}>
               <Table verticalSpacing="xs">
-                <Table.Thead style={{ background: "rgba(0, 0, 0, 0.3)" }}>
+                <Table.Thead className={styles.tableHeader}>
                   <Table.Tr>
                     <Table.Th style={{ width: 40 }}>Status</Table.Th>
                     <Table.Th>Target Destination</Table.Th>
@@ -274,7 +241,7 @@ export const SplitTunnelingView: React.FC = () => {
                         />
                       </Table.Td>
                       <Table.Td>
-                        <Text size="xs" fw={700} className="font-mono" style={{ color: "#67e8f9" }}>
+                        <Text size="xs" fw={700} className={`font-mono ${styles.targetText}`}>
                           {rule.target}
                         </Text>
                       </Table.Td>

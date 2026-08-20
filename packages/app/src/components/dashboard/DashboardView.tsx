@@ -3,20 +3,11 @@ import { Box } from "@mantine/core";
 import { HeroCockpitBanner } from "./HeroCockpitBanner";
 import { DashboardProfileDeck } from "./DashboardProfileDeck";
 import { DashboardFullLogStream } from "./DashboardFullLogStream";
+import styles from "./DashboardView.module.css";
 
 export const DashboardView: React.FC = () => {
   return (
-    <Box
-      style={{
-        padding: "14px",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: "14px",
-        overflowY: "auto",
-        overflowX: "hidden",
-      }}
-    >
+    <Box className={styles.root}>
       {/* 1. TOP: Master Hero Cockpit (Power Trigger + Security Telemetry + Live Speed Graph) */}
       <HeroCockpitBanner />
 

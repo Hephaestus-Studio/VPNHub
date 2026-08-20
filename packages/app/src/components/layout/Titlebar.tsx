@@ -11,6 +11,7 @@ import {
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import { IpcBridge } from "../../services/ipcBridge";
+import styles from "./Titlebar.module.css";
 
 export const Titlebar: React.FC = () => {
   const { daemonHealth, daemonVersion, isCompactWidget, setCompactWidget, setSpotlightOpen } =
@@ -23,51 +24,19 @@ export const Titlebar: React.FC = () => {
     switch (daemonHealth) {
       case "connected":
         return (
-          <Badge
-            variant="dot"
-            color="teal"
-            size="sm"
-            style={{
-              background: "rgba(16, 185, 129, 0.12)",
-              border: "1px solid rgba(16, 185, 129, 0.3)",
-              cursor: "default",
-              textTransform: "none",
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 500,
-            }}
-          >
+          <Badge variant="dot" color="teal" size="sm" className={styles.badgeConnected}>
             {isMobile ? "Active" : `Active (${daemonVersion})`}
           </Badge>
         );
       case "reconnecting":
         return (
-          <Badge
-            variant="dot"
-            color="yellow"
-            size="sm"
-            style={{
-              background: "rgba(245, 158, 11, 0.12)",
-              border: "1px solid rgba(245, 158, 11, 0.3)",
-              cursor: "default",
-              textTransform: "none",
-            }}
-          >
+          <Badge variant="dot" color="yellow" size="sm" className={styles.badgeReconnecting}>
             {isMobile ? "Reconnecting" : "Daemon Reconnecting..."}
           </Badge>
         );
       case "offline":
         return (
-          <Badge
-            variant="dot"
-            color="red"
-            size="sm"
-            style={{
-              background: "rgba(239, 68, 68, 0.12)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              cursor: "default",
-              textTransform: "none",
-            }}
-          >
+          <Badge variant="dot" color="red" size="sm" className={styles.badgeOffline}>
             Offline
           </Badge>
         );
@@ -91,46 +60,22 @@ export const Titlebar: React.FC = () => {
       data-tauri-drag-region
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
-      style={{
-        height: "42px",
-        background: "rgba(11, 15, 25, 0.95)",
-        borderBottom: "1px solid var(--vpn-border)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 10px",
-        userSelect: "none",
-        zIndex: 100,
-        cursor: "default",
-        flexShrink: 0,
-      }}
+      className={styles.root}
     >
       {/* Brand & Daemon Status */}
       <Group gap="xs" data-tauri-drag-region wrap="nowrap">
         <Group gap="xs" style={{ cursor: "pointer" }} data-tauri-drag-region wrap="nowrap">
-          <Box
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: 6,
-              background: "linear-gradient(135deg, #06b6d4, #3b82f6)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 10px rgba(6, 182, 212, 0.4)",
-              flexShrink: 0,
-            }}
-          >
+          <Box className={styles.brandLogo}>
             <IconShieldLock size={14} color="#fff" stroke={2.5} />
           </Box>
           {!isMobile && (
-            <Text fw={700} size="sm" style={{ letterSpacing: "-0.02em", color: "#f3f4f6" }}>
+            <Text fw={700} size="sm" className={styles.brandTitle}>
               VPNHub
             </Text>
           )}
         </Group>
 
-        <Box style={{ width: 1, height: 16, background: "var(--vpn-border)" }} />
+        <Box className={styles.divider} />
 
         {getDaemonBadge()}
       </Group>
@@ -142,25 +87,12 @@ export const Titlebar: React.FC = () => {
           size="xs"
           leftSection={<IconSearch size={13} color="var(--vpn-text-muted)" />}
           rightSection={
-            <Badge
-              size="xs"
-              variant="outline"
-              color="gray"
-              style={{ fontSize: 9, padding: "0 4px", height: 16 }}
-            >
+            <Badge size="xs" variant="outline" color="gray" className={styles.searchBadge}>
               ⌘K
             </Badge>
           }
           onClick={() => setSpotlightOpen(true)}
-          style={{
-            background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid var(--vpn-border)",
-            color: "var(--vpn-text-secondary)",
-            fontWeight: 400,
-            borderRadius: 6,
-            height: 26,
-            padding: "0 10px",
-          }}
+          className={styles.searchButton}
         >
           Search profiles, commands...
         </Button>
@@ -169,7 +101,7 @@ export const Titlebar: React.FC = () => {
           variant="subtle"
           size="sm"
           onClick={() => setSpotlightOpen(true)}
-          style={{ color: "var(--vpn-text-secondary)" }}
+          className={styles.iconButton}
         >
           <IconSearch size={16} />
         </ActionIcon>
@@ -183,7 +115,7 @@ export const Titlebar: React.FC = () => {
             color="gray"
             size="sm"
             onClick={() => setCompactWidget(!isCompactWidget)}
-            style={{ color: isCompactWidget ? "var(--vpn-cyan)" : "var(--vpn-text-secondary)" }}
+            className={isCompactWidget ? styles.activeIconButton : styles.iconButton}
           >
             {isCompactWidget ? (
               <IconDeviceDesktop size={14} />
@@ -193,14 +125,14 @@ export const Titlebar: React.FC = () => {
           </ActionIcon>
         </Tooltip>
 
-        <Box style={{ width: 1, height: 14, background: "var(--vpn-border)", margin: "0 2px" }} />
+        <Box className={styles.controlDivider} />
 
         <ActionIcon
           variant="subtle"
           color="gray"
           size="sm"
           onClick={() => IpcBridge.windowMinimize()}
-          style={{ color: "var(--vpn-text-secondary)" }}
+          className={styles.iconButton}
         >
           <IconMinus size={13} />
         </ActionIcon>
@@ -210,7 +142,7 @@ export const Titlebar: React.FC = () => {
           color="gray"
           size="sm"
           onClick={() => IpcBridge.windowMaximize()}
-          style={{ color: "var(--vpn-text-secondary)" }}
+          className={styles.iconButton}
         >
           <IconSquare size={12} />
         </ActionIcon>
@@ -220,7 +152,7 @@ export const Titlebar: React.FC = () => {
           color="red"
           size="sm"
           onClick={() => IpcBridge.windowClose()}
-          style={{ color: "var(--vpn-text-secondary)" }}
+          className={styles.iconButton}
         >
           <IconX size={13} />
         </ActionIcon>

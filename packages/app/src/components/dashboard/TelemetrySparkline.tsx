@@ -1,6 +1,7 @@
 import { Box, Group, Text, Badge } from "@mantine/core";
 import { IconArrowDownRight, IconArrowUpRight, IconActivity } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./TelemetrySparkline.module.css";
 
 export const TelemetrySparkline: React.FC = () => {
   const { telemetry, connectionState } = useVpnStore();
@@ -49,24 +50,11 @@ export const TelemetrySparkline: React.FC = () => {
   const downloadAreaPath = `${downloadPath} L ${width} ${height} L 0 ${height} Z`;
 
   return (
-    <Box
-      className="glass-panel"
-      style={{
-        padding: "16px",
-        background: "rgba(17, 24, 39, 0.75)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-      }}
-    >
+    <Box className={`glass-panel ${styles.card}`}>
       <Group justify="space-between" align="center">
         <Group gap="xs">
           <IconActivity size={16} color="var(--vpn-cyan)" />
-          <Text
-            size="xs"
-            fw={700}
-            style={{ textTransform: "uppercase", letterSpacing: "0.05em", color: "#fff" }}
-          >
+          <Text size="xs" fw={700} className={styles.title}>
             Live Traffic & Metrics
           </Text>
         </Group>
@@ -80,15 +68,14 @@ export const TelemetrySparkline: React.FC = () => {
         <Box>
           <Group gap={4}>
             <IconArrowDownRight size={15} color="var(--vpn-cyan)" />
-            <Text size="10px" c="dimmed" fw={600} style={{ textTransform: "uppercase" }}>
+            <Text size="10px" c="dimmed" fw={600} className={styles.speedLabel}>
               Download
             </Text>
           </Group>
           <Text
             size="lg"
             fw={800}
-            className="font-mono"
-            style={{ color: isConnected ? "#22d3ee" : "var(--vpn-text-muted)" }}
+            className={`font-mono ${isConnected ? styles.downloadSpeedConnected : styles.downloadSpeedMuted}`}
           >
             {isConnected ? formatSpeed(telemetry.currentDownloadKbps) : "0.0 KB/s"}
           </Text>
@@ -97,15 +84,14 @@ export const TelemetrySparkline: React.FC = () => {
         <Box style={{ textAlign: "right" }}>
           <Group gap={4} justify="flex-end">
             <IconArrowUpRight size={15} color="var(--vpn-emerald)" />
-            <Text size="10px" c="dimmed" fw={600} style={{ textTransform: "uppercase" }}>
+            <Text size="10px" c="dimmed" fw={600} className={styles.speedLabel}>
               Upload
             </Text>
           </Group>
           <Text
             size="lg"
             fw={800}
-            className="font-mono"
-            style={{ color: isConnected ? "#34d399" : "var(--vpn-text-muted)" }}
+            className={`font-mono ${isConnected ? styles.uploadSpeedConnected : styles.uploadSpeedMuted}`}
           >
             {isConnected ? formatSpeed(telemetry.currentUploadKbps) : "0.0 KB/s"}
           </Text>
@@ -113,20 +99,10 @@ export const TelemetrySparkline: React.FC = () => {
       </Group>
 
       {/* Dynamic SVG Wave Sparkline */}
-      <Box
-        style={{
-          height: 64,
-          width: "100%",
-          position: "relative",
-          background: "rgba(0, 0, 0, 0.25)",
-          borderRadius: 6,
-          overflow: "hidden",
-          border: "1px solid var(--vpn-border)",
-        }}
-      >
+      <Box className={styles.graphWrapper}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          style={{ width: "100%", height: "100%", display: "block" }}
+          className={styles.graphSvg}
           preserveAspectRatio="none"
         >
           <defs>
@@ -160,14 +136,7 @@ export const TelemetrySparkline: React.FC = () => {
       </Box>
 
       {/* Network Quality Gauges */}
-      <Box
-        style={{
-          padding: "8px 10px",
-          background: "rgba(0, 0, 0, 0.2)",
-          borderRadius: 6,
-          border: "1px solid var(--vpn-border)",
-        }}
-      >
+      <Box className={styles.gaugesCard}>
         <Group justify="space-between" align="center">
           <Box>
             <Text size="10px" c="dimmed">
@@ -176,8 +145,7 @@ export const TelemetrySparkline: React.FC = () => {
             <Text
               size="xs"
               fw={700}
-              className="font-mono"
-              style={{ color: isConnected ? "#34d399" : "var(--vpn-text-muted)" }}
+              className={`font-mono ${isConnected ? styles.pingConnected : styles.metricMuted}`}
             >
               {isConnected ? `${telemetry.currentPingMs} ms` : "—"}
             </Text>
@@ -190,8 +158,7 @@ export const TelemetrySparkline: React.FC = () => {
             <Text
               size="xs"
               fw={700}
-              className="font-mono"
-              style={{ color: isConnected ? "#38bdf8" : "var(--vpn-text-muted)" }}
+              className={`font-mono ${isConnected ? styles.jitterConnected : styles.metricMuted}`}
             >
               {isConnected ? `${telemetry.jitterMs} ms` : "—"}
             </Text>
@@ -204,8 +171,7 @@ export const TelemetrySparkline: React.FC = () => {
             <Text
               size="xs"
               fw={700}
-              className="font-mono"
-              style={{ color: isConnected ? "#10b981" : "var(--vpn-text-muted)" }}
+              className={`font-mono ${isConnected ? styles.lossConnected : styles.metricMuted}`}
             >
               {isConnected ? `${telemetry.packetLossPercent}%` : "—"}
             </Text>
@@ -215,7 +181,7 @@ export const TelemetrySparkline: React.FC = () => {
             <Text size="10px" c="dimmed">
               Session Total
             </Text>
-            <Text size="10px" fw={600} className="font-mono" style={{ color: "#fff" }}>
+            <Text size="10px" fw={600} className={`font-mono ${styles.sessionTotal}`}>
               ⬇ {formatBytes(telemetry.totalDownloadedBytes)}
             </Text>
           </Box>

@@ -1,0 +1,76 @@
+.card {
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(31, 41, 55, 0.5);
+  border: 1px solid var(--vpn-border);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 180px;
+  transition: all 0.25s ease-in-out;
+}
+
+.cardConnected {
+  composes: card;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(17, 24, 39, 0.95));
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.cardConnecting {
+  composes: card;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(17, 24, 39, 0.95));
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.cardError {
+  composes: card;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(17, 24, 39, 0.95));
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+.cardActive {
+  composes: card;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(17, 24, 39, 0.95));
+  border: 1px solid rgba(6, 182, 212, 0.35);
+}
+
+.title {
+  color: #ffffff;
+}
+
+.menuDropdown {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--vpn-border);
+}
+
+.protocolBadge {
+  font-family:
+    JetBrains Mono,
+    monospace;
+  font-size: 9px;
+}
+
+.tagBadge {
+  font-size: 9px;
+}
+
+.footer {
+  border-top: 1px solid var(--vpn-border-subtle);
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pingText {
+  color: #34d399;
+}
+
+.actionButton {
+  font-weight: 600;
+}

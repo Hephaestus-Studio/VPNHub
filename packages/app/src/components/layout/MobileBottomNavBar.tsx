@@ -10,6 +10,7 @@ import {
   IconSettings,
 } from "@tabler/icons-react";
 import { useVpnStore, NavigationTab } from "../../state/useVpnStore";
+import styles from "./MobileBottomNavBar.module.css";
 
 interface MobileNavItem {
   id: NavigationTab;
@@ -33,20 +34,7 @@ export const MobileBottomNavBar: React.FC = () => {
   if (!isMobile) return null;
 
   return (
-    <Box
-      style={{
-        height: 48,
-        background: "rgba(10, 15, 29, 0.96)",
-        borderTop: "1px solid var(--vpn-border)",
-        backdropFilter: "blur(16px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-around",
-        padding: "0 4px",
-        flexShrink: 0,
-        zIndex: 50,
-      }}
-    >
+    <Box className={styles.root}>
       {MOBILE_NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
@@ -55,35 +43,14 @@ export const MobileBottomNavBar: React.FC = () => {
           <Tooltip key={item.id} label={item.label} position="top" withArrow>
             <UnstyledButton
               onClick={() => setActiveTab(item.id)}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "4px 8px",
-                borderRadius: 6,
-                background: isActive ? "rgba(6, 182, 212, 0.12)" : "transparent",
-                color: isActive ? "var(--vpn-cyan)" : "var(--vpn-text-muted)",
-                transition: "all 0.15s ease",
-                minWidth: 46,
-              }}
+              className={isActive ? styles.navButtonActive : styles.navButton}
             >
               <Icon
                 size={20}
                 stroke={isActive ? 2.3 : 1.7}
                 color={isActive ? "var(--vpn-cyan)" : "var(--vpn-text-secondary)"}
               />
-              <Text
-                size="9px"
-                fw={isActive ? 700 : 500}
-                style={{
-                  color: isActive ? "#ffffff" : "var(--vpn-text-muted)",
-                  marginTop: 1,
-                  lineHeight: 1,
-                }}
-              >
-                {item.label}
-              </Text>
+              <Text className={isActive ? styles.navTextActive : styles.navText}>{item.label}</Text>
             </UnstyledButton>
           </Tooltip>
         );

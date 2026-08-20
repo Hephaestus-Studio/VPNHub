@@ -13,6 +13,7 @@ import {
 import { IconApps, IconPlus } from "@tabler/icons-react";
 import { AppRule, SplitTunnelMode } from "../../types/vpn";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./AddAppRuleModal.module.css";
 
 interface AddAppRuleModalProps {
   opened: boolean;
@@ -64,24 +65,16 @@ export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClos
       title={
         <Group gap="xs">
           <IconApps size={18} color="var(--vpn-cyan)" />
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             Add Application Routing Rule
           </Text>
         </Group>
       }
       size="md"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.95)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
       }}
     >
       <Stack gap="md">
@@ -95,17 +88,7 @@ export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClos
               <UnstyledButton
                 key={app.path}
                 onClick={() => handleSelectCommon(app)}
-                style={{
-                  padding: "4px 8px",
-                  borderRadius: 6,
-                  background: "rgba(31, 41, 55, 0.5)",
-                  border: "1px solid var(--vpn-border)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 11,
-                  color: "#fff",
-                }}
+                className={styles.appQuickButton}
               >
                 <span>{app.icon}</span>
                 <span>{app.name}</span>

@@ -1,0 +1,58 @@
+.modalContent {
+  background: rgba(17, 24, 39, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--vpn-border);
+  border-radius: 12px;
+  min-height: 520px;
+}
+
+.modalHeader {
+  background: transparent;
+  border-bottom: 1px solid var(--vpn-border);
+  padding-bottom: 12px;
+}
+
+.modalBody {
+  padding: 16px 20px;
+}
+
+.modalTitle {
+  color: #ffffff;
+}
+
+.tabsList {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tabItem {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.tabItem[data-active] {
+  color: var(--vpn-cyan);
+  border-color: var(--vpn-cyan);
+}
+
+.paperBox {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.paperTitle {
+  color: #ffffff;
+}
+
+.codeTextareaInput {
+  font-size: 11px;
+}
+
+.selectKeyDirection {
+  max-width: 200px;
+}
+
+.renegInput {
+  max-width: 280px;
+}

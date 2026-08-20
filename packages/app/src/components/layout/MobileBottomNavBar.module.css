@@ -1,0 +1,47 @@
+.root {
+  height: 48px;
+  background: rgba(10, 15, 29, 0.96);
+  border-top: 1px solid var(--vpn-border);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.navButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--vpn-text-muted);
+  transition: all 0.15s ease;
+  min-width: 46px;
+}
+
+.navButtonActive {
+  composes: navButton;
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--vpn-cyan);
+}
+
+.navText {
+  color: var(--vpn-text-muted);
+  font-size: 9px;
+  font-weight: 500;
+  margin-top: 1px;
+  line-height: 1;
+}
+
+.navTextActive {
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  margin-top: 1px;
+  line-height: 1;
+}

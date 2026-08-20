@@ -17,20 +17,11 @@ import { MiniTrayWidget } from "../tray/MiniTrayWidget";
 import { WindowResizeBorders } from "./WindowResizeBorders";
 import { ConnectMfaModal } from "../profiles/ConnectMfaModal";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./AppShell.module.css";
 
 export const AppShell: React.FC = () => {
-  const {
-    activeTab,
-    isCompactWidget,
-    mfaPromptProfile,
-    setMfaPromptProfile,
-    connect,
-    loadStorage,
-  } = useVpnStore();
-
-  useEffect(() => {
-    loadStorage();
-  }, [loadStorage]);
+  const { activeTab, isCompactWidget, mfaPromptProfile, setMfaPromptProfile, connect } =
+    useVpnStore();
 
   useEffect(() => {
     let resizeTimer: number;
@@ -72,32 +63,14 @@ export const AppShell: React.FC = () => {
 
   if (isCompactWidget) {
     return (
-      <Box
-        style={{
-          width: "100vw",
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(0, 0, 0, 0.7)",
-        }}
-      >
+      <Box className={styles.compactWrapper}>
         <MiniTrayWidget />
       </Box>
     );
   }
 
   return (
-    <Box
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        width: "100vw",
-        overflow: "hidden",
-        background: "var(--vpn-bg-base)",
-      }}
-    >
+    <Box className={styles.root}>
       {/* Top Custom Frameless Titlebar */}
       <Titlebar />
 

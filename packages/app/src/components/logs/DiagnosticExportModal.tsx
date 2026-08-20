@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal, Stack, Text, Group, Button, Box, Checkbox, Progress } from "@mantine/core";
 import { IconFileZip, IconDownload } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./DiagnosticExportModal.module.css";
 
 interface DiagnosticExportModalProps {
   opened: boolean;
@@ -63,24 +64,16 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
       title={
         <Group gap="xs">
           <IconFileZip size={18} color="var(--vpn-cyan)" />
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             Export Sanitized Diagnostic Bundle
           </Text>
         </Group>
       }
       size="md"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.95)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
       }}
     >
       <Stack gap="md">
@@ -89,14 +82,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
           logs to assist IT support in diagnosing tunnel issues.
         </Text>
 
-        <Box
-          style={{
-            padding: "12px",
-            background: "rgba(0, 0, 0, 0.3)",
-            borderRadius: 8,
-            border: "1px solid var(--vpn-border)",
-          }}
-        >
+        <Box className={styles.checkboxContainer}>
           <Stack gap="xs">
             <Checkbox
               label="Include last 200 daemon trace logs"

@@ -1,6 +1,7 @@
 import { Box, Group, Text, Stack, ActionIcon, Tooltip } from "@mantine/core";
 import { IconPower, IconArrowsMaximize, IconShieldLock } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./MiniTrayWidget.module.css";
 
 export const MiniTrayWidget: React.FC = () => {
   const {
@@ -33,26 +34,12 @@ export const MiniTrayWidget: React.FC = () => {
   };
 
   return (
-    <Box
-      style={{
-        width: 320,
-        height: 440,
-        background: "rgba(11, 15, 25, 0.98)",
-        border: "1px solid var(--vpn-border)",
-        borderRadius: 14,
-        padding: "16px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.8)",
-        margin: "auto",
-      }}
-    >
+    <Box className={styles.root}>
       {/* Header */}
       <Group justify="space-between" align="center">
         <Group gap="xs">
           <IconShieldLock size={18} color="var(--vpn-cyan)" />
-          <Text size="sm" fw={700} style={{ color: "#fff" }}>
+          <Text size="sm" fw={700} className={styles.title}>
             VPNHub Mini
           </Text>
         </Group>
@@ -73,26 +60,13 @@ export const MiniTrayWidget: React.FC = () => {
       <Stack align="center" gap="sm" my="xs">
         <Box
           onClick={handleToggle}
-          className={isConnected ? "glow-connected" : isConnecting ? "pulse-connecting" : ""}
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: "50%",
-            background: isConnected
-              ? "linear-gradient(135deg, #065f46, #10b981)"
+          className={`${styles.powerButtonBase} ${
+            isConnected
+              ? `glow-connected ${styles.powerButtonConnected}`
               : isConnecting
-                ? "linear-gradient(135deg, #78350f, #f59e0b)"
-                : "linear-gradient(135deg, #1f2937, #111827)",
-            border: isConnected
-              ? "3px solid #34d399"
-              : isConnecting
-                ? "3px solid #fbbf24"
-                : "2px solid rgba(255, 255, 255, 0.15)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
+                ? `pulse-connecting ${styles.powerButtonConnecting}`
+                : styles.powerButtonIdle
+          }`}
         >
           <IconPower
             size={36}
@@ -100,8 +74,8 @@ export const MiniTrayWidget: React.FC = () => {
           />
         </Box>
 
-        <Box style={{ textAlign: "center" }}>
-          <Text size="sm" fw={700} style={{ color: "#fff" }}>
+        <Box className={styles.profileLabelBox}>
+          <Text size="sm" fw={700} className={styles.profileName}>
             {activeProfile?.serverFlag} {activeProfile?.name}
           </Text>
           <Text size="11px" c="dimmed">
@@ -112,29 +86,22 @@ export const MiniTrayWidget: React.FC = () => {
 
       {/* Live Telemetry Pill */}
       {isConnected && (
-        <Box
-          style={{
-            padding: "8px 12px",
-            background: "rgba(0, 0, 0, 0.3)",
-            borderRadius: 8,
-            border: "1px solid var(--vpn-border)",
-          }}
-        >
+        <Box className={styles.telemetryPill}>
           <Group justify="space-between">
             <Box>
               <Text size="10px" c="dimmed">
                 DOWNLOAD
               </Text>
-              <Text size="xs" fw={700} className="font-mono" style={{ color: "#22d3ee" }}>
+              <Text size="xs" fw={700} className={`font-mono ${styles.downloadSpeed}`}>
                 {(telemetry.currentDownloadKbps / 1024).toFixed(1)} MB/s
               </Text>
             </Box>
 
-            <Box style={{ textAlign: "right" }}>
+            <Box className={styles.pingTextRight}>
               <Text size="10px" c="dimmed">
                 PING
               </Text>
-              <Text size="xs" fw={700} className="font-mono" style={{ color: "#34d399" }}>
+              <Text size="xs" fw={700} className={`font-mono ${styles.pingText}`}>
                 {telemetry.currentPingMs} ms
               </Text>
             </Box>
@@ -144,7 +111,7 @@ export const MiniTrayWidget: React.FC = () => {
 
       {/* 3 Quick Profiles */}
       <Box>
-        <Text size="10px" fw={700} c="dimmed" mb={4} style={{ textTransform: "uppercase" }}>
+        <Text size="10px" fw={700} c="dimmed" mb={4} className={styles.recentNodesHeader}>
           Recent Nodes
         </Text>
         <Stack gap={4}>
@@ -152,28 +119,17 @@ export const MiniTrayWidget: React.FC = () => {
             <Box
               key={p.id}
               onClick={() => connect(p.id)}
-              style={{
-                padding: "6px 8px",
-                borderRadius: 6,
-                background:
-                  p.id === activeProfileId ? "rgba(6, 182, 212, 0.12)" : "rgba(31, 41, 55, 0.4)",
-                border:
-                  p.id === activeProfileId
-                    ? "1px solid rgba(6, 182, 212, 0.3)"
-                    : "1px solid var(--vpn-border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                cursor: "pointer",
-              }}
+              className={`${styles.nodeItemBase} ${
+                p.id === activeProfileId ? styles.nodeItemActive : styles.nodeItemInactive
+              }`}
             >
               <Group gap={6}>
                 <Text size="sm">{p.serverFlag}</Text>
-                <Text size="xs" fw={600} style={{ color: "#fff", maxWidth: 160 }} truncate>
+                <Text size="xs" fw={600} className={styles.nodeName} truncate>
                   {p.name}
                 </Text>
               </Group>
-              <Text size="10px" className="font-mono" style={{ color: "#34d399" }}>
+              <Text size="10px" className={`font-mono ${styles.pingText}`}>
                 {p.pingMs}ms
               </Text>
             </Box>

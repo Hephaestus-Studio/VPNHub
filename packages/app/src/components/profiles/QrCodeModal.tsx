@@ -1,6 +1,7 @@
 import { Modal, Stack, Text, Box, Group, Button, Badge } from "@mantine/core";
 import { IconQrcode, IconCopy } from "@tabler/icons-react";
 import { VpnProfile } from "../../types/vpn";
+import styles from "./QrCodeModal.module.css";
 
 interface QrCodeModalProps {
   opened: boolean;
@@ -18,42 +19,22 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({ opened, onClose, profi
       title={
         <Group gap="xs">
           <IconQrcode size={18} color="var(--vpn-cyan)" />
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             Sync Profile with Mobile Client
           </Text>
         </Group>
       }
       size="sm"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.95)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
       }}
     >
       <Stack align="center" gap="md" py="sm">
-        <Box
-          style={{
-            width: 180,
-            height: 180,
-            background: "#ffffff",
-            borderRadius: 12,
-            padding: 12,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)",
-          }}
-        >
+        <Box className={styles.qrContainer}>
           {/* Simulated High-Res QR Matrix */}
-          <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%" }}>
+          <svg viewBox="0 0 100 100" className={styles.qrSvg}>
             <rect width="100" height="100" fill="#fff" />
             <path d="M10 10 h25 v25 h-25 z M15 15 h15 v15 h-15 z M19 19 h7 v7 h-7 z" fill="#000" />
             <path d="M65 10 h25 v25 h-25 z M70 15 h15 v15 h-15 z M74 19 h7 v7 h-7 z" fill="#000" />
@@ -75,7 +56,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({ opened, onClose, profi
 
         <Box style={{ textAlign: "center" }}>
           <Group justify="center" gap={6}>
-            <Text size="md" fw={700} style={{ color: "#fff" }}>
+            <Text size="md" fw={700} className={styles.profileName}>
               {profile.name}
             </Text>
             <Badge size="xs" color="cyan" variant="light">

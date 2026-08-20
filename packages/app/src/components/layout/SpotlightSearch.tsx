@@ -9,6 +9,7 @@ import {
   IconArrowsSplit,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./SpotlightSearch.module.css";
 
 export const SpotlightSearch: React.FC = () => {
   const {
@@ -120,17 +121,11 @@ export const SpotlightSearch: React.FC = () => {
       centered
       size="lg"
       padding={0}
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.95)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-          overflow: "hidden",
-        },
+      classNames={{
+        content: styles.modalContent,
       }}
     >
-      <Box style={{ padding: "12px 16px", borderBottom: "1px solid var(--vpn-border)" }}>
+      <Box className={styles.searchHeader}>
         <TextInput
           placeholder="Search profiles, commands, or settings..."
           leftSection={<IconSearch size={18} color="var(--vpn-cyan)" />}
@@ -138,28 +133,16 @@ export const SpotlightSearch: React.FC = () => {
           onChange={(e) => setQuery(e.currentTarget.value)}
           autoFocus
           variant="unstyled"
-          styles={{
-            input: {
-              color: "#fff",
-              fontSize: "15px",
-            },
+          classNames={{
+            input: styles.searchInput,
           }}
         />
       </Box>
 
-      <Box style={{ maxHeight: 360, overflowY: "auto", padding: "8px" }}>
+      <Box className={styles.resultsList}>
         {filteredProfiles.length > 0 && (
           <Box mb="xs">
-            <Text
-              size="10px"
-              fw={700}
-              c="dimmed"
-              px="xs"
-              mb={4}
-              style={{ letterSpacing: "0.08em" }}
-            >
-              VPN PROFILES ({filteredProfiles.length})
-            </Text>
+            <Text className={styles.sectionHeader}>VPN PROFILES ({filteredProfiles.length})</Text>
             <Stack gap={2}>
               {filteredProfiles.map((prof) => (
                 <UnstyledButton
@@ -168,26 +151,12 @@ export const SpotlightSearch: React.FC = () => {
                     connect(prof.id);
                     setSpotlightOpen(false);
                   }}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    transition: "background 0.15s",
-                  }}
-                  styles={{
-                    root: {
-                      "&:hover": {
-                        background: "rgba(6, 182, 212, 0.12)",
-                      },
-                    },
-                  }}
+                  className={styles.profileItem}
                 >
                   <Group gap="sm">
                     <Text size="lg">{prof.serverFlag}</Text>
                     <Box>
-                      <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                      <Text size="sm" className={styles.profileTitle}>
                         {prof.name}
                       </Text>
                       <Text size="11px" c="dimmed">
@@ -212,16 +181,7 @@ export const SpotlightSearch: React.FC = () => {
 
         {filteredActions.length > 0 && (
           <Box>
-            <Text
-              size="10px"
-              fw={700}
-              c="dimmed"
-              px="xs"
-              mb={4}
-              style={{ letterSpacing: "0.08em" }}
-            >
-              COMMANDS & VIEWS
-            </Text>
+            <Text className={styles.sectionHeader}>COMMANDS & VIEWS</Text>
             <Stack gap={2}>
               {filteredActions.map((action) => {
                 const Icon = action.icon;
@@ -229,30 +189,13 @@ export const SpotlightSearch: React.FC = () => {
                   <UnstyledButton
                     key={action.id}
                     onClick={action.onSelect}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: 8,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      transition: "background 0.15s",
-                    }}
+                    className={styles.actionItem}
                   >
-                    <Box
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        background: "rgba(255, 255, 255, 0.06)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                    <Box className={styles.actionIconBox}>
                       <Icon size={16} color="var(--vpn-cyan)" />
                     </Box>
                     <Box>
-                      <Text size="sm" fw={500} style={{ color: "#fff" }}>
+                      <Text size="sm" className={styles.actionTitle}>
                         {action.title}
                       </Text>
                       <Text size="11px" c="dimmed">

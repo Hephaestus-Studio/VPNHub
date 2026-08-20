@@ -1,0 +1,22 @@
+.modalContent {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--vpn-border);
+  border-radius: 12px;
+}
+
+.modalHeader {
+  background: transparent;
+  border-bottom: 1px solid var(--vpn-border);
+}
+
+.modalTitle {
+  color: #ffffff;
+}
+
+.checkboxContainer {
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid var(--vpn-border);
+}

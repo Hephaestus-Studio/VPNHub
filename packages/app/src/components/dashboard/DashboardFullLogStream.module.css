@@ -1,0 +1,120 @@
+.panel {
+  padding: 14px 16px;
+  background: rgba(17, 24, 39, 0.75);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 180px;
+  gap: 10px;
+}
+
+.panelMobile {
+  composes: panel;
+  padding: 10px 12px;
+  min-height: 200px;
+  gap: 6px;
+}
+
+.title {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.titleMobile {
+  composes: title;
+  font-size: 11px;
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background: var(--vpn-border);
+  margin: 0 1px;
+}
+
+.openButton {
+  font-size: 10.5px;
+  color: var(--vpn-cyan);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+  cursor: pointer;
+}
+
+.openButton:hover {
+  color: #67e8f9;
+}
+
+.terminalBody {
+  background: rgba(10, 15, 29, 0.88);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+  flex: 1;
+  min-height: 140px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: var(--font-mono, monospace);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.terminalBodyMobile {
+  composes: terminalBody;
+  padding: 6px 8px;
+  gap: 3px;
+}
+
+.emptyLogs {
+  padding: 20px;
+  text-align: center;
+  color: var(--vpn-text-muted);
+  font-size: 11px;
+}
+
+.logRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2.5px 4px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  transition: background 0.1s ease;
+  width: 100%;
+}
+
+.logRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.logRowMobile {
+  composes: logRow;
+  gap: 5px;
+  font-size: 10.5px;
+}
+
+.sourcePill {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.5px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logMessage {
+  color: #f1f5f9;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

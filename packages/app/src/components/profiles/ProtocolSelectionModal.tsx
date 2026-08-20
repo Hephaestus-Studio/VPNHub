@@ -7,6 +7,7 @@ import {
   IconPlus,
   IconChevronRight,
 } from "@tabler/icons-react";
+import styles from "./ProtocolSelectionModal.module.css";
 
 interface ProtocolSelectionModalProps {
   opened: boolean;
@@ -34,28 +35,17 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
           ) : (
             <IconPlus size={20} color="var(--vpn-cyan)" />
           )}
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             {isImport ? "Import Profile - Select Protocol" : "Add Profile - Select Protocol"}
           </Text>
         </Group>
       }
       size="md"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.98)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 14,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-          paddingBottom: 12,
-        },
-        body: {
-          padding: "20px",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
+        body: styles.modalBody,
       }}
     >
       <Stack gap="md">
@@ -67,47 +57,20 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
 
         {/* Option 1: WireGuard */}
         <Paper
-          p="md"
           onClick={() => {
             onClose();
             onSelect("wireguard");
           }}
-          style={{
-            background: "rgba(6, 182, 212, 0.04)",
-            border: "1px solid rgba(6, 182, 212, 0.2)",
-            borderRadius: 12,
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(6, 182, 212, 0.1)";
-            e.currentTarget.style.borderColor = "var(--vpn-cyan)";
-            e.currentTarget.style.transform = "translateY(-2px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(6, 182, 212, 0.04)";
-            e.currentTarget.style.borderColor = "rgba(6, 182, 212, 0.2)";
-            e.currentTarget.style.transform = "none";
-          }}
+          className={styles.wireguardOption}
         >
           <Group justify="space-between" align="center">
             <Group gap="md">
-              <Box
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: "rgba(6, 182, 212, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <Box className={styles.wireguardIconBox}>
                 <IconBolt size={24} color="var(--vpn-cyan)" />
               </Box>
               <Box>
                 <Group gap="xs" align="center" mb={2}>
-                  <Text fw={700} size="sm" style={{ color: "#fff" }}>
+                  <Text fw={700} size="sm" className={styles.optionTitle}>
                     WireGuard
                   </Text>
                   <Badge size="xs" color="cyan" variant="light">
@@ -121,53 +84,26 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
                 </Text>
               </Box>
             </Group>
-            <IconChevronRight size={18} color="rgba(255, 255, 255, 0.4)" />
+            <IconChevronRight size={18} className={styles.chevronIcon} />
           </Group>
         </Paper>
 
         {/* Option 2: OpenVPN */}
         <Paper
-          p="md"
           onClick={() => {
             onClose();
             onSelect("openvpn");
           }}
-          style={{
-            background: "rgba(16, 185, 129, 0.04)",
-            border: "1px solid rgba(16, 185, 129, 0.2)",
-            borderRadius: 12,
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-            e.currentTarget.style.borderColor = "var(--vpn-emerald)";
-            e.currentTarget.style.transform = "translateY(-2px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(16, 185, 129, 0.04)";
-            e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.2)";
-            e.currentTarget.style.transform = "none";
-          }}
+          className={styles.openvpnOption}
         >
           <Group justify="space-between" align="center">
             <Group gap="md">
-              <Box
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: "rgba(16, 185, 129, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <Box className={styles.openvpnIconBox}>
                 <IconShieldLock size={24} color="var(--vpn-emerald)" />
               </Box>
               <Box>
                 <Group gap="xs" align="center" mb={2}>
-                  <Text fw={700} size="sm" style={{ color: "#fff" }}>
+                  <Text fw={700} size="sm" className={styles.optionTitle}>
                     OpenVPN
                   </Text>
                   <Badge size="xs" color="teal" variant="light">
@@ -181,7 +117,7 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
                 </Text>
               </Box>
             </Group>
-            <IconChevronRight size={18} color="rgba(255, 255, 255, 0.4)" />
+            <IconChevronRight size={18} className={styles.chevronIcon} />
           </Group>
         </Paper>
       </Stack>

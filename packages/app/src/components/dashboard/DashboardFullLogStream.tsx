@@ -8,6 +8,7 @@ import {
   IconArrowsDownUp,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./DashboardFullLogStream.module.css";
 
 export const DashboardFullLogStream: React.FC = () => {
   const { logs, isLogAutoScroll, setLogAutoScroll, clearLogs, setActiveTab } = useVpnStore();
@@ -54,19 +55,7 @@ export const DashboardFullLogStream: React.FC = () => {
   };
 
   return (
-    <Box
-      className="glass-panel"
-      style={{
-        padding: isMobile ? "10px 12px" : "14px 16px",
-        background: "rgba(17, 24, 39, 0.75)",
-        borderRadius: "12px",
-        display: "flex",
-        flexDirection: "column",
-        flex: 1,
-        minHeight: isMobile ? 200 : 180,
-        gap: isMobile ? "6px" : "10px",
-      }}
-    >
+    <Box className={`glass-panel ${isMobile ? styles.panelMobile : styles.panel}`}>
       {/* Header Bar */}
       <Group justify="space-between" align="center" wrap="nowrap">
         <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -74,12 +63,7 @@ export const DashboardFullLogStream: React.FC = () => {
           <Text
             size="xs"
             fw={700}
-            style={{
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: "#fff",
-              fontSize: isMobile ? 11 : 12,
-            }}
+            className={isMobile ? styles.titleMobile : styles.title}
             truncate
           >
             {isMobile ? "Activity Stream" : "Live Activity Stream"}
@@ -107,20 +91,9 @@ export const DashboardFullLogStream: React.FC = () => {
             </ActionIcon>
           </Tooltip>
 
-          <Box style={{ width: 1, height: 12, background: "var(--vpn-border)", margin: "0 1px" }} />
+          <Box className={styles.divider} />
 
-          <UnstyledButton
-            onClick={() => setActiveTab("logs")}
-            style={{
-              fontSize: 10.5,
-              color: "var(--vpn-cyan)",
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              fontWeight: 500,
-              flexShrink: 0,
-            }}
-          >
+          <UnstyledButton onClick={() => setActiveTab("logs")} className={styles.openButton}>
             {isMobile ? "Console" : "Open Full Console"} <IconArrowUpRight size={12} />
           </UnstyledButton>
         </Group>
@@ -129,32 +102,10 @@ export const DashboardFullLogStream: React.FC = () => {
       {/* Terminal View Body */}
       <Box
         ref={logContainerRef}
-        style={{
-          background: "rgba(10, 15, 29, 0.88)",
-          borderRadius: 8,
-          border: "1px solid rgba(255, 255, 255, 0.06)",
-          padding: isMobile ? "6px 8px" : "8px 12px",
-          flex: 1,
-          minHeight: 140,
-          overflowY: "auto",
-          overflowX: "hidden",
-          fontFamily: "var(--font-mono, monospace)",
-          display: "flex",
-          flexDirection: "column",
-          gap: isMobile ? 3 : 4,
-        }}
+        className={isMobile ? styles.terminalBodyMobile : styles.terminalBody}
       >
         {recentLogs.length === 0 ? (
-          <Box
-            style={{
-              padding: "20px",
-              textAlign: "center",
-              color: "var(--vpn-text-muted)",
-              fontSize: 11,
-            }}
-          >
-            No log activity captured yet.
-          </Box>
+          <Box className={styles.emptyLogs}>No log activity captured yet.</Box>
         ) : (
           recentLogs.map((log) => {
             const badgeStyle = getLevelBadge(log.level);
@@ -164,26 +115,7 @@ export const DashboardFullLogStream: React.FC = () => {
               : log.timestamp;
 
             return (
-              <Box
-                key={log.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: isMobile ? 5 : 8,
-                  padding: "2.5px 4px",
-                  borderRadius: 4,
-                  fontSize: isMobile ? 10.5 : 11.5,
-                  lineHeight: 1.35,
-                  transition: "background 0.1s ease",
-                  width: "100%",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
+              <Box key={log.id} className={isMobile ? styles.logRowMobile : styles.logRow}>
                 {/* Monospace Timestamp */}
                 <Text
                   size={isMobile ? "9px" : "10px"}
@@ -220,16 +152,9 @@ export const DashboardFullLogStream: React.FC = () => {
                   <Text
                     size={isMobile ? "9px" : "10px"}
                     c="dimmed"
-                    className="font-mono"
+                    className={`font-mono ${styles.sourcePill}`}
                     style={{
-                      background: "rgba(255, 255, 255, 0.04)",
-                      padding: "0.5px 4px",
-                      borderRadius: 3,
-                      flexShrink: 0,
                       maxWidth: isMobile ? 80 : "none",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
                     }}
                   >
                     {log.source}
@@ -237,16 +162,7 @@ export const DashboardFullLogStream: React.FC = () => {
                 )}
 
                 {/* Log Message */}
-                <Text
-                  size={isMobile ? "10px" : "xs"}
-                  style={{
-                    color: "#f1f5f9",
-                    flex: 1,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+                <Text size={isMobile ? "10px" : "xs"} className={styles.logMessage}>
                   {log.message}
                 </Text>
               </Box>

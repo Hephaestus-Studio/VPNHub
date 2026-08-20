@@ -1,0 +1,51 @@
+.root {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.summaryCard {
+  padding: 16px;
+  background: rgba(17, 24, 39, 0.75);
+}
+
+.summaryHeader {
+  text-transform: uppercase;
+}
+
+.daemonValue {
+  color: #34d399;
+  margin-top: 4px;
+}
+
+.kernelValue {
+  color: #38bdf8;
+  margin-top: 4px;
+}
+
+.firewallValue {
+  color: #ffffff;
+  margin-top: 4px;
+}
+
+.tablePanel {
+  background: rgba(17, 24, 39, 0.75);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.tableHeader {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.diagName {
+  color: #ffffff;
+}

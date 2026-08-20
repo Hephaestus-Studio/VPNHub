@@ -1,0 +1,101 @@
+.root {
+  width: 320px;
+  height: 440px;
+  background: rgba(11, 15, 25, 0.98);
+  border: 1px solid var(--vpn-border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  margin: auto;
+}
+
+.title {
+  color: #ffffff;
+}
+
+.powerButtonBase {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.powerButtonConnected {
+  background: linear-gradient(135deg, #065f46, #10b981);
+  border: 3px solid #34d399;
+}
+
+.powerButtonConnecting {
+  background: linear-gradient(135deg, #78350f, #f59e0b);
+  border: 3px solid #fbbf24;
+}
+
+.powerButtonIdle {
+  background: linear-gradient(135deg, #1f2937, #111827);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.profileLabelBox {
+  text-align: center;
+}
+
+.profileName {
+  color: #ffffff;
+}
+
+.telemetryPill {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid var(--vpn-border);
+}
+
+.downloadSpeed {
+  color: #22d3ee;
+}
+
+.pingText {
+  color: #34d399;
+}
+
+.pingTextRight {
+  text-align: right;
+}
+
+.recentNodesHeader {
+  text-transform: uppercase;
+}
+
+.nodeItemBase {
+  padding: 6px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.nodeItemActive {
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.nodeItemInactive {
+  background: rgba(31, 41, 55, 0.4);
+  border: 1px solid var(--vpn-border);
+}
+
+.nodeName {
+  color: #ffffff;
+  max-width: 160px;
+}

@@ -1,0 +1,34 @@
+.modalContent {
+  background: rgba(17, 24, 39, 0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--vpn-border);
+  border-radius: 12px;
+}
+
+.modalHeader {
+  background: transparent;
+  border-bottom: 1px solid var(--vpn-border);
+}
+
+.modalTitle {
+  color: #ffffff;
+}
+
+.profileBox {
+  background: rgba(31, 41, 55, 0.5);
+  border: 1px solid var(--vpn-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.profileName {
+  color: #ffffff;
+}
+
+.totpInput {
+  font-size: 16px;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  text-align: center;
+  border-color: var(--vpn-cyan);
+}

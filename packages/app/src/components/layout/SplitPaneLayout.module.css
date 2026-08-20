@@ -1,0 +1,52 @@
+.container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.sidebarWrapper {
+  height: 100%;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.splitter {
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  position: relative;
+  z-index: 40;
+  margin-left: -3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.splitterLine {
+  width: 1px;
+  height: 100%;
+  background: var(--vpn-border);
+  transition: all 0.15s ease;
+}
+
+.splitterLineDragging {
+  width: 2px;
+  height: 100%;
+  background: var(--vpn-cyan);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.85);
+  transition: all 0.15s ease;
+}
+
+.mainWorkspace {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  background: var(--vpn-bg-base);
+  position: relative;
+}

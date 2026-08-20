@@ -25,6 +25,7 @@ import {
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { invoke } from "@tauri-apps/api/core";
 import { VpnProfile, ProtocolType } from "../../types/vpn";
+import styles from "./NewProfileHubModal.module.css";
 
 interface NewProfileHubModalProps {
   opened: boolean;
@@ -269,6 +270,10 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
     reader.readAsText(file);
   };
 
+  let dropzoneClass = styles.dropzoneIdle;
+  if (isLoading) dropzoneClass = styles.dropzoneLoading;
+  else if (isDraggingOver) dropzoneClass = styles.dropzoneDragging;
+
   return (
     <Modal
       opened={opened}
@@ -276,28 +281,17 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
       title={
         <Group gap="xs">
           <IconFileUpload size={20} color="var(--vpn-cyan)" />
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             Add or Import VPN Profile
           </Text>
         </Group>
       }
       size="lg"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.98)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 14,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-          paddingBottom: 12,
-        },
-        body: {
-          padding: "20px",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
+        body: styles.modalBody,
       }}
     >
       <Stack gap="lg">
@@ -306,7 +300,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
             icon={<IconAlertCircle size={16} />}
             color="red"
             variant="light"
-            styles={{ root: { padding: "8px 12px" } }}
+            style={{ padding: "8px 12px" }}
           >
             {error}
           </Alert>
@@ -315,12 +309,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         {/* SECTION 1: IMPORT FROM FILE */}
         <Box>
           <Group justify="space-between" align="center" mb="xs">
-            <Text
-              size="xs"
-              fw={600}
-              c="dimmed"
-              style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
-            >
+            <Text size="xs" fw={600} c="dimmed" className={styles.sectionHeader}>
               Option 1: Import Configuration File
             </Text>
             {isDraggingOver && (
@@ -342,69 +331,27 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
             }}
             maxSize={10 * 1024 * 1024}
             disabled={isLoading}
-            style={{
-              background: isLoading
-                ? "rgba(6, 182, 212, 0.08)"
-                : isDraggingOver
-                  ? "rgba(6, 182, 212, 0.16)"
-                  : "rgba(31, 41, 55, 0.45)",
-              border: isDraggingOver
-                ? "2px dashed var(--vpn-cyan)"
-                : isLoading
-                  ? "2px solid rgba(6, 182, 212, 0.6)"
-                  : "2px dashed rgba(6, 182, 212, 0.35)",
-              boxShadow: isDraggingOver
-                ? "0 0 30px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(6, 182, 212, 0.15)"
-                : "none",
-              transform: isDraggingOver ? "scale(1.015)" : "none",
-              borderRadius: 12,
-              padding: "28px 20px",
-              textAlign: "center",
-              cursor: isLoading ? "wait" : "pointer",
-              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
+            className={dropzoneClass}
           >
             {isLoading ? (
               <Stack align="center" gap="sm" py="xs">
-                <Box
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: "50%",
-                    background: "rgba(6, 182, 212, 0.2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+                <Box className={styles.loadingIconBox}>
                   <Loader size="md" color="cyan" />
                 </Box>
-                <Text size="sm" fw={700} style={{ color: "var(--vpn-cyan)" }}>
+                <Text size="sm" fw={700} className={styles.loadingTitle}>
                   Analyzing & Parsing Configuration...
                 </Text>
                 <Text size="xs" c="dimmed">
                   Extracting TLS certificates, keys & tunnel endpoints from{" "}
-                  <span style={{ color: "#fff", fontFamily: "monospace" }}>
-                    {loadingFileName || "config"}
-                  </span>
+                  <span className={styles.loadingFileName}>{loadingFileName || "config"}</span>
                 </Text>
               </Stack>
             ) : (
               <Stack align="center" gap="xs">
                 <Box
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: "50%",
-                    background: isDraggingOver
-                      ? "rgba(6, 182, 212, 0.3)"
-                      : "rgba(6, 182, 212, 0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transform: isDraggingOver ? "scale(1.15)" : "none",
-                    transition: "transform 0.2s ease, background 0.2s ease",
-                  }}
+                  className={
+                    isDraggingOver ? styles.dropzoneIconBoxDragging : styles.dropzoneIconBox
+                  }
                 >
                   {isDraggingOver ? (
                     <IconDownload size={28} color="var(--vpn-cyan)" />
@@ -412,20 +359,20 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                     <IconFileTypeTxt size={26} color="var(--vpn-cyan)" />
                   )}
                 </Box>
-                <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                <Text size="sm" fw={600} className={styles.dropzoneText}>
                   {isDraggingOver ? (
-                    <span style={{ color: "var(--vpn-cyan)" }}>Drop file now to import</span>
+                    <span className={styles.cyanHighlight}>Drop file now to import</span>
                   ) : (
                     <>
-                      Drag & Drop <span style={{ color: "var(--vpn-cyan)" }}>.ovpn</span> or{" "}
-                      <span style={{ color: "var(--vpn-cyan)" }}>.conf</span> file here
+                      Drag & Drop <span className={styles.cyanHighlight}>.ovpn</span> or{" "}
+                      <span className={styles.cyanHighlight}>.conf</span> file here
                     </>
                   )}
                 </Text>
                 <Text size="xs" c="dimmed">
                   Auto-detects OpenVPN 2.x/3.x bundles and WireGuard configs up to 10MB
                 </Text>
-                <Text size="11px" c="cyan" style={{ textDecoration: "underline" }}>
+                <Text size="11px" c="cyan" className={styles.browseLink}>
                   or click to browse files from your computer
                 </Text>
               </Stack>
@@ -435,7 +382,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
 
         <Divider
           label={
-            <Text size="xs" fw={600} c="dimmed" style={{ letterSpacing: "0.05em" }}>
+            <Text size="xs" fw={600} c="dimmed" className={styles.dividerText}>
               OR CONFIGURE MANUALLY
             </Text>
           }
@@ -445,60 +392,26 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
 
         {/* SECTION 2: CREATE MANUALLY BY PROTOCOL */}
         <Box>
-          <Text
-            size="xs"
-            fw={600}
-            c="dimmed"
-            mb="xs"
-            style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
-          >
+          <Text size="xs" fw={600} c="dimmed" mb="xs" className={styles.sectionHeader}>
             Option 2: Create Connection Manually
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
             {/* WireGuard Manual Card */}
             <Paper
-              p="md"
               onClick={() => {
                 onClose();
                 onSelectManualCreate("wireguard");
               }}
-              style={{
-                background: "rgba(6, 182, 212, 0.04)",
-                border: "1px solid rgba(6, 182, 212, 0.2)",
-                borderRadius: 12,
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(6, 182, 212, 0.1)";
-                e.currentTarget.style.borderColor = "var(--vpn-cyan)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(6, 182, 212, 0.04)";
-                e.currentTarget.style.borderColor = "rgba(6, 182, 212, 0.2)";
-                e.currentTarget.style.transform = "none";
-              }}
+              className={styles.wireguardCard}
             >
               <Group justify="space-between" align="flex-start" wrap="nowrap">
                 <Group gap="sm" align="flex-start">
-                  <Box
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 8,
-                      background: "rgba(6, 182, 212, 0.15)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
+                  <Box className={styles.wireguardIconBox}>
                     <IconBolt size={20} color="var(--vpn-cyan)" />
                   </Box>
                   <Box>
                     <Group gap="xs" align="center" mb={2}>
-                      <Text fw={700} size="sm" style={{ color: "#fff" }}>
+                      <Text fw={700} size="sm" className={styles.cardTitle}>
                         WireGuard
                       </Text>
                       <Badge size="xs" color="cyan" variant="light">
@@ -510,58 +423,26 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                     </Text>
                   </Box>
                 </Group>
-                <IconChevronRight
-                  size={16}
-                  color="rgba(255, 255, 255, 0.3)"
-                  style={{ marginTop: 4 }}
-                />
+                <IconChevronRight size={16} className={styles.chevronIcon} />
               </Group>
             </Paper>
 
             {/* OpenVPN Manual Card */}
             <Paper
-              p="md"
               onClick={() => {
                 onClose();
                 onSelectManualCreate("openvpn");
               }}
-              style={{
-                background: "rgba(16, 185, 129, 0.04)",
-                border: "1px solid rgba(16, 185, 129, 0.2)",
-                borderRadius: 12,
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                e.currentTarget.style.borderColor = "var(--vpn-emerald)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(16, 185, 129, 0.04)";
-                e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.2)";
-                e.currentTarget.style.transform = "none";
-              }}
+              className={styles.openvpnCard}
             >
               <Group justify="space-between" align="flex-start" wrap="nowrap">
                 <Group gap="sm" align="flex-start">
-                  <Box
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 8,
-                      background: "rgba(16, 185, 129, 0.15)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
+                  <Box className={styles.openvpnIconBox}>
                     <IconShieldLock size={20} color="var(--vpn-emerald)" />
                   </Box>
                   <Box>
                     <Group gap="xs" align="center" mb={2}>
-                      <Text fw={700} size="sm" style={{ color: "#fff" }}>
+                      <Text fw={700} size="sm" className={styles.cardTitle}>
                         OpenVPN
                       </Text>
                       <Badge size="xs" color="teal" variant="light">
@@ -573,11 +454,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                     </Text>
                   </Box>
                 </Group>
-                <IconChevronRight
-                  size={16}
-                  color="rgba(255, 255, 255, 0.3)"
-                  style={{ marginTop: 4 }}
-                />
+                <IconChevronRight size={16} className={styles.chevronIcon} />
               </Group>
             </Paper>
           </SimpleGrid>

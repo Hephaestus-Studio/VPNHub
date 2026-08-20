@@ -42,7 +42,7 @@ interface VpnStoreState {
   mfaPromptProfile: VpnProfile | null;
 
   // Actions
-  loadStorage: () => Promise<void>;
+  loadStorage: (force?: boolean) => Promise<void>;
   setActiveTab: (tab: NavigationTab) => void;
   setSpotlightOpen: (open: boolean) => void;
   setCompactWidget: (compact: boolean) => void;
@@ -79,6 +79,7 @@ interface VpnStoreState {
 
 let telemetryInterval: ReturnType<typeof setInterval> | null = null;
 let ipcSubscribed = false;
+let isStorageLoading = false;
 
 const setupIpcSubscriptions = async (
   get: () => VpnStoreState,
@@ -264,166 +265,174 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
   ipRules: [],
   diagnostics: INITIAL_DIAGNOSTICS_DATA,
 
-  loadStorage: async () => {
-    const snapshot = await IpcBridge.loadAllStorage();
-    if (!snapshot) return;
+  loadStorage: async (force = false) => {
+    if (!force && (get().isStorageLoaded || isStorageLoading)) return;
+    isStorageLoading = true;
 
-    const mappedProfiles: VpnProfile[] = snapshot.profiles.map((p) => {
-      const secret = snapshot.secrets ? snapshot.secrets[p.id] : undefined;
+    try {
+      const snapshot = await IpcBridge.loadAllStorage();
+      if (!snapshot) return;
 
-      let username = p.credentials?.username;
-      let password: string | undefined = undefined;
-      let passwordMode: "static" | "dynamic_prompt" | "totp_auto" =
-        (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") || "static";
-      let totpSecret: string | undefined = undefined;
-      let totpFormat: "append" | "prefix" | "totp_only" =
-        (p.credentials?.totp_format as "append" | "prefix" | "totp_only") || "append";
-      let privateKey: string | undefined = undefined;
-      let presharedKey: string | undefined = undefined;
-      let rawConfig: string | undefined = undefined;
+      const mappedProfiles: VpnProfile[] = snapshot.profiles.map((p) => {
+        const secret = snapshot.secrets ? snapshot.secrets[p.id] : undefined;
 
-      let caCert: string | undefined = undefined;
-      let clientCert: string | undefined = undefined;
-      let clientKey: string | undefined = undefined;
-      let tlsAuthKey: string | undefined = undefined;
-      let tlsCryptKey: string | undefined = undefined;
-      let keyDirection: string | undefined = undefined;
-      let remoteCertTlsServer: boolean | undefined = undefined;
-      let renegSec: number | undefined = undefined;
+        let username = p.credentials?.username;
+        let password: string | undefined = undefined;
+        let passwordMode: "static" | "dynamic_prompt" | "totp_auto" =
+          (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") || "static";
+        let totpSecret: string | undefined = undefined;
+        let totpFormat: "append" | "prefix" | "totp_only" =
+          (p.credentials?.totp_format as "append" | "prefix" | "totp_only") || "append";
+        let privateKey: string | undefined = undefined;
+        let presharedKey: string | undefined = undefined;
+        let rawConfig: string | undefined = undefined;
 
-      if (secret) {
-        if (secret.type === "wireguard") {
-          privateKey = secret.private_key;
-          presharedKey = secret.preshared_key;
-        } else if (secret.type === "user_password") {
-          username = secret.username || username;
-          password = secret.password;
-          totpSecret = secret.totp_secret;
-          totpFormat = (secret.totp_format as "append" | "prefix" | "totp_only") || totpFormat;
-          caCert = secret.ca_cert;
-          clientCert = secret.client_cert;
-          clientKey = secret.client_key;
-          tlsAuthKey = secret.tls_auth_key;
-          tlsCryptKey = secret.tls_crypt_key;
-          keyDirection = secret.key_direction;
-          remoteCertTlsServer = secret.remote_cert_tls_server;
-          renegSec = secret.reneg_sec;
-          rawConfig = secret.ovpn_config;
-          if (totpSecret) {
-            passwordMode =
-              (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") ||
-              "totp_auto";
-          }
-        } else if (secret.type === "raw_ovpn_config") {
-          rawConfig = secret.config_content;
-          username = secret.username || username;
-          password = secret.password;
-          totpSecret = secret.totp_secret;
-          totpFormat = (secret.totp_format as "append" | "prefix" | "totp_only") || totpFormat;
-          if (totpSecret) {
-            passwordMode =
-              (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") ||
-              "totp_auto";
+        let caCert: string | undefined = undefined;
+        let clientCert: string | undefined = undefined;
+        let clientKey: string | undefined = undefined;
+        let tlsAuthKey: string | undefined = undefined;
+        let tlsCryptKey: string | undefined = undefined;
+        let keyDirection: string | undefined = undefined;
+        let remoteCertTlsServer: boolean | undefined = undefined;
+        let renegSec: number | undefined = undefined;
+
+        if (secret) {
+          if (secret.type === "wireguard") {
+            privateKey = secret.private_key;
+            presharedKey = secret.preshared_key;
+          } else if (secret.type === "user_password") {
+            username = secret.username || username;
+            password = secret.password;
+            totpSecret = secret.totp_secret;
+            totpFormat = (secret.totp_format as "append" | "prefix" | "totp_only") || totpFormat;
+            caCert = secret.ca_cert;
+            clientCert = secret.client_cert;
+            clientKey = secret.client_key;
+            tlsAuthKey = secret.tls_auth_key;
+            tlsCryptKey = secret.tls_crypt_key;
+            keyDirection = secret.key_direction;
+            remoteCertTlsServer = secret.remote_cert_tls_server;
+            renegSec = secret.reneg_sec;
+            rawConfig = secret.ovpn_config;
+            if (totpSecret) {
+              passwordMode =
+                (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") ||
+                "totp_auto";
+            }
+          } else if (secret.type === "raw_ovpn_config") {
+            rawConfig = secret.config_content;
+            username = secret.username || username;
+            password = secret.password;
+            totpSecret = secret.totp_secret;
+            totpFormat = (secret.totp_format as "append" | "prefix" | "totp_only") || totpFormat;
+            if (totpSecret) {
+              passwordMode =
+                (p.credentials?.password_mode as "static" | "dynamic_prompt" | "totp_auto") ||
+                "totp_auto";
+            }
           }
         }
-      }
 
-      return {
-        id: p.id,
-        name: p.name,
-        serverCountry: p.server_country,
-        serverCity: "",
-        serverFlag: p.server_flag,
-        serverHost: p.server_host,
-        serverPort: p.server_port,
-        protocol: p.protocol as VpnProfile["protocol"],
-        virtualIp: p.virtual_ip,
-        tags: p.tags,
-        isFavorite: p.is_favorite,
-        pingMs: p.ping_ms,
-        lastConnected: p.last_connected,
-        useOnlyForNetworkResources: p.intranet_only ?? false,
-        customSubnets: p.custom_subnets ?? [],
-        credentials: {
-          username,
-          password,
-          passwordMode,
-          totpSecret,
-          totpFormat,
-          privateKey,
-          presharedKey,
-          caCert,
-          clientCert,
-          clientKey,
-          tlsAuthKey,
-          tlsCryptKey,
-          keyDirection,
-          remoteCertTlsServer,
-          renegSec,
-          hasPassword: Boolean(password || p.credentials?.has_password),
-          hasPrivateKey: Boolean(privateKey || p.credentials?.has_private_key),
-          hasCert: Boolean(clientCert || p.credentials?.has_client_cert),
-          hasCaCert: Boolean(caCert || p.credentials?.has_ca_cert),
-          hasTlsAuth: Boolean(tlsAuthKey || p.credentials?.has_tls_auth),
-          hasTlsCrypt: Boolean(tlsCryptKey || p.credentials?.has_tls_crypt),
-        },
-        rawConfig,
+        return {
+          id: p.id,
+          name: p.name,
+          serverCountry: p.server_country,
+          serverCity: "",
+          serverFlag: p.server_flag,
+          serverHost: p.server_host,
+          serverPort: p.server_port,
+          protocol: p.protocol as VpnProfile["protocol"],
+          virtualIp: p.virtual_ip,
+          tags: p.tags,
+          isFavorite: p.is_favorite,
+          pingMs: p.ping_ms,
+          lastConnected: p.last_connected,
+          useOnlyForNetworkResources: p.intranet_only ?? false,
+          customSubnets: p.custom_subnets ?? [],
+          credentials: {
+            username,
+            password,
+            passwordMode,
+            totpSecret,
+            totpFormat,
+            privateKey,
+            presharedKey,
+            caCert,
+            clientCert,
+            clientKey,
+            tlsAuthKey,
+            tlsCryptKey,
+            keyDirection,
+            remoteCertTlsServer,
+            renegSec,
+            hasPassword: Boolean(password || p.credentials?.has_password),
+            hasPrivateKey: Boolean(privateKey || p.credentials?.has_private_key),
+            hasCert: Boolean(clientCert || p.credentials?.has_client_cert),
+            hasCaCert: Boolean(caCert || p.credentials?.has_ca_cert),
+            hasTlsAuth: Boolean(tlsAuthKey || p.credentials?.has_tls_auth),
+            hasTlsCrypt: Boolean(tlsCryptKey || p.credentials?.has_tls_crypt),
+          },
+          rawConfig,
+        };
+      });
+
+      const mappedSettings: SecuritySettings = {
+        killSwitch: snapshot.security_settings.kill_switch,
+        dnsProtection: snapshot.security_settings.dns_protection,
+        customDnsProvider:
+          (snapshot.security_settings
+            .custom_dns_provider as SecuritySettings["customDnsProvider"]) || "cloudflare",
+        customDnsServers: snapshot.security_settings.custom_dns_servers || ["1.1.1.1", "1.0.0.1"],
+        ipv6LeakProtection: snapshot.security_settings.ipv6_leak_protection,
+        webRtcProtection: snapshot.security_settings.webrtc_leak_protection,
+        lanBypass: snapshot.security_settings.lan_traffic_bypass,
+        defaultUseOnlyForNetworkResources:
+          snapshot.security_settings.default_intranet_only ?? false,
       };
-    });
 
-    const mappedSettings: SecuritySettings = {
-      killSwitch: snapshot.security_settings.kill_switch,
-      dnsProtection: snapshot.security_settings.dns_protection,
-      customDnsProvider:
-        (snapshot.security_settings.custom_dns_provider as SecuritySettings["customDnsProvider"]) ||
-        "cloudflare",
-      customDnsServers: snapshot.security_settings.custom_dns_servers || ["1.1.1.1", "1.0.0.1"],
-      ipv6LeakProtection: snapshot.security_settings.ipv6_leak_protection,
-      webRtcProtection: snapshot.security_settings.webrtc_leak_protection,
-      lanBypass: snapshot.security_settings.lan_traffic_bypass,
-      defaultUseOnlyForNetworkResources: snapshot.security_settings.default_intranet_only ?? false,
-    };
+      const mappedAppRules: AppRule[] = snapshot.app_rules.map((r) => ({
+        id: r.id,
+        name: r.name,
+        icon: r.icon,
+        path: r.path,
+        mode: r.mode,
+        enabled: r.enabled,
+      }));
 
-    const mappedAppRules: AppRule[] = snapshot.app_rules.map((r) => ({
-      id: r.id,
-      name: r.name,
-      icon: r.icon,
-      path: r.path,
-      mode: r.mode,
-      enabled: r.enabled,
-    }));
+      const mappedIpRules: IpDomainRule[] = snapshot.ip_rules.map((r) => ({
+        id: r.id,
+        target: r.target,
+        type: r.type,
+        description: r.description,
+        mode: r.mode,
+        enabled: r.enabled,
+      }));
 
-    const mappedIpRules: IpDomainRule[] = snapshot.ip_rules.map((r) => ({
-      id: r.id,
-      target: r.target,
-      type: r.type,
-      description: r.description,
-      mode: r.mode,
-      enabled: r.enabled,
-    }));
+      const activeId = mappedProfiles.find((p) => p.isFavorite)?.id || mappedProfiles[0]?.id || "";
 
-    const activeId = mappedProfiles.find((p) => p.isFavorite)?.id || mappedProfiles[0]?.id || "";
+      set({
+        profiles: mappedProfiles,
+        securitySettings: mappedSettings,
+        appRules: mappedAppRules,
+        ipRules: mappedIpRules,
+        activeProfileId: activeId,
+        isStorageLoaded: true,
+      });
 
-    set({
-      profiles: mappedProfiles,
-      securitySettings: mappedSettings,
-      appRules: mappedAppRules,
-      ipRules: mappedIpRules,
-      activeProfileId: activeId,
-      isStorageLoaded: true,
-    });
+      get().addLog(
+        "INFO",
+        "PERSISTENCE",
+        `Loaded ${mappedProfiles.length} profiles and encrypted vault keys from disk`
+      );
 
-    get().addLog(
-      "INFO",
-      "PERSISTENCE",
-      `Loaded ${mappedProfiles.length} profiles and encrypted vault keys from disk`
-    );
+      // Initialize real-time daemon IPC subscriptions
+      await setupIpcSubscriptions(get, set);
 
-    // Initialize real-time daemon IPC subscriptions
-    await setupIpcSubscriptions(get, set);
-
-    // Trigger initial background ping for all profiles
-    get().pingAllProfiles();
+      // Trigger initial background ping for all profiles
+      get().pingAllProfiles();
+    } finally {
+      isStorageLoading = false;
+    }
   },
 
   setActiveTab: (tab) => set({ activeTab: tab }),

@@ -1,0 +1,189 @@
+.root {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.title {
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.searchGroup {
+  flex: 1;
+  min-width: 260px;
+}
+
+.searchInput {
+  flex: 1;
+  max-width: 360px;
+}
+
+.searchInputField {
+  background: rgba(17, 24, 39, 0.75);
+  border-color: var(--vpn-border);
+  color: #ffffff;
+}
+
+.segmentedRoot {
+  background: rgba(17, 24, 39, 0.75);
+  border: 1px solid var(--vpn-border);
+}
+
+.terminalFrame {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 12, 20, 0.95);
+  border: 1px solid var(--vpn-border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.terminalHeader {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid var(--vpn-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.dotRed {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.dotYellow {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+.dotGreen {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.terminalBody {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  user-select: text;
+  font-family:
+    JetBrains Mono,
+    Fira Code,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.emptyBox {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--vpn-text-muted);
+  gap: 8px;
+  user-select: none;
+}
+
+.emptyIcon {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.logRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+  position: relative;
+}
+
+.logRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.timestamp {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  flex-shrink: 0;
+  user-select: text;
+}
+
+.levelPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 16px;
+}
+
+.sourceTag {
+  color: var(--vpn-cyan);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.logMessage {
+  font-size: 11.5px;
+  word-break: break-all;
+  flex: 1;
+}
+
+.messageError {
+  color: #fca5a5;
+}
+
+.messageWarn {
+  color: #fde68a;
+}
+
+.messageInfo {
+  color: #e5e7eb;
+}
+
+.copyRowBtn {
+  opacity: 0.3;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+
+.copyRowBtn:hover {
+  opacity: 1;
+}
+
+.scrollButton {
+  position: absolute;
+  bottom: 12px;
+  right: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}

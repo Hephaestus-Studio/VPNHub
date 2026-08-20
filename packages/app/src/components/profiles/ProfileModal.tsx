@@ -32,6 +32,7 @@ import { useVpnStore } from "../../state/useVpnStore";
 import { VpnProfile, ProtocolType } from "../../types/vpn";
 import { TotpGenerator } from "../../utils/totp";
 import { CertificateManagerModal } from "./CertificateManagerModal";
+import styles from "./ProfileModal.module.css";
 
 interface ProfileModalProps {
   opened: boolean;
@@ -274,7 +275,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           ) : (
             <IconShieldLock size={20} color="var(--vpn-emerald)" />
           )}
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             {isEdit
               ? `Edit ${isWireGuard ? "WireGuard" : "OpenVPN"} Profile`
               : `Create ${isWireGuard ? "WireGuard" : "OpenVPN"} Profile`}
@@ -290,25 +291,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       }
       size="lg"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.96)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 12,
-          maxHeight: "88vh",
-          display: "flex",
-          flexDirection: "column",
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-          paddingBottom: 12,
-        },
-        body: {
-          overflowY: "auto",
-          padding: "16px 20px",
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
+        body: styles.modalBody,
       }}
     >
       <Stack gap="lg">
@@ -316,7 +302,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         <Box>
           <Group gap="xs" mb="xs">
             <IconWorld size={16} color="var(--vpn-cyan)" />
-            <Text fw={600} size="sm" style={{ color: "#fff" }}>
+            <Text fw={600} size="sm" className={styles.sectionTitle}>
               Server & Connection Settings
             </Text>
           </Group>
@@ -334,7 +320,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
             {!isWireGuard && (
               <Box>
-                <Text size="xs" fw={500} mb={4} style={{ color: "#fff" }}>
+                <Text size="xs" fw={500} mb={4} className={styles.fieldLabel}>
                   Transport Protocol
                 </Text>
                 <SegmentedControl
@@ -373,8 +359,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     Number(val) || (isWireGuard ? 51820 : protocol === "openvpn_tcp" ? 443 : 1194)
                   )
                 }
-                className="font-mono"
-                style={{ maxWidth: 130 }}
+                className={`font-mono ${styles.portInput}`}
               />
             </Group>
 
@@ -392,16 +377,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
             {/* Section: Routing & Split Gateway (Intranet-Only) */}
             <Box
-              style={{
-                background: "rgba(17, 24, 39, 0.6)",
-                border: useOnlyForNetworkResources
-                  ? "1px solid rgba(6, 182, 212, 0.3)"
-                  : "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: 10,
-                padding: "12px 14px",
-                marginTop: "4px",
-                transition: "all 0.2s ease",
-              }}
+              className={useOnlyForNetworkResources ? styles.intranetBoxActive : styles.intranetBox}
             >
               <Group
                 justify="space-between"
@@ -411,7 +387,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <Group gap="xs">
                   <IconNetwork size={18} color="var(--vpn-cyan)" />
                   <Box>
-                    <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                    <Text size="xs" fw={600} className={styles.sectionTitle}>
                       Use this connection only for resources on its network
                     </Text>
                     <Text size="10px" c="dimmed">
@@ -438,7 +414,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     className="font-mono"
                     description="Private subnets to route into this VPN tunnel (comma-separated)"
                   />
-                  <Text size="10px" c="dimmed" style={{ fontStyle: "italic" }}>
+                  <Text size="10px" c="dimmed" className={styles.hintText}>
                     💡 Routes pushed by the VPN server & the assigned tunnel IP are automatically
                     included.
                   </Text>
@@ -455,7 +431,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           <Group justify="space-between" align="center" mb="xs">
             <Group gap="xs">
               <IconKey size={16} color="var(--vpn-cyan)" />
-              <Text fw={600} size="sm" style={{ color: "#fff" }}>
+              <Text fw={600} size="sm" className={styles.sectionTitle}>
                 Keys & Authentication
               </Text>
             </Group>
@@ -465,15 +441,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </Group>
 
           {isWireGuard ? (
-            <Stack
-              gap="sm"
-              style={{
-                background: "rgba(6, 182, 212, 0.04)",
-                border: "1px solid rgba(6, 182, 212, 0.15)",
-                borderRadius: 8,
-                padding: "12px",
-              }}
-            >
+            <Stack gap="sm" className={styles.wireguardKeysBox}>
               <PasswordInput
                 label="WireGuard Private Key (Base64)"
                 placeholder="Client peer private key (e.g. aGVwaGFlc3R1cy...)"
@@ -493,14 +461,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </Stack>
           ) : (
             <Stack gap="sm">
-              <Box
-                style={{
-                  background: "rgba(16, 185, 129, 0.04)",
-                  border: "1px solid rgba(16, 185, 129, 0.15)",
-                  borderRadius: 8,
-                  padding: "12px",
-                }}
-              >
+              <Box className={styles.openvpnAuthBox}>
                 <Stack gap="sm">
                   <TextInput
                     label="Username"
@@ -511,7 +472,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Password / Dynamic 2FA Mode Selector */}
                   <Box>
-                    <Text size="xs" fw={500} mb={4} style={{ color: "#fff" }}>
+                    <Text size="xs" fw={500} mb={4} className={styles.fieldLabel}>
                       Password & 2FA / TOTP Authentication Mode
                     </Text>
                     <SegmentedControl
@@ -565,14 +526,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Auto TOTP Secret Section */}
                   {passwordMode === "totp_auto" && (
-                    <Box
-                      style={{
-                        background: "rgba(6, 182, 212, 0.08)",
-                        border: "1px solid rgba(6, 182, 212, 0.25)",
-                        borderRadius: 8,
-                        padding: 10,
-                      }}
-                    >
+                    <Box className={styles.totpAutoBox}>
                       <Stack gap="xs">
                         <PasswordInput
                           label="TOTP Secret Key (Base32)"
@@ -643,7 +597,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   )}
 
                   {passwordMode === "dynamic_prompt" && (
-                    <Text size="xs" c="dimmed" style={{ fontStyle: "italic" }}>
+                    <Text size="xs" c="dimmed" className={styles.hintText}>
                       💡 Khi bấm Kết Nối, VPNHub sẽ hiển thị hộp thoại xác thực 2FA nhanh để bạn
                       nhập mã OTP động (Google Authenticator / YubiKey).
                     </Text>
@@ -652,22 +606,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               </Box>
 
               {/* Section: TLS & Certificates Summary Card */}
-              <Box
-                style={{
-                  background: "rgba(17, 24, 39, 0.7)",
-                  border: hasPopulatedTls
-                    ? "1px solid rgba(6, 182, 212, 0.25)"
-                    : "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: 10,
-                  padding: "14px 16px",
-                  transition: "all 0.2s ease",
-                }}
-              >
+              <Box className={hasPopulatedTls ? styles.tlsSummaryBoxActive : styles.tlsSummaryBox}>
                 <Group justify="space-between" align="center" mb="xs">
                   <Group gap="xs">
                     <IconCertificate size={18} color="var(--vpn-cyan)" />
                     <Box>
-                      <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                      <Text size="sm" fw={600} className={styles.sectionTitle}>
                         TLS & Certificate Security
                       </Text>
                       <Text size="11px" c="dimmed">
@@ -734,12 +678,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         </Box>
       </Stack>
 
-      <Group
-        justify="flex-end"
-        mt="xl"
-        pt="sm"
-        style={{ borderTop: "1px solid var(--vpn-border)" }}
-      >
+      <Group justify="flex-end" mt="xl" pt="sm" className={styles.modalFooter}>
         <Button variant="subtle" color="gray" onClick={onClose}>
           Cancel
         </Button>

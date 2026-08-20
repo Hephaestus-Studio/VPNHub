@@ -1,0 +1,66 @@
+.root {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.killSwitchPanel {
+  padding: 20px;
+  background: rgba(17, 24, 39, 0.75);
+}
+
+.killSwitchIconBoxActive {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.killSwitchIconBoxInactive {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardTitle {
+  color: #ffffff;
+}
+
+.strictLabel {
+  color: #34d399;
+}
+
+.segmentedRoot {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--vpn-border);
+}
+
+.shieldCard {
+  padding: 16px;
+  background: rgba(17, 24, 39, 0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ipv6StatusBox {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  border: 1px solid var(--vpn-border);
+}

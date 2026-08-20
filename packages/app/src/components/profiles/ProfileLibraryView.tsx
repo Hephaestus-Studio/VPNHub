@@ -30,6 +30,7 @@ import { ProfileCard } from "./ProfileCard";
 import { ProfileModal } from "./ProfileModal";
 import { NewProfileHubModal } from "./NewProfileHubModal";
 import { QrCodeModal } from "./QrCodeModal";
+import styles from "./ProfileLibraryView.module.css";
 
 export const ProfileLibraryView: React.FC = () => {
   const { profiles, activeProfileId, connectionState, connect, disconnect, toggleFavorite } =
@@ -76,20 +77,11 @@ export const ProfileLibraryView: React.FC = () => {
   };
 
   return (
-    <Box
-      style={{
-        padding: "16px",
-        height: "100%",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-      }}
-    >
+    <Box className={styles.root}>
       {/* Header Bar */}
       <Group justify="space-between" align="center">
         <Box>
-          <Text size="xl" fw={700} style={{ color: "#fff", letterSpacing: "-0.02em" }}>
+          <Text size="xl" fw={700} className={styles.title}>
             Profile Library
           </Text>
           <Text size="xs" c="dimmed">
@@ -108,16 +100,7 @@ export const ProfileLibraryView: React.FC = () => {
       </Group>
 
       {/* Controls Bar: Search & Filter Pills & Grid/Table Toggle */}
-      <Box
-        className="glass-panel"
-        style={{
-          padding: "12px",
-          background: "rgba(17, 24, 39, 0.75)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-        }}
-      >
+      <Box className={`glass-panel ${styles.controlsPanel}`}>
         <Group justify="space-between" align="center">
           <TextInput
             placeholder="Search by profile name, IP, country, or tags..."
@@ -126,12 +109,8 @@ export const ProfileLibraryView: React.FC = () => {
             onChange={(e) => setSearch(e.currentTarget.value)}
             style={{ minWidth: 280, flex: 1 }}
             size="xs"
-            styles={{
-              input: {
-                background: "rgba(0, 0, 0, 0.3)",
-                border: "1px solid var(--vpn-border)",
-                color: "#fff",
-              },
+            classNames={{
+              input: styles.searchInput,
             }}
           />
 
@@ -144,7 +123,7 @@ export const ProfileLibraryView: React.FC = () => {
                 value: "grid",
                 label: (
                   <Tooltip label="Grid View" position="bottom" withArrow>
-                    <Center style={{ width: 22, height: 20 }}>
+                    <Center className={styles.toggleCenter}>
                       <IconLayoutGrid size={15} />
                     </Center>
                   </Tooltip>
@@ -154,7 +133,7 @@ export const ProfileLibraryView: React.FC = () => {
                 value: "table",
                 label: (
                   <Tooltip label="Table View" position="bottom" withArrow>
-                    <Center style={{ width: 22, height: 20 }}>
+                    <Center className={styles.toggleCenter}>
                       <IconList size={15} />
                     </Center>
                   </Tooltip>
@@ -180,12 +159,7 @@ export const ProfileLibraryView: React.FC = () => {
               variant={activeFilter === f.id ? "filled" : "subtle"}
               color={activeFilter === f.id ? "cyan" : "gray"}
               onClick={() => setActiveFilter(f.id)}
-              style={{
-                height: 24,
-                padding: "0 10px",
-                fontSize: 11,
-                borderRadius: 20,
-              }}
+              className={styles.filterPill}
             >
               {f.label}
             </Button>
@@ -206,16 +180,9 @@ export const ProfileLibraryView: React.FC = () => {
           ))}
         </SimpleGrid>
       ) : (
-        <Box
-          className="glass-panel"
-          style={{
-            background: "rgba(17, 24, 39, 0.75)",
-            borderRadius: 8,
-            overflow: "hidden",
-          }}
-        >
+        <Box className={`glass-panel ${styles.tablePanel}`}>
           <Table verticalSpacing="xs" highlightOnHover>
-            <Table.Thead style={{ background: "rgba(0, 0, 0, 0.3)" }}>
+            <Table.Thead className={styles.tableHeader}>
               <Table.Tr>
                 <Table.Th style={{ width: 40 }}></Table.Th>
                 <Table.Th>Profile / Location</Table.Th>
@@ -239,21 +206,14 @@ export const ProfileLibraryView: React.FC = () => {
                   [prof.serverCity, prof.serverCountry].filter(Boolean).join(", ") ||
                   "Remote Gateway";
 
+                let rowClass = undefined;
+                if (isConnected) rowClass = styles.rowConnected;
+                else if (isConnecting) rowClass = styles.rowConnecting;
+                else if (isError) rowClass = styles.rowError;
+                else if (isActive) rowClass = styles.rowActive;
+
                 return (
-                  <Table.Tr
-                    key={prof.id}
-                    style={{
-                      background: isConnected
-                        ? "rgba(16, 185, 129, 0.08)"
-                        : isConnecting
-                          ? "rgba(245, 158, 11, 0.08)"
-                          : isError
-                            ? "rgba(239, 68, 68, 0.08)"
-                            : isActive
-                              ? "rgba(6, 182, 212, 0.05)"
-                              : undefined,
-                    }}
-                  >
+                  <Table.Tr key={prof.id} className={rowClass}>
                     <Table.Td style={{ width: 40 }}>
                       <ActionIcon
                         variant="subtle"
@@ -273,7 +233,7 @@ export const ProfileLibraryView: React.FC = () => {
                         <Text size="lg">{prof.serverFlag}</Text>
                         <Box>
                           <Group gap="xs" align="center">
-                            <Text size="sm" fw={600} style={{ color: "#fff" }}>
+                            <Text size="sm" fw={600} className={styles.profileName}>
                               {prof.name}
                             </Text>
                             {isConnected && (
@@ -314,7 +274,7 @@ export const ProfileLibraryView: React.FC = () => {
                     <Table.Td>
                       <Group gap={4}>
                         <IconBolt size={13} color="var(--vpn-emerald)" />
-                        <Text size="xs" fw={700} className="font-mono" style={{ color: "#34d399" }}>
+                        <Text size="xs" fw={700} className={`font-mono ${styles.pingText}`}>
                           {prof.pingMs} ms
                         </Text>
                       </Group>
@@ -328,7 +288,7 @@ export const ProfileLibraryView: React.FC = () => {
                             size="xs"
                             variant="light"
                             color="gray"
-                            style={{ fontSize: 9 }}
+                            className={styles.tagBadge}
                           >
                             {t}
                           </Badge>

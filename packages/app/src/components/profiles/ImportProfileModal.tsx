@@ -3,6 +3,7 @@ import { Modal, Stack, Text, Box, Alert, Group, Badge } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { IconFileTypeTxt, IconAlertCircle, IconBolt, IconShieldLock } from "@tabler/icons-react";
 import { VpnProfile, ProtocolType } from "../../types/vpn";
+import styles from "./ImportProfileModal.module.css";
 
 interface ImportProfileModalProps {
   opened: boolean;
@@ -219,7 +220,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
           ) : (
             <IconShieldLock size={20} color="var(--vpn-emerald)" />
           )}
-          <Text fw={700} size="md" style={{ color: "#fff" }}>
+          <Text fw={700} size="md" className={styles.modalTitle}>
             {isWireGuardExpected ? "Import WireGuard (.conf)" : "Import OpenVPN (.ovpn)"}
           </Text>
           <Badge size="xs" color={isWireGuardExpected ? "cyan" : "teal"} variant="light">
@@ -229,18 +230,9 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
       }
       size="md"
       centered
-      styles={{
-        content: {
-          background: "rgba(17, 24, 39, 0.98)",
-          backdropFilter: "blur(16px)",
-          border: "1px solid var(--vpn-border)",
-          borderRadius: 14,
-        },
-        header: {
-          background: "transparent",
-          borderBottom: "1px solid var(--vpn-border)",
-          paddingBottom: 12,
-        },
+      classNames={{
+        content: styles.modalContent,
+        header: styles.modalHeader,
       }}
     >
       <Stack gap="md">
@@ -249,7 +241,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
             icon={<IconAlertCircle size={16} />}
             color="red"
             variant="light"
-            styles={{ root: { padding: "8px 12px" } }}
+            classNames={{ root: styles.alertRoot }}
           >
             {error}
           </Alert>
@@ -269,38 +261,22 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
                   ".conf",
                 ]
           }
-          style={{
-            background: "rgba(31, 41, 55, 0.4)",
-            border: `2px dashed ${
-              isWireGuardExpected ? "rgba(6, 182, 212, 0.4)" : "rgba(16, 185, 129, 0.4)"
-            }`,
-            borderRadius: 12,
-            padding: "36px 20px",
-            textAlign: "center",
-            cursor: "pointer",
-            transition: "border-color 0.2s, background-color 0.2s",
-          }}
+          className={isWireGuardExpected ? styles.dropzoneWireguard : styles.dropzoneOpenvpn}
         >
           <Stack align="center" gap="sm">
             <Box
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: "50%",
-                background: isWireGuardExpected
-                  ? "rgba(6, 182, 212, 0.15)"
-                  : "rgba(16, 185, 129, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className={
+                isWireGuardExpected
+                  ? styles.dropzoneIconCircleWireguard
+                  : styles.dropzoneIconCircleOpenvpn
+              }
             >
               <IconFileTypeTxt
                 size={30}
                 color={isWireGuardExpected ? "var(--vpn-cyan)" : "var(--vpn-emerald)"}
               />
             </Box>
-            <Text size="sm" fw={600} style={{ color: "#fff" }}>
+            <Text size="sm" fw={600} className={styles.dropzoneTitle}>
               {isWireGuardExpected
                 ? "Drag & Drop WireGuard .conf file here"
                 : "Drag & Drop OpenVPN .ovpn or .conf file here"}
@@ -313,7 +289,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
             <Text
               size="11px"
               c={isWireGuardExpected ? "cyan" : "teal"}
-              style={{ textDecoration: "underline" }}
+              className={styles.browseLink}
             >
               or click to browse from your computer
             </Text>

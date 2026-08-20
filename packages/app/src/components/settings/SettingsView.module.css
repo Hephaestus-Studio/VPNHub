@@ -1,0 +1,30 @@
+.root {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.panel {
+  padding: 16px;
+  background: rgba(17, 24, 39, 0.75);
+}
+
+.cardTitle {
+  color: #ffffff;
+}
+
+.itemTitle {
+  color: #ffffff;
+}
+
+.divider {
+  border-color: var(--vpn-border-subtle);
+}

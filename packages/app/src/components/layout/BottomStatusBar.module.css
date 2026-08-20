@@ -1,0 +1,50 @@
+.root {
+  height: 28px;
+  background: #090d16;
+  border-top: 1px solid var(--vpn-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 11px;
+  color: var(--vpn-text-secondary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background: var(--vpn-border);
+}
+
+.ksTeal {
+  color: #34d399;
+}
+
+.ksRed {
+  color: #f87171;
+}
+
+.ipv6Blocked {
+  color: #38bdf8;
+}
+
+.ipv6Pass {
+  color: #f59e0b;
+}
+
+.dnsSecured {
+  color: #67e8f9;
+}
+
+.interfaceText {
+  color: #ffffff;
+}
+
+.versionBadge {
+  font-size: 9px;
+  height: 16px;
+  padding: 0 4px;
+  border: 1px solid var(--vpn-border);
+}

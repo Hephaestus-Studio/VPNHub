@@ -14,6 +14,7 @@ import {
   IconLayoutSidebarLeftExpand,
 } from "@tabler/icons-react";
 import { useVpnStore, NavigationTab } from "../../state/useVpnStore";
+import styles from "./Sidebar.module.css";
 
 interface NavItem {
   id: NavigationTab;
@@ -43,19 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
   const isCompact = propIsCompact !== undefined ? propIsCompact : isMediaCompact;
 
   return (
-    <Box
-      style={{
-        width: "100%",
-        height: "100%",
-        background: "var(--vpn-bg-surface)",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        padding: isCompact ? "10px 6px" : "10px 8px",
-        overflowX: "hidden",
-        overflowY: "auto",
-      }}
-    >
+    <Box className={isCompact ? styles.rootCompact : styles.root}>
       {/* Top Section: Toggle Button & Navigation List */}
       <Stack gap={3}>
         <Group
@@ -63,19 +52,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
           align="center"
           mb={4}
           pb={4}
-          style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}
+          className={styles.headerGroup}
         >
           {!isCompact && (
-            <Text
-              size="sm"
-              fw={700}
-              style={{
-                color: "#ffffff",
-                fontSize: 13.5,
-                letterSpacing: "0.02em",
-                paddingLeft: 6,
-              }}
-            >
+            <Text size="sm" fw={700} className={styles.headerTitle}>
               Menu
             </Text>
           )}
@@ -89,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
               color="gray"
               size="sm"
               onClick={onToggleCollapse}
-              style={{ color: "var(--vpn-text-secondary)" }}
+              className={styles.collapseButton}
             >
               {isCompact ? (
                 <IconLayoutSidebarLeftExpand size={16} />
@@ -110,21 +90,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
                 : undefined
               : item.badge;
 
+          let btnClass = styles.navButton;
+          if (isCompact) {
+            btnClass = isActive ? styles.navButtonCompactActive : styles.navButtonCompact;
+          } else if (isActive) {
+            btnClass = styles.navButtonActive;
+          }
+
           const buttonContent = (
             <UnstyledButton
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: isCompact ? "center" : "space-between",
-                padding: isCompact ? "10px 0" : "8px 10px",
-                borderRadius: 8,
-                background: isActive ? "rgba(6, 182, 212, 0.12)" : "transparent",
-                border: isActive ? "1px solid rgba(6, 182, 212, 0.25)" : "1px solid transparent",
-                transition: "all 0.15s ease",
-                width: "100%",
-              }}
+              className={btnClass}
             >
               <Group gap="xs" justify={isCompact ? "center" : "flex-start"}>
                 <Icon
@@ -133,14 +110,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
                   stroke={isActive ? 2.2 : 1.8}
                 />
                 {!isCompact && (
-                  <Text
-                    size="sm"
-                    fw={isActive ? 600 : 400}
-                    style={{
-                      color: isActive ? "#fff" : "var(--vpn-text-secondary)",
-                      fontSize: 13,
-                    }}
-                  >
+                  <Text size="sm" className={isActive ? styles.navLabelActive : styles.navLabel}>
                     {item.label}
                   </Text>
                 )}
@@ -151,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
                   size="xs"
                   variant={isActive ? "filled" : "outline"}
                   color={isActive ? "cyan" : "gray"}
-                  style={{ fontSize: 10, padding: "0 5px" }}
+                  className={styles.badge}
                 >
                   {badgeText}
                 </Badge>
@@ -174,31 +144,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
       {/* Bottom Service Info & Support */}
       <Stack gap={8}>
         {!isCompact ? (
-          <Box
-            style={{
-              background: "rgba(31, 41, 55, 0.4)",
-              border: "1px solid var(--vpn-border)",
-              borderRadius: 8,
-              padding: "8px 10px",
-            }}
-          >
+          <Box className={styles.coreCard}>
             <Group justify="space-between" align="center">
               <Group gap="xs">
-                <Box
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 4,
-                    background: "rgba(6, 182, 212, 0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+                <Box className={styles.coreIconBox}>
                   <IconShieldCheck size={14} color="var(--vpn-cyan)" />
                 </Box>
                 <Box>
-                  <Text size="xs" fw={600} style={{ color: "#fff", lineHeight: 1.2 }}>
+                  <Text size="xs" fw={600} className={styles.coreTitle}>
                     VPNHub Core
                   </Text>
                   <Text size="10px" c="dimmed" style={{ lineHeight: 1 }}>
@@ -227,16 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
           onClick={() => {
             window.open("https://github.com/hephaestus-studio/vpnhub", "_blank");
           }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: isCompact ? "center" : "flex-start",
-            gap: 8,
-            padding: "6px 8px",
-            borderRadius: 6,
-            color: "var(--vpn-text-muted)",
-            fontSize: 12,
-          }}
+          className={isCompact ? styles.supportButtonCompact : styles.supportButton}
         >
           <IconLifebuoy size={16} />
           {!isCompact && (

@@ -21,25 +21,19 @@ import {
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import { DnsLeakTestModal } from "./DnsLeakTestModal";
+import styles from "./SecurityHubView.module.css";
 
 export const SecurityHubView: React.FC = () => {
   const { securitySettings, setKillSwitch, updateSecuritySettings } = useVpnStore();
   const [isLeakModalOpen, setLeakModalOpen] = useState(false);
 
+  const isKillSwitchActive = securitySettings.killSwitch !== "off";
+
   return (
-    <Box
-      style={{
-        padding: "16px",
-        height: "100%",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-      }}
-    >
+    <Box className={styles.root}>
       {/* Header */}
       <Box>
-        <Text size="xl" fw={700} style={{ color: "#fff", letterSpacing: "-0.02em" }}>
+        <Text size="xl" fw={700} className={styles.title}>
           Security & Shield Center
         </Text>
         <Text size="xs" c="dimmed">
@@ -48,40 +42,23 @@ export const SecurityHubView: React.FC = () => {
       </Box>
 
       {/* Kill Switch Card */}
-      <Box
-        className="glass-panel"
-        style={{
-          padding: "20px",
-          background: "rgba(17, 24, 39, 0.75)",
-        }}
-      >
+      <Box className={`glass-panel ${styles.killSwitchPanel}`}>
         <Group justify="space-between" align="flex-start" mb="md">
           <Group gap="sm">
             <Box
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                background:
-                  securitySettings.killSwitch !== "off"
-                    ? "rgba(16, 185, 129, 0.15)"
-                    : "rgba(239, 68, 68, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className={
+                isKillSwitchActive
+                  ? styles.killSwitchIconBoxActive
+                  : styles.killSwitchIconBoxInactive
+              }
             >
               <IconShieldLock
                 size={20}
-                color={
-                  securitySettings.killSwitch !== "off"
-                    ? "var(--vpn-emerald)"
-                    : "var(--vpn-crimson)"
-                }
+                color={isKillSwitchActive ? "var(--vpn-emerald)" : "var(--vpn-crimson)"}
               />
             </Box>
             <Box>
-              <Text size="md" fw={700} style={{ color: "#fff" }}>
+              <Text size="md" fw={700} className={styles.cardTitle}>
                 Fail-Closed Kill Switch (Firewall Enforcement)
               </Text>
               <Text size="xs" c="dimmed">
@@ -141,7 +118,7 @@ export const SecurityHubView: React.FC = () => {
               value: "strict",
               label: (
                 <Stack gap={2} align="center" py={4}>
-                  <Text size="xs" fw={600} style={{ color: "#34d399" }}>
+                  <Text size="xs" fw={600} className={styles.strictLabel}>
                     Strict (Fail-Closed)
                   </Text>
                   <Text size="10px" c="dimmed">
@@ -151,11 +128,8 @@ export const SecurityHubView: React.FC = () => {
               ),
             },
           ]}
-          styles={{
-            root: {
-              background: "rgba(0, 0, 0, 0.3)",
-              border: "1px solid var(--vpn-border)",
-            },
+          classNames={{
+            root: styles.segmentedRoot,
           }}
         />
       </Box>
@@ -163,21 +137,12 @@ export const SecurityHubView: React.FC = () => {
       {/* Grid of Security Shields */}
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
         {/* DNS Shield */}
-        <Box
-          className="glass-panel"
-          style={{
-            padding: "16px",
-            background: "rgba(17, 24, 39, 0.75)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
+        <Box className={`glass-panel ${styles.shieldCard}`}>
           <Stack gap="sm">
             <Group justify="space-between">
               <Group gap="xs">
                 <IconLock size={18} color="var(--vpn-cyan)" />
-                <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                <Text size="sm" fw={700} className={styles.cardTitle}>
                   DNS Leak Shield
                 </Text>
               </Group>
@@ -221,21 +186,12 @@ export const SecurityHubView: React.FC = () => {
         </Box>
 
         {/* IPv6 Leak Shield */}
-        <Box
-          className="glass-panel"
-          style={{
-            padding: "16px",
-            background: "rgba(17, 24, 39, 0.75)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
+        <Box className={`glass-panel ${styles.shieldCard}`}>
           <Stack gap="sm">
             <Group justify="space-between">
               <Group gap="xs">
                 <IconWorld size={18} color="var(--vpn-emerald)" />
-                <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                <Text size="sm" fw={700} className={styles.cardTitle}>
                   IPv6 Blackhole Leak Shield
                 </Text>
               </Group>
@@ -253,14 +209,7 @@ export const SecurityHubView: React.FC = () => {
               IPv4 VPN tunnel.
             </Text>
 
-            <Box
-              style={{
-                padding: "8px 12px",
-                background: "rgba(0, 0, 0, 0.25)",
-                borderRadius: 6,
-                border: "1px solid var(--vpn-border)",
-              }}
-            >
+            <Box className={styles.ipv6StatusBox}>
               <Text size="11px" className="font-mono" c="dimmed">
                 Status:{" "}
                 {securitySettings.ipv6LeakProtection
@@ -285,21 +234,12 @@ export const SecurityHubView: React.FC = () => {
         </Box>
 
         {/* WebRTC Shield */}
-        <Box
-          className="glass-panel"
-          style={{
-            padding: "16px",
-            background: "rgba(17, 24, 39, 0.75)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
+        <Box className={`glass-panel ${styles.shieldCard}`}>
           <Stack gap="xs">
             <Group justify="space-between" mb="xs">
               <Group gap="xs">
                 <IconRadioactive size={18} color="var(--vpn-amber)" />
-                <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                <Text size="sm" fw={700} className={styles.cardTitle}>
                   WebRTC STUN / TURN Shield
                 </Text>
               </Group>
@@ -333,21 +273,12 @@ export const SecurityHubView: React.FC = () => {
         </Box>
 
         {/* Smart LAN Access Bypass */}
-        <Box
-          className="glass-panel"
-          style={{
-            padding: "16px",
-            background: "rgba(17, 24, 39, 0.75)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
+        <Box className={`glass-panel ${styles.shieldCard}`}>
           <Stack gap="xs">
             <Group justify="space-between" mb="xs">
               <Group gap="xs">
                 <IconNetwork size={18} color="var(--vpn-cyan)" />
-                <Text size="sm" fw={700} style={{ color: "#fff" }}>
+                <Text size="sm" fw={700} className={styles.cardTitle}>
                   Smart Local Network (LAN) Bypass
                 </Text>
               </Group>

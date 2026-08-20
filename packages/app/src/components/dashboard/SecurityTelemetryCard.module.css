@@ -1,0 +1,73 @@
+.card {
+  padding: 16px;
+  background: rgba(17, 24, 39, 0.75);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 12px;
+}
+
+.title {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+}
+
+.metricBox {
+  background: rgba(31, 41, 55, 0.4);
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--vpn-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.metricLabel {
+  text-transform: uppercase;
+}
+
+.virtualIpConnected {
+  color: #22d3ee;
+}
+
+.publicIpConnected {
+  color: #10b981;
+}
+
+.dnsConnected {
+  color: #fbbf24;
+}
+
+.metricMuted {
+  color: var(--vpn-text-muted);
+}
+
+.killSwitchActive {
+  color: #f43f5e;
+}
+
+.bottomBanner {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--vpn-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bottomBannerConnected {
+  composes: bottomBanner;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.splitActive {
+  color: #34d399;
+}
+
+.badgeSmall {
+  font-size: 9px;
+}

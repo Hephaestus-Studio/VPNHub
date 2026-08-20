@@ -13,6 +13,7 @@ import {
   Divider,
 } from "@mantine/core";
 import { IconDeviceDesktop, IconNetwork, IconDeviceFloppy } from "@tabler/icons-react";
+import styles from "./SettingsView.module.css";
 
 export const SettingsView: React.FC = () => {
   const [autoLaunch, setAutoLaunch] = useState(true);
@@ -31,19 +32,10 @@ export const SettingsView: React.FC = () => {
   };
 
   return (
-    <Box
-      style={{
-        padding: "16px",
-        height: "100%",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-      }}
-    >
+    <Box className={styles.root}>
       <Group justify="space-between" align="center">
         <Box>
-          <Text size="xl" fw={700} style={{ color: "#fff", letterSpacing: "-0.02em" }}>
+          <Text size="xl" fw={700} className={styles.title}>
             Application & Protocol Settings
           </Text>
           <Text size="xs" c="dimmed">
@@ -63,13 +55,10 @@ export const SettingsView: React.FC = () => {
 
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
         {/* App Startup & System */}
-        <Box
-          className="glass-panel"
-          style={{ padding: "16px", background: "rgba(17, 24, 39, 0.75)" }}
-        >
+        <Box className={`glass-panel ${styles.panel}`}>
           <Group gap="xs" mb="sm">
             <IconDeviceDesktop size={18} color="var(--vpn-cyan)" />
-            <Text size="sm" fw={700} style={{ color: "#fff" }}>
+            <Text size="sm" fw={700} className={styles.cardTitle}>
               Desktop Behavior & Tray
             </Text>
           </Group>
@@ -77,7 +66,7 @@ export const SettingsView: React.FC = () => {
           <Stack gap="sm">
             <Group justify="space-between">
               <Box>
-                <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                <Text size="xs" fw={600} className={styles.itemTitle}>
                   Launch at System Startup
                 </Text>
                 <Text size="10px" c="dimmed">
@@ -91,11 +80,11 @@ export const SettingsView: React.FC = () => {
               />
             </Group>
 
-            <Divider style={{ borderColor: "var(--vpn-border-subtle)" }} />
+            <Divider className={styles.divider} />
 
             <Group justify="space-between">
               <Box>
-                <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                <Text size="xs" fw={600} className={styles.itemTitle}>
                   Auto-Connect on Launch
                 </Text>
                 <Text size="10px" c="dimmed">
@@ -109,11 +98,11 @@ export const SettingsView: React.FC = () => {
               />
             </Group>
 
-            <Divider style={{ borderColor: "var(--vpn-border-subtle)" }} />
+            <Divider className={styles.divider} />
 
             <Group justify="space-between">
               <Box>
-                <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                <Text size="xs" fw={600} className={styles.itemTitle}>
                   Minimize to System Tray on Close
                 </Text>
                 <Text size="10px" c="dimmed">
@@ -127,11 +116,11 @@ export const SettingsView: React.FC = () => {
               />
             </Group>
 
-            <Divider style={{ borderColor: "var(--vpn-border-subtle)" }} />
+            <Divider className={styles.divider} />
 
             <Group justify="space-between">
               <Box>
-                <Text size="xs" fw={600} style={{ color: "#fff" }}>
+                <Text size="xs" fw={600} className={styles.itemTitle}>
                   Hardware Acceleration
                 </Text>
                 <Text size="10px" c="dimmed">
@@ -148,13 +137,10 @@ export const SettingsView: React.FC = () => {
         </Box>
 
         {/* Protocol Tuning */}
-        <Box
-          className="glass-panel"
-          style={{ padding: "16px", background: "rgba(17, 24, 39, 0.75)" }}
-        >
+        <Box className={`glass-panel ${styles.panel}`}>
           <Group gap="xs" mb="sm">
             <IconNetwork size={18} color="var(--vpn-emerald)" />
-            <Text size="sm" fw={700} style={{ color: "#fff" }}>
+            <Text size="sm" fw={700} className={styles.cardTitle}>
               Tunnel & MTU Optimization
             </Text>
           </Group>

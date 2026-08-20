@@ -1,0 +1,136 @@
+.root {
+  width: 100%;
+  height: 100%;
+  background: var(--vpn-bg-surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.rootCompact {
+  composes: root;
+  padding: 10px 6px;
+}
+
+.headerGroup {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.headerTitle {
+  color: #ffffff;
+  font-size: 13.5px;
+  letter-spacing: 0.02em;
+  padding-left: 6px;
+}
+
+.collapseButton {
+  color: var(--vpn-text-secondary);
+  transition: color 0.15s ease;
+}
+
+.collapseButton:hover {
+  color: var(--vpn-text-primary);
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  width: 100%;
+  cursor: pointer;
+}
+
+.navButton:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.navButtonActive {
+  composes: navButton;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.navButtonActive:hover {
+  background: rgba(6, 182, 212, 0.18);
+}
+
+.navButtonCompact {
+  composes: navButton;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.navButtonCompactActive {
+  composes: navButtonActive;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.navLabel {
+  color: var(--vpn-text-secondary);
+  font-size: 13px;
+}
+
+.navLabelActive {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 0 5px;
+}
+
+.coreCard {
+  background: rgba(31, 41, 55, 0.4);
+  border: 1px solid var(--vpn-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.coreIconBox {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(6, 182, 212, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coreTitle {
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.supportButton {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--vpn-text-muted);
+  font-size: 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.supportButton:hover {
+  color: var(--vpn-text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.supportButtonCompact {
+  composes: supportButton;
+  justify-content: center;
+}

@@ -16,6 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { VpnProfile } from "../../types/vpn";
 import { useVpnStore } from "../../state/useVpnStore";
+import styles from "./ProfileCard.module.css";
 
 interface ProfileCardProps {
   profile: VpnProfile;
@@ -77,25 +78,15 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     document.body.removeChild(element);
   };
 
-  let cardBg = "rgba(31, 41, 55, 0.5)";
-  let cardBorder = "1px solid var(--vpn-border)";
-  let cardShadow = "none";
-
+  let cardClass = styles.card;
   if (isConnected) {
-    cardBg = "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(17, 24, 39, 0.95))";
-    cardBorder = "1px solid rgba(16, 185, 129, 0.5)";
-    cardShadow = "0 0 20px rgba(16, 185, 129, 0.2)";
+    cardClass = styles.cardConnected;
   } else if (isConnecting) {
-    cardBg = "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(17, 24, 39, 0.95))";
-    cardBorder = "1px solid rgba(245, 158, 11, 0.5)";
-    cardShadow = "0 0 20px rgba(245, 158, 11, 0.2)";
+    cardClass = styles.cardConnecting;
   } else if (isError) {
-    cardBg = "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(17, 24, 39, 0.95))";
-    cardBorder = "1px solid rgba(239, 68, 68, 0.5)";
-    cardShadow = "0 0 20px rgba(239, 68, 68, 0.2)";
+    cardClass = styles.cardError;
   } else if (isActive) {
-    cardBg = "linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(17, 24, 39, 0.95))";
-    cardBorder = "1px solid rgba(6, 182, 212, 0.35)";
+    cardClass = styles.cardActive;
   }
 
   const renderStatusBadge = () => {
@@ -212,28 +203,14 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
   const buttonProps = getButtonProps();
 
   return (
-    <Box
-      className="glass-card"
-      style={{
-        padding: "16px",
-        borderRadius: 10,
-        background: cardBg,
-        border: cardBorder,
-        boxShadow: cardShadow,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        minHeight: 180,
-        transition: "all 0.25s ease-in-out",
-      }}
-    >
+    <Box className={`glass-card ${cardClass}`}>
       {/* Header */}
       <Box>
         <Group justify="space-between" align="flex-start" mb="xs">
           <Group gap="xs">
             <Text size="24px">{profile.serverFlag}</Text>
             <Box>
-              <Text size="sm" fw={700} style={{ color: "#fff" }}>
+              <Text size="sm" fw={700} className={styles.title}>
                 {profile.name}
               </Text>
               <Text size="xs" c="dimmed">
@@ -258,13 +235,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
                 </ActionIcon>
               </Menu.Target>
 
-              <Menu.Dropdown
-                style={{
-                  background: "rgba(17, 24, 39, 0.95)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid var(--vpn-border)",
-                }}
-              >
+              <Menu.Dropdown className={styles.menuDropdown}>
                 <Menu.Item leftSection={<IconEdit size={14} />} onClick={() => onEdit(profile)}>
                   Edit Configuration
                 </Menu.Item>
@@ -292,19 +263,14 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
 
         {/* Server & Tags & Status */}
         <Group gap="xs" mb="xs" wrap="wrap">
-          <Badge
-            size="xs"
-            variant="outline"
-            color="cyan"
-            style={{ fontFamily: "JetBrains Mono", fontSize: 9 }}
-          >
+          <Badge size="xs" variant="outline" color="cyan" className={styles.protocolBadge}>
             {profile.protocol.toUpperCase()}
           </Badge>
 
           {renderStatusBadge()}
 
           {profile.tags.map((t) => (
-            <Badge key={t} size="xs" variant="light" color="gray" style={{ fontSize: 9 }}>
+            <Badge key={t} size="xs" variant="light" color="gray" className={styles.tagBadge}>
               {t}
             </Badge>
           ))}
@@ -316,18 +282,10 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
       </Box>
 
       {/* Footer */}
-      <Box
-        style={{
-          borderTop: "1px solid var(--vpn-border-subtle)",
-          paddingTop: 10,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+      <Box className={styles.footer}>
         <Group gap={4}>
           <IconBolt size={14} color="var(--vpn-emerald)" />
-          <Text size="xs" fw={700} className="font-mono" style={{ color: "#34d399" }}>
+          <Text size="xs" fw={700} className={`font-mono ${styles.pingText}`}>
             {profile.pingMs} ms
           </Text>
         </Group>
@@ -339,7 +297,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
           leftSection={buttonProps.leftSection}
           onClick={handleConnectClick}
           loading={buttonProps.loading}
-          style={{ fontWeight: 600 }}
+          className={styles.actionButton}
         >
           {buttonProps.children}
         </Button>
