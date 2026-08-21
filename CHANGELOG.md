@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement Security Shield Center, Smart LAN bypass, and Intranet-Only routing - ([b517ae1](https://github.com/Hephaestus-Studio/VPNHub/commit/b517ae15da26cfa97ef02edf47cb554a14947d3f))
 - *(ui)* Support connection cancellation and daemon crash recovery - ([3f63bd1](https://github.com/Hephaestus-Studio/VPNHub/commit/3f63bd1533dd83d7f486269c97ee7a732ee0a637))
 - *(ui)* Responsive redesign for profile library and system console - ([75e6429](https://github.com/Hephaestus-Studio/VPNHub/commit/75e642928d1f15c98567adb9f34c7685541a3edd))
+- *(daemon)* Dynamically parse and propagate OpenVPN pushed routes - ([923f8aa](https://github.com/Hephaestus-Studio/VPNHub/commit/923f8aadf5eb9434ba05a41cf0189c7787189c45))
 
 ### Maintenance
 
