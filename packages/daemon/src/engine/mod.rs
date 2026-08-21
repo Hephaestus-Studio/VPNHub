@@ -42,4 +42,9 @@ pub trait VpnDriver: Send + Sync {
 
     /// Returns the assigned IPv4 tunnel address if known.
     fn assigned_ip(&self) -> Option<String>;
+
+    /// Returns any intranet / host routes pushed by server or discovered in configuration.
+    fn pushed_routes(&self) -> Vec<String> {
+        Vec::new()
+    }
 }

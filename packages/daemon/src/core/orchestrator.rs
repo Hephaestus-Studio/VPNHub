@@ -168,9 +168,14 @@ impl DaemonOrchestrator {
                         if current != new_st {
                             if new_st == SessionState::Connected {
                                 // Tunnel is confirmed active -> Setup network routes, DNS, IPv6 blackhole & firewalls
-                                let assigned = {
+                                let (assigned, pushed_routes) = {
                                     let guard = active_driver.lock().await;
-                                    guard.as_ref().and_then(|d| d.assigned_ip())
+                                    let ip = guard.as_ref().and_then(|d| d.assigned_ip());
+                                    let routes = guard
+                                        .as_ref()
+                                        .map(|d| d.pushed_routes())
+                                        .unwrap_or_default();
+                                    (ip, routes)
                                 };
 
                                 {
@@ -204,7 +209,7 @@ impl DaemonOrchestrator {
                                     &iface_name,
                                     assigned.as_deref(),
                                     &custom_dns,
-                                    &[], // pushed routes
+                                    &pushed_routes,
                                     &sec_policy,
                                     &route_policy,
                                 ) {

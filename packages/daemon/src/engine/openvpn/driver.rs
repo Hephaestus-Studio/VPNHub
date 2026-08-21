@@ -15,11 +15,117 @@ use crate::engine::{DriverEvent, VpnDriver};
 use crate::error::DriverError;
 use crate::ipc::protocol::{AuthConfig, BandwidthMetrics, ConnectParams, SessionState};
 
+/// Converts an IPv4 dotted decimal netmask (e.g., "255.255.255.0") to CIDR prefix length (e.g., 24).
+pub fn netmask_to_cidr(netmask: &str) -> Option<u8> {
+    let clean = netmask
+        .trim()
+        .trim_matches(|c| c == '\'' || c == '"' || c == ',');
+    let ip: std::net::Ipv4Addr = clean.parse().ok()?;
+    let octets = ip.octets();
+    let bits: u32 = ((octets[0] as u32) << 24)
+        | ((octets[1] as u32) << 16)
+        | ((octets[2] as u32) << 8)
+        | (octets[3] as u32);
+    Some(bits.count_ones() as u8)
+}
+
+/// Parses a `route` directive from config or option strings into CIDR notation (`IP/prefix`).
+pub fn parse_route_string(input: &str) -> Option<String> {
+    let s = input.trim().trim_matches(|c| c == '\'' || c == '"');
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.is_empty() {
+        return None;
+    }
+
+    let mut start_idx = 0;
+    if tokens[0].eq_ignore_ascii_case("route") {
+        start_idx = 1;
+    }
+
+    if start_idx >= tokens.len() {
+        return None;
+    }
+
+    let dest = tokens[start_idx].trim_matches(|c| c == '\'' || c == '"' || c == ',');
+    if dest.contains('/') {
+        let parts: Vec<&str> = dest.split('/').collect();
+        if parts.len() == 2 && parts[0].parse::<std::net::Ipv4Addr>().is_ok() {
+            if let Ok(prefix) = parts[1].parse::<u8>() {
+                if prefix <= 32 && parts[0] != "0.0.0.0" && parts[0] != "127.0.0.1" {
+                    return Some(format!("{}/{}", parts[0], prefix));
+                }
+            }
+        }
+    }
+
+    if dest.parse::<std::net::Ipv4Addr>().is_ok() && dest != "0.0.0.0" && dest != "127.0.0.1" {
+        if start_idx + 1 < tokens.len() {
+            let mask = tokens[start_idx + 1].trim_matches(|c| c == '\'' || c == '"' || c == ',');
+            if let Some(cidr) = netmask_to_cidr(mask) {
+                return Some(format!("{}/{}", dest, cidr));
+            }
+        }
+        // Default to /32 if no mask or non-mask next token (like gateway keyword)
+        return Some(format!("{}/32", dest));
+    }
+
+    None
+}
+
+/// Extracts any route definitions from OpenVPN 3 C++ logs or event strings.
+pub fn extract_routes_from_text(text: &str) -> Vec<String> {
+    let mut routes = Vec::new();
+    let text = text.trim();
+
+    // 1. Check for CIDRs in tokens (e.g. net_route_v4: 172.18.5.44/32 or Route: 172.18.5.44/32)
+    for word in text.split_whitespace() {
+        let clean = word.trim_matches(|c| {
+            c == '\''
+                || c == '"'
+                || c == ','
+                || c == ';'
+                || c == '('
+                || c == ')'
+                || c == '['
+                || c == ']'
+        });
+        if clean.contains('/') {
+            let parts: Vec<&str> = clean.split('/').collect();
+            if parts.len() == 2 && parts[0].parse::<std::net::Ipv4Addr>().is_ok() {
+                if let Ok(prefix) = parts[1].parse::<u8>() {
+                    if prefix <= 32 && parts[0] != "0.0.0.0" && parts[0] != "127.0.0.1" {
+                        let cidr = format!("{}/{}", parts[0], prefix);
+                        if !routes.contains(&cidr) {
+                            routes.push(cidr);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Check for "route ..." / "push: route ..." / "push "route ..." patterns
+    for segment in text.split(&['\n', '\r', ',', ';'][..]) {
+        let seg = segment.trim().trim_matches(|c| c == '"' || c == '\'');
+        if let Some(idx) = seg.to_lowercase().find("route ") {
+            let route_part = &seg[idx..];
+            if let Some(r) = parse_route_string(route_part) {
+                if !routes.contains(&r) {
+                    routes.push(r);
+                }
+            }
+        }
+    }
+
+    routes
+}
+
 /// OpenVPN 3 Driver managing tunnel lifecycle via embedded C++ Core with Async Tokio bindings.
 pub struct OpenVpnDriver {
     params: ConnectParams,
     interface_name: String,
     assigned_ip: Arc<Mutex<Option<String>>>,
+    pushed_routes: Arc<Mutex<Vec<String>>>,
     is_running: Arc<AtomicBool>,
     session_handle: Arc<Mutex<Option<SessionHandle>>>,
 }
@@ -37,6 +143,7 @@ impl OpenVpnDriver {
             params,
             interface_name,
             assigned_ip: Arc::new(Mutex::new(None)),
+            pushed_routes: Arc::new(Mutex::new(Vec::new())),
             is_running: Arc::new(AtomicBool::new(false)),
             session_handle: Arc::new(Mutex::new(None)),
         }
@@ -207,6 +314,25 @@ impl VpnDriver for OpenVpnDriver {
     async fn start(&mut self, event_sender: mpsc::Sender<DriverEvent>) -> Result<(), DriverError> {
         let (config_str, credentials) = self.prepare_config()?;
 
+        // Discover static route definitions from raw config
+        let mut initial_routes = Vec::new();
+        for line in config_str.lines() {
+            for r in extract_routes_from_text(line) {
+                if !initial_routes.contains(&r) {
+                    initial_routes.push(r);
+                }
+            }
+        }
+        if !initial_routes.is_empty() {
+            debug!(
+                "Discovered {} static route(s) in OpenVPN configuration: {:?}",
+                initial_routes.len(),
+                initial_routes
+            );
+            let mut guard = self.pushed_routes.lock().await;
+            *guard = initial_routes;
+        }
+
         let has_ca = config_str.contains("<ca>") || config_str.contains("<CA>");
         let has_tls_auth = config_str.contains("<tls-auth>") || config_str.contains("<TLS-AUTH>");
         let has_tls_crypt =
@@ -274,14 +400,28 @@ impl VpnDriver for OpenVpnDriver {
         *self.session_handle.lock().await = Some(handle);
         self.is_running.store(true, Ordering::SeqCst);
 
-        // Forward driver logs
+        // Forward driver logs and dynamically discover pushed routes
         let tx_log = event_sender.clone();
+        let pushed_routes_log = self.pushed_routes.clone();
         tokio::spawn(async move {
             while let Ok(log_line) = log_rx.recv().await {
-                debug!("[OpenVPN 3 Core] {}", log_line.trim());
+                let trimmed = log_line.trim();
+                debug!("[OpenVPN 3 Core] {}", trimmed);
+
+                let detected = extract_routes_from_text(trimmed);
+                if !detected.is_empty() {
+                    let mut guard = pushed_routes_log.lock().await;
+                    for r in detected {
+                        if !guard.contains(&r) {
+                            debug!("Discovered dynamic route from OpenVPN 3 log: {}", r);
+                            guard.push(r);
+                        }
+                    }
+                }
+
                 let _ = tx_log.try_send(DriverEvent::Log {
                     level: "DEBUG".to_string(),
-                    message: log_line.trim().to_string(),
+                    message: trimmed.to_string(),
                 });
             }
         });
@@ -289,12 +429,25 @@ impl VpnDriver for OpenVpnDriver {
         // Forward and process driver events
         let tx_event = event_sender.clone();
         let assigned_ip = self.assigned_ip.clone();
+        let pushed_routes_event = self.pushed_routes.clone();
         tokio::spawn(async move {
             while let Ok(event) = event_rx.recv().await {
                 info!(
                     "[OpenVPN 3 Event] name='{}' info='{}' err={} fatal={}",
                     event.name, event.info, event.error, event.fatal
                 );
+
+                // Detect pushed routes from event payload
+                let detected = extract_routes_from_text(&event.info);
+                if !detected.is_empty() {
+                    let mut guard = pushed_routes_event.lock().await;
+                    for r in detected {
+                        if !guard.contains(&r) {
+                            debug!("Discovered dynamic route from OpenVPN 3 event: {}", r);
+                            guard.push(r);
+                        }
+                    }
+                }
 
                 // Detect IP assignment
                 if event.name == "CONNECTED"
@@ -381,6 +534,7 @@ impl VpnDriver for OpenVpnDriver {
         }
 
         *self.assigned_ip.lock().await = None;
+        self.pushed_routes.lock().await.clear();
         Ok(())
     }
 
@@ -413,10 +567,68 @@ impl VpnDriver for OpenVpnDriver {
             None
         }
     }
+
+    fn pushed_routes(&self) -> Vec<String> {
+        let lock = self.pushed_routes.try_lock();
+        if let Ok(guard) = lock {
+            guard.clone()
+        } else {
+            Vec::new()
+        }
+    }
 }
 
 impl Drop for OpenVpnDriver {
     fn drop(&mut self) {
         self.is_running.store(false, Ordering::SeqCst);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_netmask_to_cidr() {
+        assert_eq!(netmask_to_cidr("255.255.255.255"), Some(32));
+        assert_eq!(netmask_to_cidr("255.255.255.0"), Some(24));
+        assert_eq!(netmask_to_cidr("255.255.0.0"), Some(16));
+        assert_eq!(netmask_to_cidr("255.0.0.0"), Some(8));
+        assert_eq!(netmask_to_cidr("invalid"), None);
+    }
+
+    #[test]
+    fn test_parse_route_string() {
+        assert_eq!(
+            parse_route_string("route 172.18.5.44 255.255.255.255"),
+            Some("172.18.5.44/32".to_string())
+        );
+        assert_eq!(
+            parse_route_string("route 172.18.0.0 255.255.0.0"),
+            Some("172.18.0.0/16".to_string())
+        );
+        assert_eq!(
+            parse_route_string("route 10.0.0.0 255.0.0.0 10.8.0.1"),
+            Some("10.0.0.0/8".to_string())
+        );
+        assert_eq!(
+            parse_route_string("172.18.5.44/32"),
+            Some("172.18.5.44/32".to_string())
+        );
+        assert_eq!(
+            parse_route_string("route 192.168.1.50"),
+            Some("192.168.1.50/32".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_routes_from_text() {
+        let log = r#"[OpenVPN 3 Core] push: route 172.18.5.44 255.255.255.255"#;
+        let routes = extract_routes_from_text(log);
+        assert!(routes.contains(&"172.18.5.44/32".to_string()));
+
+        let net_route_log = r#"[OpenVPN 3 Core] net_route_v4: 172.18.5.44/32 dev tun0"#;
+        let routes2 = extract_routes_from_text(net_route_log);
+        assert!(routes2.contains(&"172.18.5.44/32".to_string()));
     }
 }
