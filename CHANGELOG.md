@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhance profile vault persistence, live daemon sync, and log console - ([86332cf](https://github.com/Hephaestus-Studio/VPNHub/commit/86332cf6b23ce33d2fb86773e30a44ab7821ca47))
 - Enhance UI dashboard cockpit, profile management modals, and live kernel telemetry - ([fb0648e](https://github.com/Hephaestus-Studio/VPNHub/commit/fb0648e353dd245054836af6e32a11cceab84661))
 - Implement Security Shield Center, Smart LAN bypass, and Intranet-Only routing - ([b517ae1](https://github.com/Hephaestus-Studio/VPNHub/commit/b517ae15da26cfa97ef02edf47cb554a14947d3f))
+- *(ui)* Support connection cancellation and daemon crash recovery - ([3f63bd1](https://github.com/Hephaestus-Studio/VPNHub/commit/3f63bd1533dd83d7f486269c97ee7a732ee0a637))
+- *(ui)* Responsive redesign for profile library and system console - ([75e6429](https://github.com/Hephaestus-Studio/VPNHub/commit/75e642928d1f15c98567adb9f34c7685541a3edd))
 
 ### Maintenance
 
@@ -34,3 +36,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactoring
 
 - *(workspace)* Restructure repository to monorepo with packages/app and daemon - ([2010713](https://github.com/Hephaestus-Studio/VPNHub/commit/20107134df5206824a16bb2baf823c239f19faad))
+- *(ui)* Extract inline styles into co-located CSS modules - ([dfbd5a3](https://github.com/Hephaestus-Studio/VPNHub/commit/dfbd5a31af10695d934b179cf8a2aa0211adcc68))
