@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(ui)* Support connection cancellation and daemon crash recovery - ([3f63bd1](https://github.com/Hephaestus-Studio/VPNHub/commit/3f63bd1533dd83d7f486269c97ee7a732ee0a637))
 - *(ui)* Responsive redesign for profile library and system console - ([75e6429](https://github.com/Hephaestus-Studio/VPNHub/commit/75e642928d1f15c98567adb9f34c7685541a3edd))
 - *(daemon)* Dynamically parse and propagate OpenVPN pushed routes - ([923f8aa](https://github.com/Hephaestus-Studio/VPNHub/commit/923f8aadf5eb9434ba05a41cf0189c7787189c45))
+- *(engine)* Add pure-Rust OpenVPN 3 core crates and engine - ([6541a08](https://github.com/Hephaestus-Studio/VPNHub/commit/6541a08c3bd9aaf881a31645a3b6fd37cc2a4ad2))
+- *(daemon)* Implement OpenVpnDriver, zero-touch DNS, and streamlined routing - ([bc92811](https://github.com/Hephaestus-Studio/VPNHub/commit/bc928118a6804b8fa70de4628f5b32dc5550a7ec))
+- *(ui)* Streamline navigation, profile routing, and security center - ([3397055](https://github.com/Hephaestus-Studio/VPNHub/commit/33970554a37610cd0968f5c2fea81ddbcfd6510e))
+- *(settings)* Integrate autostart plugin and desktop window close behavior - ([96e4bac](https://github.com/Hephaestus-Studio/VPNHub/commit/96e4bacb6eff24e8b67cae7285b8989d15d13709))
 
 ### Maintenance
 
