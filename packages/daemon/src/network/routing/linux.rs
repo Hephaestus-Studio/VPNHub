@@ -53,19 +53,47 @@ impl LinuxRouteManager {
         // 1. Detect and preserve default gateway & physical LAN interface
         self.discover_original_gateway();
 
-        // 2. Add static host route to VPN server via original default gateway so tunnel packets don't loop
+        // 2. Add static host route to all IP addresses of the VPN server via original default gateway & physical interface
         if let Some(ref gw) = self.original_gateway {
-            debug!(
-                "Adding explicit host route to VPN server {} via gateway {}",
-                server_ip, gw
-            );
-            let res = std::process::Command::new("ip")
-                .args(["route", "add", server_ip, "via", gw])
-                .status();
-            if let Ok(st) = res {
-                if st.success() {
-                    self.injected_routes
-                        .push(format!("{} via {}", server_ip, gw));
+            use std::net::ToSocketAddrs;
+            let mut target_ips = Vec::new();
+            if let Ok(ip) = server_ip.parse::<std::net::IpAddr>() {
+                target_ips.push(ip.to_string());
+            } else if let Ok(addrs) = format!("{server_ip}:0").to_socket_addrs() {
+                for a in addrs {
+                    target_ips.push(a.ip().to_string());
+                }
+            }
+            if target_ips.is_empty() {
+                target_ips.push(server_ip.to_string());
+            }
+
+            for target_ip in target_ips {
+                debug!(
+                    "Adding explicit host bypass route to VPN server endpoint {} via gateway {}",
+                    target_ip, gw
+                );
+                let status = if let Some(ref dev) = self.physical_interface {
+                    std::process::Command::new("ip")
+                        .args([
+                            "route", "replace", &target_ip, "via", gw, "dev", dev, "metric", "1",
+                        ])
+                        .status()
+                } else {
+                    std::process::Command::new("ip")
+                        .args(["route", "replace", &target_ip, "via", gw, "metric", "1"])
+                        .status()
+                };
+                if let Ok(st) = status {
+                    if st.success() {
+                        if let Some(ref dev) = self.physical_interface {
+                            self.injected_routes
+                                .push(format!("{} via {} dev {}", target_ip, gw, dev));
+                        } else {
+                            self.injected_routes
+                                .push(format!("{} via {}", target_ip, gw));
+                        }
+                    }
                 }
             }
         }
@@ -81,6 +109,35 @@ impl LinuxRouteManager {
             }
         }
 
+        // Helper to normalize any route string to CIDR notation
+        let normalize_route = |r: &str| -> String {
+            let s = r.trim();
+            if let Some((ip, mask)) = s.split_once('/') {
+                if mask == "255.255.255.255" {
+                    format!("{ip}/32")
+                } else if let Ok(m) = mask.parse::<std::net::Ipv4Addr>() {
+                    let cidr = u32::from(m).count_ones();
+                    format!("{ip}/{cidr}")
+                } else {
+                    s.to_string()
+                }
+            } else if s.contains(' ') {
+                let parts: Vec<&str> = s.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    if let Ok(m) = parts[1].parse::<std::net::Ipv4Addr>() {
+                        let cidr = u32::from(m).count_ones();
+                        format!("{}/{}", parts[0], cidr)
+                    } else {
+                        parts[0].to_string()
+                    }
+                } else {
+                    s.to_string()
+                }
+            } else {
+                s.to_string()
+            }
+        };
+
         // 4. Configure routes based on Intranet-Only vs Full-Tunnel
         if intranet_only {
             info!("Intranet-Only routing active: Default gateway stays on physical interface");
@@ -92,40 +149,22 @@ impl LinuxRouteManager {
                     ip_cidr, tunnel_iface
                 );
                 let _ = std::process::Command::new("ip")
-                    .args(["route", "add", ip_cidr, "dev", tunnel_iface])
+                    .args(["route", "replace", ip_cidr, "dev", tunnel_iface])
                     .status();
                 self.injected_routes
                     .push(format!("{} dev {}", ip_cidr, tunnel_iface));
             }
 
-            // Automatically route standard corporate enterprise private subnets (RFC 1918: 10.0.0.0/8, 172.16.0.0/12)
-            // This guarantees instant access to corporate gateways, staging, and databases even if the server
-            // push options were fragmented or dropped by parser quirks.
-            let standard_intranet_subnets = ["10.0.0.0/8", "172.16.0.0/12"];
-            for subnet in &standard_intranet_subnets {
-                debug!(
-                    "Injecting standard enterprise intranet subnet: {} dev {}",
-                    subnet, tunnel_iface
-                );
-                let status = std::process::Command::new("ip")
-                    .args(["route", "add", subnet, "dev", tunnel_iface])
-                    .status();
-                if let Ok(st) = status {
-                    if st.success() {
-                        self.injected_routes
-                            .push(format!("{} dev {}", subnet, tunnel_iface));
-                    }
-                }
-            }
-
             // Inject all pushed routes from VPN server
-            for route in pushed_routes {
+            for raw_route in pushed_routes {
+                let route = normalize_route(raw_route);
+
                 debug!(
                     "Injecting server-pushed intranet route: {} via {}",
                     route, tunnel_iface
                 );
                 let status = std::process::Command::new("ip")
-                    .args(["route", "add", route, "dev", tunnel_iface])
+                    .args(["route", "replace", &route, "dev", tunnel_iface])
                     .status();
                 if let Ok(st) = status {
                     if st.success() {
@@ -136,13 +175,14 @@ impl LinuxRouteManager {
             }
 
             // Inject custom user-defined corporate subnets (e.g. 10.0.0.0/8, 192.168.10.0/24)
-            for subnet in custom_subnets {
+            for raw_subnet in custom_subnets {
+                let subnet = normalize_route(raw_subnet);
                 debug!(
                     "Injecting user custom corporate subnet: {} via {}",
                     subnet, tunnel_iface
                 );
                 let status = std::process::Command::new("ip")
-                    .args(["route", "add", subnet, "dev", tunnel_iface])
+                    .args(["route", "replace", &subnet, "dev", tunnel_iface])
                     .status();
                 if let Ok(st) = status {
                     if st.success() {
@@ -158,10 +198,10 @@ impl LinuxRouteManager {
                 tunnel_iface
             );
             let _ = std::process::Command::new("ip")
-                .args(["route", "add", "0.0.0.0/1", "dev", tunnel_iface])
+                .args(["route", "replace", "0.0.0.0/1", "dev", tunnel_iface])
                 .status();
             let _ = std::process::Command::new("ip")
-                .args(["route", "add", "128.0.0.0/1", "dev", tunnel_iface])
+                .args(["route", "replace", "128.0.0.0/1", "dev", tunnel_iface])
                 .status();
             self.injected_routes
                 .push(format!("0.0.0.0/1 dev {}", tunnel_iface));
@@ -169,9 +209,10 @@ impl LinuxRouteManager {
                 .push(format!("128.0.0.0/1 dev {}", tunnel_iface));
 
             // Also inject any specific pushed and custom routes for explicit precision
-            for route in pushed_routes.iter().chain(custom_subnets.iter()) {
+            for raw_route in pushed_routes.iter().chain(custom_subnets.iter()) {
+                let route = normalize_route(raw_route);
                 let _ = std::process::Command::new("ip")
-                    .args(["route", "add", route, "dev", tunnel_iface])
+                    .args(["route", "replace", &route, "dev", tunnel_iface])
                     .status();
                 self.injected_routes
                     .push(format!("{} dev {}", route, tunnel_iface));
@@ -198,6 +239,8 @@ impl LinuxRouteManager {
             if parts.len() >= 3 {
                 let _ = std::process::Command::new("ip")
                     .args(["route", "del", parts[0], parts[1], parts[2]])
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
                     .status();
             }
         }
@@ -205,14 +248,20 @@ impl LinuxRouteManager {
         // Fallback cleanup of standard routes
         let _ = std::process::Command::new("ip")
             .args(["route", "del", "0.0.0.0/1", "dev", tunnel_iface])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status();
         let _ = std::process::Command::new("ip")
             .args(["route", "del", "128.0.0.0/1", "dev", tunnel_iface])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status();
 
         if let Some(ref gw) = self.original_gateway {
             let _ = std::process::Command::new("ip")
                 .args(["route", "del", server_ip, "via", gw])
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
                 .status();
         }
 

@@ -30,7 +30,7 @@ impl LinuxFirewallManager {
     /// Activates fail-closed Kill Switch, WebRTC shields, and Smart LAN exemptions.
     pub fn enable_kill_switch(
         &mut self,
-        server_ip: &str,
+        server_endpoint_ips: &[String],
         server_port: u16,
         tunnel_iface: &str,
         intranet_only: bool,
@@ -39,9 +39,15 @@ impl LinuxFirewallManager {
         local_lan_subnet: Option<&str>,
     ) -> Result<(), FirewallError> {
         info!(
-            "Enabling Firewall Shields on Linux (Server: {}:{}, Interface: {}, IntranetOnly: {}, WebRTC: {})",
-            server_ip, server_port, tunnel_iface, intranet_only, webrtc_protection
+            "Enabling Firewall Shields on Linux (Server IPs: {:?}:{}, Interface: {}, IntranetOnly: {}, WebRTC: {})",
+            server_endpoint_ips, server_port, tunnel_iface, intranet_only, webrtc_protection
         );
+
+        let target_ips = if server_endpoint_ips.is_empty() {
+            vec!["0.0.0.0".to_string()]
+        } else {
+            server_endpoint_ips.to_vec()
+        };
 
         let mut ruleset = String::new();
         ruleset.push_str(&format!("table inet {} {{\n", NFT_TABLE_NAME));
@@ -69,11 +75,24 @@ impl LinuxFirewallManager {
 
             // Drop any packet destined for VPN corporate subnets if not going through the tunnel
             for subnet in vpn_subnets {
-                if !subnet.trim().is_empty() {
+                let s = subnet.trim();
+                if !s.is_empty() {
+                    let formatted_subnet = if let Some((ip, mask)) = s.split_once('/') {
+                        if mask == "255.255.255.255" {
+                            format!("{ip}/32")
+                        } else if let Ok(m) = mask.parse::<std::net::Ipv4Addr>() {
+                            let cidr = u32::from(m).count_ones();
+                            format!("{ip}/{cidr}")
+                        } else {
+                            s.to_string()
+                        }
+                    } else {
+                        s.to_string()
+                    };
+
                     ruleset.push_str(&format!(
-                        "        ip daddr {} oif != \"{}\" oif != \"lo\" drop\n",
-                        subnet.trim(),
-                        tunnel_iface
+                        "        ip daddr {} meta oifname != {{ \"{}\", \"lo\" }} drop\n",
+                        formatted_subnet, tunnel_iface
                     ));
                 }
             }
@@ -84,15 +103,19 @@ impl LinuxFirewallManager {
             ruleset.push_str("        type filter hook output priority 0; policy drop;\n");
             ruleset.push_str("        oif \"lo\" accept\n");
             ruleset.push_str(&format!("        oif \"{}\" accept\n", tunnel_iface));
-            ruleset.push_str(&format!(
-                "        ip daddr {} th dport {} accept\n",
-                server_ip, server_port
-            ));
+            for tip in &target_ips {
+                ruleset.push_str(&format!(
+                    "        ip daddr {} th dport {} accept\n",
+                    tip, server_port
+                ));
+            }
+            // Preserve local DHCP broadcast
+            ruleset.push_str("        udp dport { 67, 68 } accept\n");
+            ruleset.push_str("        ip daddr 255.255.255.255 accept\n");
 
             // Smart LAN physical subnet accept
             if let Some(lan) = local_lan_subnet {
                 ruleset.push_str(&format!("        ip daddr {} accept\n", lan));
-                ruleset.push_str("        ip daddr 255.255.255.255 accept\n");
                 ruleset.push_str("        ip daddr 224.0.0.0/4 accept\n");
             }
 
@@ -141,7 +164,11 @@ impl LinuxFirewallManager {
         }
 
         // Fallback to iptables if nftables command fails
-        self.apply_iptables_fallback(server_ip, server_port, tunnel_iface, local_lan_subnet)?;
+        let primary_ip = target_ips
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "0.0.0.0".to_string());
+        self.apply_iptables_fallback(&primary_ip, server_port, tunnel_iface, local_lan_subnet)?;
         self.is_active = true;
 
         Ok(())

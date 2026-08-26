@@ -31,9 +31,9 @@ pub enum SessionState {
 pub enum ProtocolType {
     /// WireGuard (Kernel on Linux, Wintun/BoringTun on Windows).
     Wireguard,
-    /// OpenVPN 3 C++ Core over UDP transport.
+    /// OpenVPN over UDP transport.
     OpenvpnUdp,
-    /// OpenVPN 3 C++ Core over TCP transport.
+    /// OpenVPN over TCP transport.
     OpenvpnTcp,
 }
 
@@ -87,25 +87,12 @@ fn default_true() -> bool {
     true
 }
 
-fn default_dns_provider() -> String {
-    "cloudflare".to_string()
-}
-
 /// Comprehensive Security and Leak Protection Policy.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityPolicy {
     /// Kill switch enforcement mode.
     #[serde(default)]
     pub kill_switch_mode: KillSwitchMode,
-    /// Whether DNS leak protection is enabled.
-    #[serde(default = "default_true")]
-    pub dns_protection: bool,
-    /// Custom DNS provider name ("cloudflare", "google", "quad9", "custom").
-    #[serde(default = "default_dns_provider")]
-    pub custom_dns_provider: String,
-    /// Custom DNS server IPs if provider is "custom" or explicit override.
-    #[serde(default)]
-    pub custom_dns_servers: Vec<String>,
     /// Whether IPv6 blackhole leak protection is enabled.
     #[serde(default = "default_true")]
     pub ipv6_leak_protection: bool,
@@ -121,9 +108,6 @@ impl Default for SecurityPolicy {
     fn default() -> Self {
         Self {
             kill_switch_mode: KillSwitchMode::Strict,
-            dns_protection: true,
-            custom_dns_provider: "cloudflare".to_string(),
-            custom_dns_servers: vec!["1.1.1.1".to_string(), "1.0.0.1".to_string()],
             ipv6_leak_protection: true,
             webrtc_protection: true,
             lan_bypass: true,
@@ -135,6 +119,7 @@ impl Default for SecurityPolicy {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RoutingPolicy {
     /// "Use this connection only for resources on its network" (Intranet-Only).
+    /// If true, overrides server redirect-gateway and only routes pushed corporate subnets.
     #[serde(default)]
     pub intranet_only: bool,
     /// Additional custom corporate subnets/CIDRs to route into VPN (e.g. `["10.0.0.0/8", "192.168.10.0/24"]`).
@@ -158,36 +143,12 @@ pub struct ConnectParams {
     /// Whether to enable fail-closed Kill Switch firewall protection (backward compat).
     #[serde(default)]
     pub enable_kill_switch: bool,
-    /// Custom DNS server IPs (e.g. `["1.1.1.1", "1.0.0.1"]`) to enforce in tunnel (backward compat).
-    #[serde(default)]
-    pub custom_dns: Option<Vec<String>>,
     /// Comprehensive security policy.
     #[serde(default)]
     pub security_policy: Option<SecurityPolicy>,
     /// Routing policy (Full Tunnel vs Intranet-Only).
     #[serde(default)]
     pub routing_policy: Option<RoutingPolicy>,
-}
-
-/// Split tunneling configuration options.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SplitTunnelConfig {
-    /// Include only or exclude specified routes/apps.
-    pub mode: SplitTunnelMode,
-    /// Subnets/IP addresses (CIDR notation).
-    pub ip_subnets: Vec<String>,
-    /// Application paths or binary identifiers.
-    pub app_paths: Vec<String>,
-}
-
-/// Split tunneling operational mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SplitTunnelMode {
-    /// Route ONLY specified subnets/apps via VPN; all else direct to physical interface.
-    IncludeOnly,
-    /// Route ALL traffic via VPN EXCEPT specified subnets/apps.
-    Exclude,
 }
 
 /// Inbound requests from client applications (GUI / CLI) to the Daemon.
@@ -208,10 +169,6 @@ pub enum DaemonRequest {
         #[serde(default)]
         mode: Option<KillSwitchMode>,
     },
-    /// Apply split tunneling policy.
-    SetSplitTunneling(SplitTunnelConfig),
-    /// Export system network diagnostics (routes, DNS, firewall, recent logs).
-    GetDiagnostics,
     /// Ping the daemon to verify IPC connectivity.
     Ping,
 }
@@ -228,8 +185,6 @@ pub enum DaemonResponse {
     Status(DaemonStatusSnapshot),
     /// Latest real-time network metrics.
     Metrics(BandwidthMetrics),
-    /// System diagnostic report for troubleshooting.
-    Diagnostics(DiagnosticReport),
     /// Request failed with an error code and descriptive message.
     Error { code: u32, message: String },
 }
@@ -310,17 +265,4 @@ pub enum AlertSeverity {
     Info,
     Warning,
     Critical,
-}
-
-/// System diagnostic report exported for technical support.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct DiagnosticReport {
-    /// Current OS IP routing table dump.
-    pub routing_table: String,
-    /// Current OS DNS resolver configuration.
-    pub dns_configuration: String,
-    /// Current firewall rules (nftables / WFP).
-    pub firewall_rules: String,
-    /// Recent sanitized daemon logs from circular buffer.
-    pub recent_logs: Vec<String>,
 }

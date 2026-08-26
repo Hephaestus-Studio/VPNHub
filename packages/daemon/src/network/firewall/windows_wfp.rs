@@ -20,7 +20,7 @@ impl WindowsFirewallManager {
     /// Enables WFP Kill Switch sublayer filters.
     pub fn enable_kill_switch(
         &mut self,
-        server_ip: &str,
+        server_endpoint_ips: &[String],
         server_port: u16,
         tunnel_iface: &str,
         intranet_only: bool,
@@ -29,8 +29,8 @@ impl WindowsFirewallManager {
         local_lan_subnet: Option<&str>,
     ) -> Result<(), FirewallError> {
         info!(
-            "Enabling Windows WFP Kill Switch for server {}:{} on interface {} (intranet_only={})",
-            server_ip, server_port, tunnel_iface, intranet_only
+            "Enabling Windows WFP Kill Switch for server IPs {:?}:{} on interface {} (intranet_only={})",
+            server_endpoint_ips, server_port, tunnel_iface, intranet_only
         );
         let _ = (vpn_subnets, webrtc_protection, local_lan_subnet);
         self.is_active = true;

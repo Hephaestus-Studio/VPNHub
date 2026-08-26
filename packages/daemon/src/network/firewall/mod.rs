@@ -24,7 +24,7 @@ impl MockFirewallManager {
     }
     pub fn enable_kill_switch(
         &mut self,
-        _server_ip: &str,
+        _server_endpoint_ips: &[String],
         _server_port: u16,
         _tunnel_iface: &str,
         _intranet_only: bool,
@@ -35,6 +35,7 @@ impl MockFirewallManager {
         self.is_active = true;
         Ok(())
     }
+
     pub fn disable_kill_switch(&mut self) -> Result<(), crate::error::FirewallError> {
         self.is_active = false;
         Ok(())

@@ -6,9 +6,11 @@ use crate::core::session::ActiveSession;
 use crate::core::state::StateManager;
 use crate::engine::openvpn::OpenVpnDriver;
 use crate::engine::wireguard::WireGuardDriver;
+
 use crate::engine::{DriverEvent, VpnDriver};
+
 use crate::error::DaemonError;
-use crate::health::{generate_diagnostics, MetricsCollector};
+use crate::health::MetricsCollector;
 use crate::ipc::protocol::{
     BandwidthMetrics, ConnectParams, DaemonRequest, DaemonResponse, DaemonStatusSnapshot,
     ProtocolType, SessionState,
@@ -22,7 +24,7 @@ pub struct DaemonOrchestrator {
     network_mgr: Arc<Mutex<NetworkManager>>,
     active_session: Arc<Mutex<Option<ActiveSession>>>,
     active_driver: Arc<Mutex<Option<Box<dyn VpnDriver>>>>,
-    ring_buffer: Arc<LogRingBuffer>,
+    _ring_buffer: Arc<LogRingBuffer>,
     metrics_collector: Arc<MetricsCollector>,
 }
 
@@ -34,7 +36,7 @@ impl DaemonOrchestrator {
             network_mgr: Arc::new(Mutex::new(NetworkManager::new())),
             active_session: Arc::new(Mutex::new(None)),
             active_driver: Arc::new(Mutex::new(None)),
-            ring_buffer,
+            _ring_buffer: ring_buffer,
             metrics_collector: Arc::new(MetricsCollector::new()),
         }
     }
@@ -90,16 +92,6 @@ impl DaemonOrchestrator {
                         message: e.to_string(),
                     },
                 }
-            }
-
-            DaemonRequest::SetSplitTunneling(_config) => {
-                info!("Split tunneling configuration updated");
-                DaemonResponse::Success
-            }
-
-            DaemonRequest::GetDiagnostics => {
-                let diag = generate_diagnostics(&self.ring_buffer);
-                DaemonResponse::Diagnostics(diag)
             }
         }
     }
@@ -168,14 +160,30 @@ impl DaemonOrchestrator {
                         if current != new_st {
                             if new_st == SessionState::Connected {
                                 // Tunnel is confirmed active -> Setup network routes, DNS, IPv6 blackhole & firewalls
-                                let (assigned, pushed_routes) = {
+                                let (
+                                    assigned,
+                                    pushed_routes,
+                                    is_redirect_gw,
+                                    search_domains,
+                                    server_dns,
+                                ) = {
                                     let guard = active_driver.lock().await;
                                     let ip = guard.as_ref().and_then(|d| d.assigned_ip());
                                     let routes = guard
                                         .as_ref()
                                         .map(|d| d.pushed_routes())
                                         .unwrap_or_default();
-                                    (ip, routes)
+                                    let redirect = guard
+                                        .as_ref()
+                                        .map(|d| d.is_redirect_gateway())
+                                        .unwrap_or(false);
+                                    let search = guard
+                                        .as_ref()
+                                        .map(|d| d.search_domains())
+                                        .unwrap_or_default();
+                                    let dns =
+                                        guard.as_ref().map(|d| d.dns_servers()).unwrap_or_default();
+                                    (ip, routes, redirect, search, dns)
                                 };
 
                                 {
@@ -199,8 +207,6 @@ impl DaemonOrchestrator {
 
                                 let route_policy =
                                     params_clone.routing_policy.clone().unwrap_or_default();
-                                let custom_dns =
-                                    params_clone.custom_dns.clone().unwrap_or_default();
 
                                 let mut net = network_mgr.lock().await;
                                 if let Err(e) = net.setup_vpn_network(
@@ -208,14 +214,17 @@ impl DaemonOrchestrator {
                                     params_clone.server_port,
                                     &iface_name,
                                     assigned.as_deref(),
-                                    &custom_dns,
+                                    &server_dns,
+                                    &search_domains,
                                     &pushed_routes,
+                                    is_redirect_gw,
                                     &sec_policy,
                                     &route_policy,
                                 ) {
                                     error!("Failed to setup VPN network state: {}", e);
                                 }
                             }
+
                             let _ = state_mgr.transition_to(new_st, None);
                         }
                     }

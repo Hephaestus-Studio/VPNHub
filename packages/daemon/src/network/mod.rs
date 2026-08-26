@@ -31,6 +31,7 @@ pub struct NetworkManager {
 
 struct TunnelContext {
     server_ip: String,
+    server_endpoint_ips: Vec<String>,
     server_port: u16,
     iface: String,
     intranet_only: bool,
@@ -63,15 +64,35 @@ impl NetworkManager {
         server_port: u16,
         iface: &str,
         assigned_ip: Option<&str>,
-        dns_servers: &[String],
+        server_dns: &[String],
+        _search_domains: &[String],
         pushed_routes: &[String],
+        is_redirect_gateway: bool,
         security_policy: &SecurityPolicy,
+
         routing_policy: &RoutingPolicy,
     ) -> Result<(), DaemonError> {
+        let is_effective_full_tunnel = is_redirect_gateway && !routing_policy.intranet_only;
+        let is_intranet_split = !is_effective_full_tunnel;
+
         info!(
-            "Applying network configuration for tunnel interface '{}' (intranet_only={}, killswitch={:?}, ipv6={}, webrtc={})",
-            iface, routing_policy.intranet_only, security_policy.kill_switch_mode, security_policy.ipv6_leak_protection, security_policy.webrtc_protection
+            "Applying network configuration for tunnel interface '{}' (full_tunnel={}, server_redirect_gw={}, user_intranet_override={}, server_dns_count={}, killswitch={:?}, ipv6={}, webrtc={})",
+            iface, is_effective_full_tunnel, is_redirect_gateway, routing_policy.intranet_only, server_dns.len(), security_policy.kill_switch_mode, security_policy.ipv6_leak_protection, security_policy.webrtc_protection
         );
+
+        // 0. Resolve server endpoint IPs upfront BEFORE modifying routes or DNS
+        use std::net::ToSocketAddrs;
+        let mut resolved_server_ips = Vec::new();
+        if let Ok(ip) = server_ip.parse::<std::net::IpAddr>() {
+            resolved_server_ips.push(ip.to_string());
+        } else if let Ok(addrs) = format!("{server_ip}:0").to_socket_addrs() {
+            for a in addrs {
+                resolved_server_ips.push(a.ip().to_string());
+            }
+        }
+        if resolved_server_ips.is_empty() {
+            resolved_server_ips.push(server_ip.to_string());
+        }
 
         // 1. Configure interface MTU and assign virtual IP
         InterfaceManager::configure_interface(iface, DEFAULT_VPN_MTU, assigned_ip)?;
@@ -81,7 +102,7 @@ impl NetworkManager {
             server_ip,
             iface,
             assigned_ip,
-            routing_policy.intranet_only,
+            is_intranet_split,
             pushed_routes,
             &routing_policy.custom_subnets,
             security_policy.lan_bypass,
@@ -92,45 +113,21 @@ impl NetworkManager {
         if let Some(ip_cidr) = assigned_ip {
             vpn_subnets.push(ip_cidr.to_string());
         }
+
         vpn_subnets.extend_from_slice(pushed_routes);
         vpn_subnets.extend_from_slice(&routing_policy.custom_subnets);
 
-        // 3. Configure DNS (Priority: VPN Server pushed DNS -> Secure DNS Resolver from Shield)
-        let mut final_dns = Vec::new();
-        if !dns_servers.is_empty() {
-            final_dns.extend_from_slice(dns_servers);
-        } else if security_policy.dns_protection {
-            match security_policy.custom_dns_provider.to_lowercase().as_str() {
-                "cloudflare" => {
-                    final_dns.push("1.1.1.1".to_string());
-                    final_dns.push("1.0.0.1".to_string());
-                }
-                "google" => {
-                    final_dns.push("8.8.8.8".to_string());
-                    final_dns.push("8.8.4.4".to_string());
-                }
-                "quad9" => {
-                    final_dns.push("9.9.9.9".to_string());
-                    final_dns.push("149.112.112.112".to_string());
-                }
-                "custom" => {
-                    if !security_policy.custom_dns_servers.is_empty() {
-                        final_dns.extend_from_slice(&security_policy.custom_dns_servers);
-                    } else {
-                        final_dns.push("1.1.1.1".to_string());
-                    }
-                }
-                _ => {
-                    final_dns.push("1.1.1.1".to_string());
-                    final_dns.push("1.0.0.1".to_string());
-                }
-            }
-        }
-
-        if !final_dns.is_empty() {
-            if let Err(e) = self.dns.configure_dns(iface, &final_dns) {
+        // 3. Configure DNS (Strictly Server-Driven: ONLY configure if server pushed DNS)
+        if !server_dns.is_empty() {
+            info!(
+                "Configuring server-pushed DNS servers {:?} on interface '{}'",
+                server_dns, iface
+            );
+            if let Err(e) = self.dns.configure_dns(iface, server_dns) {
                 warn!("Non-fatal DNS configuration warning: {}", e);
             }
+        } else {
+            info!("Server pushed 0 DNS servers: Preserving native system DNS (Zero-Touch DNS)");
         }
 
         // 4. Configure IPv6 Blackhole Leak Shield if enabled
@@ -149,10 +146,10 @@ impl NetworkManager {
             };
 
             if let Err(e) = self.firewall.enable_kill_switch(
-                server_ip,
+                &resolved_server_ips,
                 server_port,
                 iface,
-                routing_policy.intranet_only,
+                is_intranet_split,
                 &vpn_subnets,
                 security_policy.webrtc_protection,
                 local_lan,
@@ -163,9 +160,10 @@ impl NetworkManager {
 
         self.active_tunnel = Some(TunnelContext {
             server_ip: server_ip.to_string(),
+            server_endpoint_ips: resolved_server_ips,
             server_port,
             iface: iface.to_string(),
-            intranet_only: routing_policy.intranet_only,
+            intranet_only: is_intranet_split,
             vpn_subnets,
             security_policy: security_policy.clone(),
         });
@@ -215,7 +213,7 @@ impl NetworkManager {
                     None
                 };
                 self.firewall.enable_kill_switch(
-                    &ctx.server_ip,
+                    &ctx.server_endpoint_ips,
                     ctx.server_port,
                     &ctx.iface,
                     ctx.intranet_only,

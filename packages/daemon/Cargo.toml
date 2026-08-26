@@ -40,8 +40,13 @@ anyhow = "1"
 # Cryptography & Security
 zeroize = { version = "1", features = ["derive"] }
 
-# OpenVPN 3 C++ Core integration
-openvpn-connect = { version = "0.1.1", features = ["tokio", "vendor"] }
+# Native Pure-Rust openvpn3-rs Library
+ovpn-core = { path = "../../crates/ovpn-core" }
+ovpn-config = { path = "../../crates/ovpn-config" }
+ovpn-protocol = { path = "../../crates/ovpn-protocol" }
+ovpn-tun = { path = "../../crates/ovpn-tun" }
+
+
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nix = { version = "0.29", features = ["fs", "socket", "user", "process", "signal", "mman"] }

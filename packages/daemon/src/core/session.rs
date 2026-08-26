@@ -47,8 +47,9 @@ impl ActiveSession {
             server_port: params.server_port,
             interface_name,
             assigned_ip,
-            dns_servers: params.custom_dns.clone().unwrap_or_default(),
+            dns_servers: Vec::new(),
             kill_switch_enabled: params.enable_kill_switch,
+
             connected_at_epoch_secs: now,
         }
     }

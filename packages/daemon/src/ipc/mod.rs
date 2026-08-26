@@ -12,6 +12,6 @@ pub mod transport;
 pub use codec::JsonLengthDelimitedCodec;
 pub use protocol::{
     AuthConfig, BandwidthMetrics, ConnectParams, DaemonEvent, DaemonRequest, DaemonResponse,
-    DaemonStatusSnapshot, DiagnosticReport, ProtocolType, SessionState, SplitTunnelConfig,
+    DaemonStatusSnapshot, ProtocolType, SessionState,
 };
 pub use server::IpcServer;

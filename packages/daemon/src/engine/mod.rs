@@ -1,7 +1,7 @@
 //! # Multi-Protocol VPN Engine Subsystem
 //!
 //! Exposes the [`VpnDriver`] abstraction for uniform lifecycle control
-//! over OpenVPN 3 C++ Core and WireGuard tunnel engines.
+//! over OpenVPN and WireGuard tunnel engines.
 
 pub mod openvpn;
 pub mod wireguard;
@@ -45,6 +45,26 @@ pub trait VpnDriver: Send + Sync {
 
     /// Returns any intranet / host routes pushed by server or discovered in configuration.
     fn pushed_routes(&self) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// Returns whether the server requested Full-Tunnel (redirect-gateway).
+    fn is_redirect_gateway(&self) -> bool {
+        false
+    }
+
+    /// Returns the gateway IPv4 address of the tunnel link if available.
+    fn tunnel_gateway(&self) -> Option<String> {
+        None
+    }
+
+    /// Returns any search domains pushed by the server.
+    fn search_domains(&self) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// Returns any DNS nameservers pushed by the server.
+    fn dns_servers(&self) -> Vec<String> {
         Vec::new()
     }
 }

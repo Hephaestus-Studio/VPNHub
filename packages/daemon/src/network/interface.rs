@@ -83,10 +83,14 @@ impl InterfaceManager {
 
         #[cfg(target_os = "linux")]
         {
-            debug!("Deallocating TUN device '{}' on Linux", iface);
-            let _ = std::process::Command::new("ip")
-                .args(["tuntap", "del", "dev", iface, "mode", "tun"])
-                .status();
+            if std::path::Path::new(&format!("/sys/class/net/{}", iface)).exists() {
+                debug!("Deallocating TUN device '{}' on Linux", iface);
+                let _ = std::process::Command::new("ip")
+                    .args(["tuntap", "del", "dev", iface, "mode", "tun"])
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .status();
+            }
             Ok(())
         }
 
