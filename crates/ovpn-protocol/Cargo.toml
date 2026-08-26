@@ -1,0 +1,27 @@
+[package]
+name = "ovpn-protocol"
+version = "0.1.0"
+edition = "2021"
+authors = ["VPNHub Team"]
+description = "Pure No-I/O deterministic state machine protocol engine for openvpn3-rs"
+
+[dependencies]
+ovpn-config = { path = "../ovpn-config" }
+ovpn-crypto = { path = "../ovpn-crypto" }
+bytes = "1"
+thiserror = "2"
+tracing = "0.1"
+serde = { version = "1", features = ["derive"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "logging", "tls12"] }
+rustls-pki-types = { version = "1", features = ["std"] }
+rustls-pemfile = "2.2"
+
+
+webpki-roots = "0.26"
+rand = "0.8"
+hex = "0.4"
+
+
+[dev-dependencies]
+tempfile = "3"
+rcgen = "0.13"

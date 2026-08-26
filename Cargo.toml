@@ -3,4 +3,5 @@ resolver = "2"
 members = [
     "packages/app/src-tauri",
     "packages/daemon",
+    "crates/*",
 ]

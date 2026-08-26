@@ -1,0 +1,23 @@
+[package]
+name = "ovpn-ffi"
+version = "0.1.0"
+edition = "2021"
+authors = ["VPNHub Team"]
+description = "C-ABI Foreign Function Interface (FFI) bindings for openvpn3-rs"
+
+[lib]
+name = "ovpn_ffi"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[dependencies]
+ovpn-config = { path = "../ovpn-config" }
+ovpn-protocol = { path = "../ovpn-protocol" }
+ovpn-tun = { path = "../ovpn-tun" }
+ovpn-core = { path = "../ovpn-core" }
+tokio = { version = "1", features = ["full"] }
+libc = "0.2"
+thiserror = "2"
+tracing = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"

@@ -1,0 +1,23 @@
+[package]
+name = "ovpn-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["VPNHub Team"]
+description = "High-level Client pipeline orchestrator, DTO contract, and event broadcast for openvpn3-rs"
+
+[dependencies]
+ovpn-config = { path = "../ovpn-config" }
+ovpn-crypto = { path = "../ovpn-crypto" }
+ovpn-protocol = { path = "../ovpn-protocol" }
+ovpn-tun = { path = "../ovpn-tun" }
+ovpn-transport = { path = "../ovpn-transport" }
+bytes = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
