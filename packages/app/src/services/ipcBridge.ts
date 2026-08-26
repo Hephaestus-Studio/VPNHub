@@ -39,9 +39,6 @@ export interface VpnConnectParams {
   custom_dns?: string[];
   security_policy?: {
     kill_switch_mode: "off" | "standard" | "strict";
-    dns_protection: boolean;
-    custom_dns_provider: string;
-    custom_dns_servers: string[];
     ipv6_leak_protection: boolean;
     webrtc_protection: boolean;
     lan_bypass: boolean;
@@ -50,12 +47,6 @@ export interface VpnConnectParams {
     intranet_only: boolean;
     custom_subnets: string[];
   };
-}
-
-export interface SplitTunnelConfigPayload {
-  mode: "include_only" | "exclude";
-  ip_subnets: string[];
-  app_paths: string[];
 }
 
 export type ProfileSecretPayload =
@@ -177,6 +168,7 @@ export class IpcBridge {
         last_connected: profile.lastConnected,
         intranet_only: profile.useOnlyForNetworkResources ?? false,
         custom_subnets: profile.customSubnets || [],
+
         credentials: profile.credentials
           ? {
               username: profile.credentials.username,
@@ -308,20 +300,6 @@ export class IpcBridge {
     return { status: "success" };
   }
 
-  static async setSplitTunneling(config: SplitTunnelConfigPayload): Promise<unknown> {
-    if (this.isTauriEnvironment()) {
-      return await invoke("set_split_tunneling", { config });
-    }
-    return { status: "success" };
-  }
-
-  static async getDiagnostics(): Promise<unknown> {
-    if (this.isTauriEnvironment()) {
-      return await invoke("get_diagnostics");
-    }
-    return null;
-  }
-
   static async pingDaemon(): Promise<boolean> {
     if (this.isTauriEnvironment()) {
       try {
@@ -366,9 +344,9 @@ export class IpcBridge {
     }
   }
 
-  static async windowClose(): Promise<void> {
+  static async windowClose(minimizeToTray: boolean = true): Promise<void> {
     if (this.isTauriEnvironment()) {
-      await invoke("window_close");
+      await invoke("window_close", { minimizeToTray });
     }
   }
 

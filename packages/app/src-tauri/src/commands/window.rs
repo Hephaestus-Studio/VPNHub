@@ -1,7 +1,7 @@
 //! # Tauri Frameless Window Control Commands
 
 use crate::error::AppError;
-use tauri::{LogicalPosition, LogicalSize, Window};
+use tauri::{LogicalPosition, LogicalSize, Manager, Window};
 
 #[tauri::command]
 pub async fn window_start_dragging(window: Window) -> Result<(), AppError> {
@@ -72,9 +72,13 @@ pub async fn window_toggle_maximize(window: Window) -> Result<(), AppError> {
 }
 
 #[tauri::command]
-pub async fn window_close(window: Window) -> Result<(), AppError> {
-    // Hide to System Tray instead of hard-terminating the application
-    window.hide().map_err(|e| AppError::Tauri(e.to_string()))
+pub async fn window_close(window: Window, minimize_to_tray: Option<bool>) -> Result<(), AppError> {
+    if minimize_to_tray.unwrap_or(true) {
+        window.hide().map_err(|e| AppError::Tauri(e.to_string()))
+    } else {
+        window.app_handle().exit(0);
+        Ok(())
+    }
 }
 
 #[tauri::command]

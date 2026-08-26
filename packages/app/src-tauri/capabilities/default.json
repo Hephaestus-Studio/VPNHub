@@ -21,6 +21,7 @@
     "core:window:allow-is-maximized",
     "core:window:allow-is-visible",
     "core:app:default",
-    "core:image:default"
+    "core:image:default",
+    "autostart:default"
   ]
 }

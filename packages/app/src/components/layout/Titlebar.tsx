@@ -14,8 +14,14 @@ import { IpcBridge } from "../../services/ipcBridge";
 import styles from "./Titlebar.module.css";
 
 export const Titlebar: React.FC = () => {
-  const { daemonHealth, daemonVersion, isCompactWidget, setCompactWidget, setSpotlightOpen } =
-    useVpnStore();
+  const {
+    daemonHealth,
+    daemonVersion,
+    isCompactWidget,
+    setCompactWidget,
+    setSpotlightOpen,
+    appSettings,
+  } = useVpnStore();
 
   const isNarrow = useMediaQuery("(max-width: 640px)");
   const isMobile = useMediaQuery("(max-width: 480px)");
@@ -151,7 +157,7 @@ export const Titlebar: React.FC = () => {
           variant="subtle"
           color="red"
           size="sm"
-          onClick={() => IpcBridge.windowClose()}
+          onClick={() => IpcBridge.windowClose(appSettings.minimizeToTray)}
           className={styles.iconButton}
         >
           <IconX size={13} />

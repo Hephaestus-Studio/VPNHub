@@ -43,6 +43,10 @@ pub fn run() {
     // 4. Build Tauri Application
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--minimized"]),
+        ))
         .manage(daemon_client.clone())
         .manage(storage_manager.clone())
         .setup(move |app| {
@@ -67,8 +71,6 @@ pub fn run() {
             get_daemon_status,
             get_metrics,
             set_kill_switch,
-            set_split_tunneling,
-            get_diagnostics,
             ping_daemon,
             ping_server,
             window_start_dragging,
