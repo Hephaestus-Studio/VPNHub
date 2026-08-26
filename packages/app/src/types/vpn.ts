@@ -9,6 +9,8 @@ export type KillSwitchMode = "off" | "standard" | "strict";
 
 export type SplitTunnelMode = "bypass" | "route_vpn";
 
+export type RoutingMode = "auto" | "intranet_only" | "full_tunnel";
+
 export interface VpnProfile {
   id: string;
   name: string;
@@ -48,6 +50,7 @@ export interface VpnProfile {
     renegSec?: number;
   };
   rawConfig?: string;
+  routingMode?: RoutingMode;
   useOnlyForNetworkResources?: boolean;
   customSubnets?: string[];
 }
@@ -108,11 +111,11 @@ export interface SecuritySettings {
   webRtcProtection: boolean;
   lanBypass: boolean;
   defaultUseOnlyForNetworkResources?: boolean;
+  defaultRoutingMode?: RoutingMode;
 }
 
-export interface DiagnosticItem {
-  name: string;
-  status: "ok" | "warning" | "error";
-  details: string;
-  value: string;
+export interface AppSettings {
+  autoLaunch: boolean;
+  autoConnect: boolean;
+  minimizeToTray: boolean;
 }

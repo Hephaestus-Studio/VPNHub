@@ -17,6 +17,7 @@ import {
   Divider,
   Switch,
 } from "@mantine/core";
+
 import {
   IconKey,
   IconWorld,
@@ -63,7 +64,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [privateKey, setPrivateKey] = useState("");
   const [presharedKey, setPresharedKey] = useState("");
 
-  // Intranet-Only Routing & Subnets
+  // Routing Policy: "Use this connection only for resources on its network"
   const [useOnlyForNetworkResources, setUseOnlyForNetworkResources] = useState(false);
   const [customSubnetsInput, setCustomSubnetsInput] = useState("");
 
@@ -155,6 +156,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setPresharedKey("");
       setUseOnlyForNetworkResources(false);
       setCustomSubnetsInput("");
+
       setUsername("");
       setPassword("");
       setPasswordMode("static");
@@ -194,6 +196,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       pingMs: initialProfile?.pingMs || Math.floor(20 + Math.random() * 40),
       useOnlyForNetworkResources,
       customSubnets: subnetsList,
+
       credentials: {
         username: username || undefined,
         password: password || undefined,
@@ -375,15 +378,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               />
             )}
 
-            {/* Section: Routing & Split Gateway (Intranet-Only) */}
+            {/* Section: Routing Policy */}
             <Box
               className={useOnlyForNetworkResources ? styles.intranetBoxActive : styles.intranetBox}
             >
-              <Group
-                justify="space-between"
-                align="center"
-                mb={useOnlyForNetworkResources ? "xs" : 0}
-              >
+              <Group justify="space-between" align="center">
                 <Group gap="xs">
                   <IconNetwork size={18} color="var(--vpn-cyan)" />
                   <Box>
@@ -391,7 +390,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       Use this connection only for resources on its network
                     </Text>
                     <Text size="10px" c="dimmed">
-                      Intranet-Only: Routes only corporate subnets; native web browsing stays direct
+                      {useOnlyForNetworkResources
+                        ? "Split-Tunnel active: Routes only internal subnets; Internet goes through local connection"
+                        : "Default: Follows server configuration (Uses VPN default gateway if pushed by server)"}
                     </Text>
                   </Box>
                 </Group>
@@ -407,12 +408,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <Stack gap="xs" mt="xs">
                   <TextInput
                     size="xs"
-                    label="Custom Internal Subnets (CIDR)"
+                    label="Custom Corporate Subnets (CIDR)"
                     placeholder="e.g. 10.0.0.0/8, 192.168.10.0/24, 172.16.0.0/12"
                     value={customSubnetsInput}
                     onChange={(e) => setCustomSubnetsInput(e.currentTarget.value)}
                     className="font-mono"
-                    description="Private subnets to route into this VPN tunnel (comma-separated)"
+                    description="Additional private subnets to route into this VPN tunnel (comma-separated)"
                   />
                   <Text size="10px" c="dimmed" className={styles.hintText}>
                     💡 Routes pushed by the VPN server & the assigned tunnel IP are automatically

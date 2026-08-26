@@ -1,4 +1,4 @@
-import { VpnProfile, LogEntry, AppRule, IpDomainRule, DiagnosticItem } from "../types/vpn";
+import { VpnProfile, LogEntry, AppRule, IpDomainRule } from "../types/vpn";
 
 export const INITIAL_PROFILES: VpnProfile[] = [
   {
@@ -211,38 +211,5 @@ export const INITIAL_IP_RULES: IpDomainRule[] = [
     description: "Direct Streaming Bypass",
     mode: "bypass",
     enabled: false,
-  },
-];
-
-export const INITIAL_DIAGNOSTICS: DiagnosticItem[] = [
-  {
-    name: "Daemon IPC Health",
-    status: "ok",
-    details: "IPC Domain Socket responsive (0.42ms round-trip)",
-    value: "ACTIVE / v0.1.0",
-  },
-  {
-    name: "Virtual Network Interface",
-    status: "ok",
-    details: "wg0 kernel device ready with MTU 1420",
-    value: "wg0 (Kernel)",
-  },
-  {
-    name: "DNS Resolution & NRPT",
-    status: "ok",
-    details: "Protected upstream DNS resolver enforced (1.1.1.1)",
-    value: "ENFORCED",
-  },
-  {
-    name: "Firewall Filtering (nftables)",
-    status: "ok",
-    details: "nftables rules active; leak prevention filters loaded",
-    value: "STRICT READY",
-  },
-  {
-    name: "IPv6 Routing Status",
-    status: "ok",
-    details: "IPv6 blackhole null-route enabled to prevent leaks",
-    value: "DISABLED / SAFE",
   },
 ];

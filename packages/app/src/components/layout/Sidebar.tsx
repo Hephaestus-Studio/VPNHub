@@ -4,9 +4,7 @@ import {
   IconBolt,
   IconFolder,
   IconShieldLock,
-  IconArrowsSplit,
   IconTerminal2,
-  IconStethoscope,
   IconSettings,
   IconLifebuoy,
   IconShieldCheck,
@@ -27,9 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: IconBolt },
   { id: "profiles", label: "Profile Library", icon: IconFolder },
   { id: "security", label: "Security & Shield", icon: IconShieldLock },
-  { id: "split-tunneling", label: "Split Tunneling", icon: IconArrowsSplit },
   { id: "logs", label: "Live Console", icon: IconTerminal2 },
-  { id: "diagnostics", label: "Diagnostics", icon: IconStethoscope },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 

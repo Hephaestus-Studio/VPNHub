@@ -8,14 +8,13 @@ import {
   SecuritySettings,
   AppRule,
   IpDomainRule,
-  DiagnosticItem,
   KillSwitchMode,
+  AppSettings,
 } from "../types/vpn";
 import { IpcBridge, ProfileSecretPayload } from "../services/ipcBridge";
 import { TotpGenerator } from "../utils/totp";
 
-export type NavigationTab =
-  "dashboard" | "profiles" | "security" | "split-tunneling" | "logs" | "settings" | "diagnostics";
+export type NavigationTab = "dashboard" | "profiles" | "security" | "logs" | "settings";
 
 interface VpnStoreState {
   connectionState: ConnectionState;
@@ -30,9 +29,9 @@ interface VpnStoreState {
   uptimeSeconds: number;
   logs: LogEntry[];
   securitySettings: SecuritySettings;
+  appSettings: AppSettings;
   appRules: AppRule[];
   ipRules: IpDomainRule[];
-  diagnostics: DiagnosticItem[];
   isSpotlightOpen: boolean;
   isCompactWidget: boolean;
   isLogAutoScroll: boolean;
@@ -51,6 +50,7 @@ interface VpnStoreState {
   setLogSearchQuery: (query: string) => void;
   setDaemonHealth: (health: DaemonHealthStatus) => void;
   setMfaPromptProfile: (profile: VpnProfile | null) => void;
+  updateAppSettings: (settings: Partial<AppSettings>) => void;
 
   connect: (profileId?: string, overridePassword?: string) => Promise<void>;
   disconnect: () => Promise<void>;
@@ -216,38 +216,21 @@ const setupIpcSubscriptions = async (
   });
 };
 
-const INITIAL_DIAGNOSTICS_DATA: DiagnosticItem[] = [
-  {
-    name: "WireGuard Module (wireguard.ko)",
-    status: "ok",
-    details: "Linux kernel module loaded, crypto chacha20poly1305 active",
-    value: "5.15.0-generic",
-  },
-  {
-    name: "nftables Kill Switch Chain",
-    status: "ok",
-    details: "Table inet vpnhub active, hook prerouting & output with priority raw",
-    value: "Active",
-  },
-  {
-    name: "systemd-resolved DNS Over TLS",
-    status: "ok",
-    details: "Strict stub resolver 127.0.0.53:53 forwarding to encrypted 1.1.1.1",
-    value: "DoT Active",
-  },
-  {
-    name: "Policy Routing Rule (FwMark 0x51820)",
-    status: "ok",
-    details: "Routing table 51820 default dev wg0 metric 50 active",
-    value: "0x51820 Match",
-  },
-  {
-    name: "IPv6 Interface Blackhole",
-    status: "ok",
-    details: "sysctl net.ipv6.conf.all.disable_ipv6=1 confirmed",
-    value: "Disabled (Protected)",
-  },
-];
+const DEFAULT_APP_SETTINGS: AppSettings = {
+  autoLaunch: false,
+  autoConnect: false,
+  minimizeToTray: true,
+};
+
+function getSavedAppSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem("vpnhub_app_settings");
+    if (raw) {
+      return { ...DEFAULT_APP_SETTINGS, ...JSON.parse(raw) };
+    }
+  } catch {}
+  return DEFAULT_APP_SETTINGS;
+}
 
 export const useVpnStore = create<VpnStoreState>((set, get) => ({
   connectionState: "disconnected",
@@ -293,9 +276,9 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
     lanBypass: true,
   },
 
+  appSettings: getSavedAppSettings(),
   appRules: [],
   ipRules: [],
-  diagnostics: INITIAL_DIAGNOSTICS_DATA,
 
   loadStorage: async (force = false) => {
     if (!force && (get().isStorageLoaded || isStorageLoading)) return;
@@ -377,10 +360,11 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
           virtualIp: p.virtual_ip,
           tags: p.tags,
           isFavorite: p.is_favorite,
-          pingMs: p.ping_ms,
+          pingMs: p.ping_ms ?? 20,
           lastConnected: p.last_connected,
           useOnlyForNetworkResources: p.intranet_only ?? false,
           customSubnets: p.custom_subnets ?? [],
+
           credentials: {
             username,
             password,
@@ -638,6 +622,15 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
     get().addLog("INFO", "SECURITY_SHIELD", "Security settings persisted to disk");
   },
 
+  updateAppSettings: (settings) => {
+    const newSettings = { ...get().appSettings, ...settings };
+    set({ appSettings: newSettings });
+    try {
+      localStorage.setItem("vpnhub_app_settings", JSON.stringify(newSettings));
+    } catch {}
+    get().addLog("INFO", "DESKTOP_SETTINGS", "Desktop window settings saved");
+  },
+
   addAppRule: (rule) => {
     const newRules = [rule, ...get().appRules];
     set({ appRules: newRules });
@@ -775,15 +768,6 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
         ? profile.useOnlyForNetworkResources
         : (state.securitySettings.defaultUseOnlyForNetworkResources ?? false);
 
-    const customDnsIps =
-      state.securitySettings.customDnsProvider === "cloudflare"
-        ? ["1.1.1.1", "1.0.0.1"]
-        : state.securitySettings.customDnsProvider === "google"
-          ? ["8.8.8.8", "8.8.4.4"]
-          : state.securitySettings.customDnsProvider === "quad9"
-            ? ["9.9.9.9", "149.112.112.112"]
-            : state.securitySettings.customDnsServers || ["1.1.1.1"];
-
     try {
       const response = (await IpcBridge.connectVpn({
         profile_id: profile.id,
@@ -792,16 +776,13 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
         server_port: profile.serverPort,
         auth_config: authConfig,
         enable_kill_switch: state.securitySettings.killSwitch !== "off",
-        custom_dns: state.securitySettings.dnsProtection ? customDnsIps : undefined,
         security_policy: {
           kill_switch_mode: state.securitySettings.killSwitch,
-          dns_protection: state.securitySettings.dnsProtection,
-          custom_dns_provider: state.securitySettings.customDnsProvider,
-          custom_dns_servers: customDnsIps,
           ipv6_leak_protection: state.securitySettings.ipv6LeakProtection,
           webrtc_protection: state.securitySettings.webRtcProtection,
           lan_bypass: state.securitySettings.lanBypass,
         },
+
         routing_policy: {
           intranet_only: isIntranetOnly,
           custom_subnets: profile.customSubnets || [],

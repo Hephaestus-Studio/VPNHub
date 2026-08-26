@@ -5,7 +5,6 @@ import {
   IconBolt,
   IconFolder,
   IconShieldLock,
-  IconArrowsSplit,
   IconTerminal2,
   IconSettings,
 } from "@tabler/icons-react";
@@ -22,7 +21,6 @@ const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: IconBolt },
   { id: "profiles", label: "Profiles", icon: IconFolder },
   { id: "security", label: "Security", icon: IconShieldLock },
-  { id: "split-tunneling", label: "Split", icon: IconArrowsSplit },
   { id: "logs", label: "Logs", icon: IconTerminal2 },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];

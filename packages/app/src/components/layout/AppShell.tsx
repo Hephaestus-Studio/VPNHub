@@ -9,9 +9,7 @@ import { SpotlightSearch } from "./SpotlightSearch";
 import { DashboardView } from "../dashboard/DashboardView";
 import { ProfileLibraryView } from "../profiles/ProfileLibraryView";
 import { SecurityHubView } from "../security/SecurityHubView";
-import { SplitTunnelingView } from "../split_tunnel/SplitTunnelingView";
 import { LogConsoleView } from "../logs/LogConsoleView";
-import { DiagnosticsView } from "../diagnostics/DiagnosticsView";
 import { SettingsView } from "../settings/SettingsView";
 import { MiniTrayWidget } from "../tray/MiniTrayWidget";
 import { WindowResizeBorders } from "./WindowResizeBorders";
@@ -48,12 +46,8 @@ export const AppShell: React.FC = () => {
         return <ProfileLibraryView />;
       case "security":
         return <SecurityHubView />;
-      case "split-tunneling":
-        return <SplitTunnelingView />;
       case "logs":
         return <LogConsoleView />;
-      case "diagnostics":
-        return <DiagnosticsView />;
       case "settings":
         return <SettingsView />;
       default:

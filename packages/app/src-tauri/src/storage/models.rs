@@ -20,6 +20,8 @@ pub struct StoredProfile {
     pub last_connected: Option<String>,
     pub credentials: Option<StoredCredentialsMetadata>,
     #[serde(default)]
+    pub routing_mode: Option<String>,
+    #[serde(default)]
     pub intranet_only: bool,
     #[serde(default)]
     pub custom_subnets: Vec<String>,

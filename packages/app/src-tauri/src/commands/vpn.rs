@@ -2,9 +2,7 @@
 
 use std::sync::Arc;
 use tauri::State;
-use vpnhub_daemon::ipc::protocol::{
-    ConnectParams, DaemonRequest, DaemonResponse, SplitTunnelConfig,
-};
+use vpnhub_daemon::ipc::protocol::{ConnectParams, DaemonRequest, DaemonResponse};
 
 use crate::error::AppError;
 use crate::ipc::DaemonClient;
@@ -134,23 +132,6 @@ pub async fn set_kill_switch(
     client
         .send_request(DaemonRequest::SetKillSwitch { enabled, mode })
         .await
-}
-
-#[tauri::command]
-pub async fn set_split_tunneling(
-    client: State<'_, Arc<DaemonClient>>,
-    config: SplitTunnelConfig,
-) -> Result<DaemonResponse, AppError> {
-    client
-        .send_request(DaemonRequest::SetSplitTunneling(config))
-        .await
-}
-
-#[tauri::command]
-pub async fn get_diagnostics(
-    client: State<'_, Arc<DaemonClient>>,
-) -> Result<DaemonResponse, AppError> {
-    client.send_request(DaemonRequest::GetDiagnostics).await
 }
 
 #[tauri::command]

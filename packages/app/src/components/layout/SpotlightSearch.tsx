@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, TextInput, Stack, Group, Text, Badge, UnstyledButton, Box } from "@mantine/core";
-import {
-  IconSearch,
-  IconBolt,
-  IconShield,
-  IconTerminal2,
-  IconFolder,
-  IconArrowsSplit,
-} from "@tabler/icons-react";
+import { IconSearch, IconBolt, IconShield, IconTerminal2, IconFolder } from "@tabler/icons-react";
+
 import { useVpnStore } from "../../state/useVpnStore";
 import styles from "./SpotlightSearch.module.css";
 
@@ -77,27 +71,18 @@ export const SpotlightSearch: React.FC = () => {
     },
     {
       id: "toggle-ks",
-      title: `Toggle Kill Switch (${securitySettings.killSwitch === "strict" ? "Set to Auto" : "Set to Strict"})`,
+      title: `Toggle Kill Switch (${securitySettings.killSwitch === "strict" ? "Turn Off" : "Turn On"})`,
       subtitle: "Firewall fail-closed enforcement",
       icon: IconShield,
       onSelect: () => {
-        setKillSwitch(securitySettings.killSwitch === "strict" ? "standard" : "strict");
-        setSpotlightOpen(false);
-      },
-    },
-    {
-      id: "nav-split",
-      title: "Configure Split Tunneling",
-      subtitle: "App rules, CIDR blocks, bypass list",
-      icon: IconArrowsSplit,
-      onSelect: () => {
-        setActiveTab("split-tunneling");
+        setKillSwitch(securitySettings.killSwitch === "strict" ? "off" : "strict");
         setSpotlightOpen(false);
       },
     },
     {
       id: "nav-logs",
       title: "Open Live Console",
+
       subtitle: "View real-time daemon logs & export diagnostics",
       icon: IconTerminal2,
       onSelect: () => {
