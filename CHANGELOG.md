@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(daemon)* Implement OpenVpnDriver, zero-touch DNS, and streamlined routing - ([bc92811](https://github.com/Hephaestus-Studio/VPNHub/commit/bc928118a6804b8fa70de4628f5b32dc5550a7ec))
 - *(ui)* Streamline navigation, profile routing, and security center - ([3397055](https://github.com/Hephaestus-Studio/VPNHub/commit/33970554a37610cd0968f5c2fea81ddbcfd6510e))
 - *(settings)* Integrate autostart plugin and desktop window close behavior - ([96e4bac](https://github.com/Hephaestus-Studio/VPNHub/commit/96e4bacb6eff24e8b67cae7285b8989d15d13709))
+- *(windows)* Add Wintun driver support, Win32 IP Helper routing, and Windows Named Pipe IPC - ([f7e12d2](https://github.com/Hephaestus-Studio/VPNHub/commit/f7e12d2b17521206964d85711130a55343628459))
 
 ### Maintenance
 
