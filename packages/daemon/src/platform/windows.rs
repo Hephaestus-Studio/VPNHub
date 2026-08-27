@@ -11,7 +11,8 @@ windows_service::define_windows_service!(ffi_service_main, vpnhub_service_main);
 #[cfg(windows)]
 fn vpnhub_service_main(_arguments: Vec<std::ffi::OsString>) {
     use windows_service::service::{
-        ServiceAcceptedCmdOptions, ServiceControl, ServiceState, ServiceStatus, ServiceType,
+        ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus,
+        ServiceType,
     };
     use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
 
@@ -33,8 +34,8 @@ fn vpnhub_service_main(_arguments: Vec<std::ffi::OsString>) {
     let running_status = ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
         current_state: ServiceState::Running,
-        controls_accepted: ServiceAcceptedCmdOptions::SUPPORT_STOP,
-        exit_code: 0,
+        controls_accepted: ServiceControlAccept::STOP,
+        exit_code: ServiceExitCode::NO_ERROR,
         checkpoint: 0,
         wait_hint: std::time::Duration::default(),
         process_id: None,
@@ -53,7 +54,7 @@ impl WindowsPlatform {
         {
             use windows_service::service_dispatcher;
             service_dispatcher::start("vpnhub-daemon", ffi_service_main)
-                .map_err(|e| PlatformError::ServiceControlFailed(e.to_string()))?;
+                .map_err(|e| PlatformError::WindowsServiceFailed(e.to_string()))?;
         }
         Ok(())
     }

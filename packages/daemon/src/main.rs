@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
 
     #[cfg(target_os = "windows")]
     if config.service_mode {
-        if let Err(e) = crate::platform::WindowsPlatform::run_service() {
+        if let Err(e) = crate::platform::windows::WindowsPlatform::run_service() {
             eprintln!("Failed to start Windows Service: {}", e);
         }
         return Ok(());

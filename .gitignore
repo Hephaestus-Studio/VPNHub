@@ -1,6 +1,8 @@
 # Logs
 /logs
 *.log
+daemon-log.txt
+/wintun.dll
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

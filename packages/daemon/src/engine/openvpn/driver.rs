@@ -214,7 +214,23 @@ impl VpnDriver for OpenVpnDriver {
             }
         };
 
-        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+        #[cfg(target_os = "windows")]
+        let tun_device: Box<dyn VirtualTunDevice> = match ovpn_tun::WindowsTunDevice::create(
+            Some("wintun"),
+            1500,
+        ) {
+            Ok(dev) => {
+                info!(target: "daemon::engine::ovpn", "Created Windows TUN interface '{}'", dev.name());
+                Box::new(dev)
+            }
+            Err(e) => {
+                warn!(target: "daemon::engine::ovpn", error = %e, "Failed to create Windows TUN device, falling back to mock");
+                let (mock, _) = MockTunDevice::new("wintun", 1500);
+                Box::new(mock)
+            }
+        };
+
+        #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
         let tun_device: Box<dyn VirtualTunDevice> = {
             let (mock, _) = MockTunDevice::new("tun0", 1500);
             Box::new(mock)

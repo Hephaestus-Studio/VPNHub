@@ -248,18 +248,20 @@ impl ClientSession {
                 // 2. Inbound IP packet from TUN interface
                 tun_res = tun.read(&mut tun_buf) => {
                     let n = tun_res?;
-                    tracing::trace!(target: "ovpn::core", "Read {} bytes from TUN device", n);
-                    let now = Instant::now();
-                    engine.process_tun_packet(now, &tun_buf[..n])?;
+                    if n > 0 {
+                        tracing::trace!(target: "ovpn::core", "Read {} bytes from TUN device", n);
+                        let now = Instant::now();
+                        engine.process_tun_packet(now, &tun_buf[..n])?;
 
-                    {
-                        let mut st = stats.write().await;
-                        st.bytes_out += n as u64;
-                        st.packets_out += 1;
-                        st.uptime_secs = start_time.elapsed().as_secs();
+                        {
+                            let mut st = stats.write().await;
+                            st.bytes_out += n as u64;
+                            st.packets_out += 1;
+                            st.uptime_secs = start_time.elapsed().as_secs();
+                        }
+
+                        Self::drain_engine_actions(&mut engine, &mut transport, tun, event_tx).await?;
                     }
-
-                    Self::drain_engine_actions(&mut engine, &mut transport, tun, event_tx).await?;
                 }
 
                 // 3. User commands from control handle

@@ -18,6 +18,7 @@ pub mod linux;
 pub mod macos;
 
 #[cfg(target_os = "windows")]
+#[allow(unsafe_code)]
 pub mod windows;
 
 pub use dco::{DcoDriver, DcoPeerKeyConfig, LinuxDcoDriver};

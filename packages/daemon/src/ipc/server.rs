@@ -77,26 +77,42 @@ impl IpcServer {
 
         #[cfg(windows)]
         {
+            use crate::ipc::transport::windows_pipe::{PipeSecurityAttributes, DEFAULT_PIPE_SDDL};
             use tokio::net::windows::named_pipe::ServerOptions;
+
             let pipe_name = self.config.socket_path.to_string_lossy().to_string();
             info!("IPC Server listening on Windows Named Pipe: {}", pipe_name);
 
-            let mut server = ServerOptions::new()
-                .first_pipe_instance(true)
-                .create(&pipe_name)
-                .map_err(|e| IpcError::BindFailed {
-                    endpoint: pipe_name.clone(),
-                    source: e,
+            let mut sec_attrs =
+                PipeSecurityAttributes::from_sddl(DEFAULT_PIPE_SDDL).map_err(|e| {
+                    IpcError::BindFailed {
+                        endpoint: pipe_name.clone(),
+                        source: e,
+                    }
                 })?;
+
+            let mut server = unsafe {
+                ServerOptions::new()
+                    .first_pipe_instance(true)
+                    .create_with_security_attributes_raw(&pipe_name, sec_attrs.as_mut_ptr())
+            }
+            .map_err(|e| IpcError::BindFailed {
+                endpoint: pipe_name.clone(),
+                source: e,
+            })?;
 
             loop {
                 match server.connect().await {
                     Ok(()) => {
                         let stream = server;
-                        server = match ServerOptions::new()
-                            .first_pipe_instance(false)
-                            .create(&pipe_name)
-                        {
+                        server = match unsafe {
+                            ServerOptions::new()
+                                .first_pipe_instance(false)
+                                .create_with_security_attributes_raw(
+                                    &pipe_name,
+                                    sec_attrs.as_mut_ptr(),
+                                )
+                        } {
                             Ok(s) => s,
                             Err(e) => {
                                 error!("Failed to create subsequent Named Pipe instance: {}", e);
@@ -104,6 +120,7 @@ impl IpcServer {
                             }
                         };
 
+                        info!("Accepted Windows Named Pipe client connection");
                         let orchestrator = self.orchestrator.clone();
                         tokio::spawn(async move {
                             if let Err(e) = Self::handle_client_stream(stream, orchestrator).await {

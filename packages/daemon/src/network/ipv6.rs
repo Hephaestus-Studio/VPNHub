@@ -3,7 +3,9 @@
 //! Provides null-routing (blackhole) and interface-level suppression for native IPv6 traffic
 //! to prevent dual-stack traffic bypass when IPv4 VPN tunnels are established.
 
-use tracing::{debug, info, warn};
+#[cfg(target_os = "linux")]
+use tracing::warn;
+use tracing::{debug, info};
 
 /// IPv6 Leak Protection Manager.
 pub struct PlatformIpv6Manager {
@@ -78,8 +80,6 @@ impl PlatformIpv6Manager {
         {
             // On Windows, blocking can be done via netsh / WFP
             debug!("IPv6 leak protection initialized for Windows WFP/Netsh");
-            self.is_active = true;
-            return Ok(());
         }
 
         self.is_active = true;

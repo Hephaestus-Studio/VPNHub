@@ -4,7 +4,7 @@
 //! and TCP MSS clamping to prevent packet fragmentation.
 
 use crate::error::NetworkError;
-use tracing::{debug, info};
+use tracing::info;
 
 /// Standard MTU for VPN tunnels (allowing for protocol encapsulation overhead).
 pub const DEFAULT_VPN_MTU: u32 = 1420;
@@ -70,7 +70,61 @@ impl InterfaceManager {
             Ok(())
         }
 
-        #[cfg(not(target_os = "linux"))]
+        #[cfg(target_os = "windows")]
+        {
+            // 1. Set MTU via netsh
+            let _ = std::process::Command::new("netsh")
+                .args([
+                    "interface",
+                    "ipv4",
+                    "set",
+                    "subinterface",
+                    iface,
+                    &format!("mtu={}", mtu),
+                    "store=active",
+                ])
+                .status();
+
+            // 2. Assign virtual tunnel IP address if provided
+            if let Some(ip) = assigned_ip {
+                let ip_clean = if let Some(idx) = ip.find('/') {
+                    &ip[..idx]
+                } else {
+                    ip
+                };
+
+                let netmask = if ip.ends_with("/24") {
+                    "255.255.255.0"
+                } else if ip.ends_with("/16") {
+                    "255.255.0.0"
+                } else if ip.ends_with("/8") {
+                    "255.0.0.0"
+                } else {
+                    "255.255.255.255"
+                };
+
+                info!(
+                    "Assigning IP {} mask {} to Windows interface '{}'",
+                    ip_clean, netmask, iface
+                );
+                let _ = std::process::Command::new("netsh")
+                    .args([
+                        "interface",
+                        "ipv4",
+                        "set",
+                        "address",
+                        &format!("name={}", iface),
+                        "static",
+                        ip_clean,
+                        netmask,
+                    ])
+                    .status();
+            }
+
+            Ok(())
+        }
+
+        #[cfg(not(any(target_os = "linux", target_os = "windows")))]
         {
             let _ = (iface, mtu, assigned_ip);
             Ok(())
@@ -94,7 +148,13 @@ impl InterfaceManager {
             Ok(())
         }
 
-        #[cfg(not(target_os = "linux"))]
+        #[cfg(target_os = "windows")]
+        {
+            let _ = iface;
+            Ok(())
+        }
+
+        #[cfg(not(any(target_os = "linux", target_os = "windows")))]
         {
             let _ = iface;
             Ok(())
@@ -128,6 +188,20 @@ impl InterfaceManager {
                 }
             }
         }
+
+        #[cfg(target_os = "windows")]
+        {
+            let out = std::process::Command::new("netsh")
+                .args(["interface", "ipv4", "show", "interfaces"])
+                .output();
+            if let Ok(output) = out {
+                let text = String::from_utf8_lossy(&output.stdout);
+                if text.contains("wintun") || text.contains("vpnhub") {
+                    return true;
+                }
+            }
+        }
+
         false
     }
 }

@@ -29,6 +29,7 @@ pub struct MockTunDevice {
     rx_queue: Arc<Mutex<tokio::sync::mpsc::Receiver<Vec<u8>>>>,
     tx_sender: tokio::sync::mpsc::Sender<Vec<u8>>,
     tx_collector: Arc<Mutex<Vec<Vec<u8>>>>,
+    _inbound_tx: tokio::sync::mpsc::Sender<Vec<u8>>,
 }
 
 impl MockTunDevice {
@@ -51,6 +52,7 @@ impl MockTunDevice {
             rx_queue: Arc::new(Mutex::new(inbound_rx)),
             tx_sender: outbound_tx,
             tx_collector: collector,
+            _inbound_tx: inbound_tx.clone(),
         };
 
         (dev, inbound_tx)
@@ -80,10 +82,10 @@ impl VirtualTunDevice for MockTunDevice {
                 buf[..copy_len].copy_from_slice(&pkt[..copy_len]);
                 Ok(copy_len)
             }
-            None => Err(TunError::Io(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
-                "Mock TUN closed",
-            ))),
+            None => {
+                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+                Ok(0)
+            }
         }
     }
 

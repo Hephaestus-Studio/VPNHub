@@ -12,6 +12,12 @@ pub const DEFAULT_LINUX_SOCKET_PATH: &str = "/run/vpnhub/vpnhub.sock";
 /// Default Windows Named Pipe name.
 pub const DEFAULT_WINDOWS_PIPE_NAME: &str = r"\\.\pipe\vpnhub-daemon";
 
+#[cfg(target_os = "windows")]
+pub const DEFAULT_SOCKET_PATH: &str = DEFAULT_WINDOWS_PIPE_NAME;
+
+#[cfg(not(target_os = "windows"))]
+pub const DEFAULT_SOCKET_PATH: &str = DEFAULT_LINUX_SOCKET_PATH;
+
 /// Maximum allowed IPC frame size in bytes (16 MiB) to guard against buffer exhaustion.
 pub const MAX_IPC_FRAME_SIZE: usize = 16 * 1024 * 1024;
 
@@ -35,7 +41,7 @@ pub struct DaemonConfig {
     #[arg(
         long,
         env = "VPNHUB_SOCKET_PATH",
-        default_value = DEFAULT_LINUX_SOCKET_PATH
+        default_value = DEFAULT_SOCKET_PATH
     )]
     pub socket_path: PathBuf,
 

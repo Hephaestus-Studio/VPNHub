@@ -4,7 +4,12 @@ use futures_util::{SinkExt, StreamExt};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
+#[cfg(unix)]
 use tokio::net::UnixStream;
+
+#[cfg(windows)]
+use tokio::net::windows::named_pipe::{ClientOptions, NamedPipeClient};
+
 use tokio::sync::Mutex;
 use tokio_util::codec::Framed;
 use tracing::{info, warn};
@@ -19,7 +24,13 @@ use vpnhub_daemon::ipc::protocol::{DaemonRequest, DaemonResponse};
 
 use crate::error::AppError;
 
-type DaemonFramed = Framed<UnixStream, JsonLengthDelimitedCodec<DaemonResponse, DaemonRequest>>;
+#[cfg(unix)]
+type IpcStream = UnixStream;
+
+#[cfg(windows)]
+type IpcStream = NamedPipeClient;
+
+type DaemonFramed = Framed<IpcStream, JsonLengthDelimitedCodec<DaemonResponse, DaemonRequest>>;
 
 /// Thread-safe client connection manager to the background daemon.
 pub struct DaemonClient {
@@ -88,11 +99,32 @@ impl DaemonClient {
             }
         }
 
-        #[cfg(not(unix))]
+        #[cfg(windows)]
         {
-            Err(AppError::DaemonOffline(
-                "Windows Named Pipe transport not configured in this build".to_string(),
-            ))
+            let pipe_name = self.socket_path.to_string_lossy().to_string();
+            match ClientOptions::new().open(&pipe_name) {
+                Ok(client) => {
+                    let codec =
+                        JsonLengthDelimitedCodec::<DaemonResponse, DaemonRequest>::default();
+                    let framed = Framed::new(client, codec);
+                    *lock = Some(framed);
+                    self.is_connected.store(true, Ordering::Relaxed);
+                    info!("Connected to VPNHub Daemon Named Pipe at {}", pipe_name);
+                    Ok(())
+                }
+                Err(e) => {
+                    *lock = None;
+                    self.is_connected.store(false, Ordering::Relaxed);
+                    warn!(
+                        "Failed to connect to Windows Named Pipe '{}': {}",
+                        pipe_name, e
+                    );
+                    Err(AppError::DaemonOffline(format!(
+                        "Failed to connect to Named Pipe {}: {}",
+                        pipe_name, e
+                    )))
+                }
+            }
         }
     }
 
@@ -149,7 +181,14 @@ impl DaemonClient {
     pub async fn ping(&self) -> bool {
         match self.send_request(DaemonRequest::Ping).await {
             Ok(DaemonResponse::Pong) => true,
-            _ => false,
+            Ok(other) => {
+                warn!("Daemon ping received unexpected response: {:?}", other);
+                false
+            }
+            Err(e) => {
+                warn!("Daemon ping failed: {}", e);
+                false
+            }
         }
     }
 }
