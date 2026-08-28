@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tracing::info;
+use tracing::{debug, info};
 
 use crate::engine::{DriverEvent, VpnDriver};
 use crate::error::DriverError;

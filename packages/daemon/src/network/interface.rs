@@ -4,7 +4,7 @@
 //! and TCP MSS clamping to prevent packet fragmentation.
 
 use crate::error::NetworkError;
-use tracing::info;
+use tracing::{debug, info};
 
 /// Standard MTU for VPN tunnels (allowing for protocol encapsulation overhead).
 pub const DEFAULT_VPN_MTU: u32 = 1420;
