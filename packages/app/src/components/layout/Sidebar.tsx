@@ -12,21 +12,21 @@ import {
   IconLayoutSidebarLeftExpand,
 } from "@tabler/icons-react";
 import { useVpnStore, NavigationTab } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./Sidebar.module.css";
 
-interface NavItem {
+interface NavItemDef {
   id: NavigationTab;
-  label: string;
   icon: React.ComponentType<{ size?: number; color?: string; stroke?: number }>;
   badge?: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: IconBolt },
-  { id: "profiles", label: "Profile Library", icon: IconFolder },
-  { id: "security", label: "Security & Shield", icon: IconShieldLock },
-  { id: "logs", label: "Live Console", icon: IconTerminal2 },
-  { id: "settings", label: "Settings", icon: IconSettings },
+const NAV_ITEMS: NavItemDef[] = [
+  { id: "dashboard", icon: IconBolt },
+  { id: "profiles", icon: IconFolder },
+  { id: "security", icon: IconShieldLock },
+  { id: "logs", icon: IconTerminal2 },
+  { id: "settings", icon: IconSettings },
 ];
 
 interface SidebarProps {
@@ -36,8 +36,26 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onToggleCollapse }) => {
   const { activeTab, setActiveTab, daemonHealth, daemonVersion, profiles } = useVpnStore();
+  const { t } = useTranslation();
   const isMediaCompact = useMediaQuery("(max-width: 768px)");
   const isCompact = propIsCompact !== undefined ? propIsCompact : isMediaCompact;
+
+  const getNavLabel = (id: NavigationTab): string => {
+    switch (id) {
+      case "dashboard":
+        return t.nav.dashboard;
+      case "profiles":
+        return t.nav.profiles;
+      case "security":
+        return t.nav.security;
+      case "logs":
+        return t.nav.logs;
+      case "settings":
+        return t.nav.settings;
+      default:
+        return id;
+    }
+  };
 
   return (
     <Box className={isCompact ? styles.rootCompact : styles.root}>
@@ -52,11 +70,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
         >
           {!isCompact && (
             <Text size="sm" fw={700} className={styles.headerTitle}>
-              Menu
+              {t.nav.menu}
             </Text>
           )}
           <Tooltip
-            label={isCompact ? "Expand Sidebar (Ctrl+B)" : "Collapse Sidebar (Ctrl+B)"}
+            label={isCompact ? t.nav.expandSidebar : t.nav.collapseSidebar}
             position="right"
             withArrow
           >
@@ -65,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
               color="gray"
               size="sm"
               onClick={onToggleCollapse}
-              className={styles.collapseButton}
+              className={isCompact ? styles.collapseButtonCompact : styles.collapseButton}
             >
               {isCompact ? (
                 <IconLayoutSidebarLeftExpand size={16} />
@@ -107,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
                 />
                 {!isCompact && (
                   <Text size="sm" className={isActive ? styles.navLabelActive : styles.navLabel}>
-                    {item.label}
+                    {getNavLabel(item.id)}
                   </Text>
                 )}
               </Group>
@@ -127,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
 
           if (isCompact) {
             return (
-              <Tooltip key={item.id} label={item.label} position="right" withArrow>
+              <Tooltip key={item.id} label={getNavLabel(item.id)} position="right" withArrow>
                 {buttonContent}
               </Tooltip>
             );
@@ -148,21 +166,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
                 </Box>
                 <Box>
                   <Text size="xs" fw={600} className={styles.coreTitle}>
-                    VPNHub Core
+                    {t.nav.coreTitle}
                   </Text>
                   <Text size="10px" c="dimmed" style={{ lineHeight: 1 }}>
-                    Daemon {daemonVersion.startsWith("v") ? daemonVersion : `v${daemonVersion}`}
+                    {t.nav.daemonStatus} {daemonVersion.startsWith("v") ? daemonVersion : `v${daemonVersion}`}
                   </Text>
                 </Box>
               </Group>
               <Badge size="xs" variant="dot" color={daemonHealth === "connected" ? "teal" : "red"}>
-                {daemonHealth === "connected" ? "Ready" : "Offline"}
+                {daemonHealth === "connected" ? t.common.ready : t.common.offline}
               </Badge>
             </Group>
           </Box>
         ) : (
           <Tooltip
-            label={`Daemon ${daemonVersion.startsWith("v") ? daemonVersion : `v${daemonVersion}`} (${daemonHealth})`}
+            label={`${t.nav.daemonStatus} ${daemonVersion.startsWith("v") ? daemonVersion : `v${daemonVersion}`} (${daemonHealth === "connected" ? t.common.ready : t.common.offline})`}
             position="right"
             withArrow
           >
@@ -172,19 +190,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
           </Tooltip>
         )}
 
-        <UnstyledButton
-          onClick={() => {
-            window.open("https://github.com/hephaestus-studio/vpnhub", "_blank");
-          }}
-          className={isCompact ? styles.supportButtonCompact : styles.supportButton}
-        >
-          <IconLifebuoy size={16} />
-          {!isCompact && (
+        {isCompact ? (
+          <Tooltip label={t.nav.supportAndDocs} position="right" withArrow>
+            <UnstyledButton
+              onClick={() => {
+                window.open("https://github.com/hephaestus-studio/vpnhub", "_blank");
+              }}
+              className={styles.supportButtonCompact}
+            >
+              <IconLifebuoy size={17} />
+            </UnstyledButton>
+          </Tooltip>
+        ) : (
+          <UnstyledButton
+            onClick={() => {
+              window.open("https://github.com/hephaestus-studio/vpnhub", "_blank");
+            }}
+            className={styles.supportButton}
+          >
+            <IconLifebuoy size={16} />
             <Text size="xs" c="dimmed">
-              Support & Docs
+              {t.nav.supportAndDocs}
             </Text>
-          )}
-        </UnstyledButton>
+          </UnstyledButton>
+        )}
       </Stack>
     </Box>
   );

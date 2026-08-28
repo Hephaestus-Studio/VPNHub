@@ -1,10 +1,12 @@
 import { Box, Stack, Group, Text, Badge, Switch, SimpleGrid } from "@mantine/core";
 import { IconShieldLock, IconNetwork, IconWorld, IconRadioactive } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./SecurityHubView.module.css";
 
 export const SecurityHubView: React.FC = () => {
   const { securitySettings, setKillSwitch, updateSecuritySettings } = useVpnStore();
+  const { t } = useTranslation();
 
   const isKillSwitchActive = securitySettings.killSwitch !== "off";
 
@@ -13,10 +15,10 @@ export const SecurityHubView: React.FC = () => {
       {/* Header */}
       <Box>
         <Text size="xl" fw={700} className={styles.title}>
-          Security & Shield Center
+          {t.security.title}
         </Text>
         <Text size="xs" c="dimmed">
-          Configure firewall leak shields, fail-closed kill switches, and local network bypass
+          {t.security.subtitle}
         </Text>
       </Box>
 
@@ -39,15 +41,14 @@ export const SecurityHubView: React.FC = () => {
             <Box>
               <Group gap="xs" align="center">
                 <Text size="md" fw={700} className={styles.cardTitle}>
-                  Internet Kill Switch (Firewall Enforcement)
+                  {t.security.killSwitchTitle}
                 </Text>
                 <Badge size="xs" color={isKillSwitchActive ? "teal" : "gray"} variant="light">
-                  {isKillSwitchActive ? "ENFORCED" : "OFF"}
+                  {isKillSwitchActive ? t.security.killSwitchEnforced : t.security.killSwitchOff}
                 </Badge>
               </Group>
               <Text size="xs" c="dimmed">
-                Blocks unencrypted traffic if the VPN connection drops unexpectedly to prevent data
-                leaks
+                {t.security.killSwitchDesc}
               </Text>
             </Box>
           </Group>
@@ -71,7 +72,7 @@ export const SecurityHubView: React.FC = () => {
                 <Group gap="xs">
                   <IconWorld size={18} color="var(--vpn-emerald)" />
                   <Text size="sm" fw={700} className={styles.cardTitle}>
-                    IPv6 Blackhole Shield
+                    {t.security.ipv6Title}
                   </Text>
                 </Group>
                 <Switch
@@ -84,21 +85,20 @@ export const SecurityHubView: React.FC = () => {
               </Group>
 
               <Text size="xs" c="dimmed">
-                Null-routes native IPv6 traffic to guarantee no dual-stack traffic bypasses the VPN
-                tunnel.
+                {t.security.ipv6Desc}
               </Text>
             </Stack>
 
             <Group justify="space-between" mt="md">
               <Text size="10px" c="dimmed">
-                Status: {securitySettings.ipv6LeakProtection ? "blackhole default" : "Pass-through"}
+                IPv6: {securitySettings.ipv6LeakProtection ? t.statusBar.ipv6Blocked : t.statusBar.ipv6Pass}
               </Text>
               <Badge
                 size="xs"
                 color={securitySettings.ipv6LeakProtection ? "teal" : "gray"}
                 variant="dot"
               >
-                {securitySettings.ipv6LeakProtection ? "Protected" : "Off"}
+                {securitySettings.ipv6LeakProtection ? t.security.ipv6Protected : t.common.disable}
               </Badge>
             </Group>
           </Stack>
@@ -112,7 +112,7 @@ export const SecurityHubView: React.FC = () => {
                 <Group gap="xs">
                   <IconRadioactive size={18} color="var(--vpn-amber)" />
                   <Text size="sm" fw={700} className={styles.cardTitle}>
-                    WebRTC STUN Shield
+                    {t.security.webrtcTitle}
                   </Text>
                 </Group>
                 <Switch
@@ -125,8 +125,7 @@ export const SecurityHubView: React.FC = () => {
               </Group>
 
               <Text size="xs" c="dimmed">
-                Prevents browsers (Chrome, Firefox) from leaking real IP addresses via outbound
-                WebRTC STUN probes.
+                {t.security.webrtcDesc}
               </Text>
             </Stack>
 
@@ -139,7 +138,7 @@ export const SecurityHubView: React.FC = () => {
                 color={securitySettings.webRtcProtection ? "yellow" : "gray"}
                 variant="light"
               >
-                {securitySettings.webRtcProtection ? "Protected" : "Pass-through"}
+                {securitySettings.webRtcProtection ? t.security.webrtcProtected : t.common.disable}
               </Badge>
             </Group>
           </Stack>
@@ -153,7 +152,7 @@ export const SecurityHubView: React.FC = () => {
                 <Group gap="xs">
                   <IconNetwork size={18} color="var(--vpn-cyan)" />
                   <Text size="sm" fw={700} className={styles.cardTitle}>
-                    Smart LAN Bypass
+                    {t.security.lanBypassTitle}
                   </Text>
                 </Group>
                 <Switch
@@ -164,17 +163,16 @@ export const SecurityHubView: React.FC = () => {
               </Group>
 
               <Text size="xs" c="dimmed">
-                Allows access to local physical network devices (home/office printers, NAS, router
-                in local subnet).
+                {t.security.lanBypassDesc}
               </Text>
             </Stack>
 
             <Group justify="space-between" mt="md">
               <Text size="10px" c="dimmed">
-                Physical Subnet Exemption
+                {t.security.lanBypassTitle}
               </Text>
               <Badge size="xs" color={securitySettings.lanBypass ? "cyan" : "gray"} variant="light">
-                {securitySettings.lanBypass ? "Active" : "Disabled"}
+                {securitySettings.lanBypass ? t.security.lanBypassActive : t.common.disable}
               </Badge>
             </Group>
           </Stack>

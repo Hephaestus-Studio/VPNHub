@@ -338,6 +338,16 @@ export class IpcBridge {
     }
   }
 
+  static async windowShow(): Promise<void> {
+    if (this.isTauriEnvironment()) {
+      try {
+        await invoke("window_show");
+      } catch (err) {
+        console.warn("window_show invoke failed:", err);
+      }
+    }
+  }
+
   static async windowMaximize(): Promise<void> {
     if (this.isTauriEnvironment()) {
       await invoke("window_toggle_maximize");

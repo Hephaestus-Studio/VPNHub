@@ -12,6 +12,7 @@ import {
 } from "@mantine/core";
 import { IconShieldLock, IconBolt, IconKey } from "@tabler/icons-react";
 import { VpnProfile } from "../../types/vpn";
+import { useTranslation } from "../../i18n";
 import styles from "./ConnectMfaModal.module.css";
 
 interface ConnectMfaModalProps {
@@ -27,6 +28,7 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
   profile,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   const [basePassword, setBasePassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +70,7 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
         <Group gap="xs">
           <IconShieldLock size={20} color="var(--vpn-amber)" />
           <Text fw={700} size="md" className={styles.modalTitle}>
-            2FA / Dynamic Authentication Required
+            {t.modals.mfaTitle}
           </Text>
         </Group>
       }
@@ -108,22 +110,22 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
           />
 
           <PasswordInput
-            label="Base Password"
-            placeholder="Enter base account password"
+            label="Password"
+            placeholder="••••••••"
             value={basePassword}
             onChange={(e) => setBasePassword(e.currentTarget.value)}
             leftSection={<IconKey size={16} />}
           />
 
           <TextInput
-            label="TOTP / 2FA One-Time Code"
-            placeholder="e.g. 6-digit code (123456)"
+            label="TOTP / MFA Code"
+            placeholder={t.modals.mfaPlaceholder}
             value={totpCode}
             onChange={(e) => setTotpCode(e.currentTarget.value)}
             autoFocus
             required
             className="font-mono"
-            description="Enter the dynamic code from your Authenticator app (Google Authenticator, YubiKey, etc.)"
+            description={t.modals.mfaSubtitle}
             classNames={{
               input: styles.totpInput,
             }}
@@ -131,7 +133,7 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
 
           <Group justify="flex-end" mt="xs">
             <Button variant="subtle" color="gray" onClick={onClose}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button
               type="submit"
@@ -139,7 +141,7 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
               leftSection={<IconBolt size={16} />}
               loading={isSubmitting}
             >
-              Authenticate & Connect
+              {t.modals.mfaConfirm}
             </Button>
           </Group>
         </Stack>

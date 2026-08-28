@@ -116,6 +116,11 @@ export interface SecuritySettings {
 
 export interface AppSettings {
   autoLaunch: boolean;
+  startMinimized: boolean;
   autoConnect: boolean;
   minimizeToTray: boolean;
+  notificationsEnabled?: boolean;
+  autoReconnect?: boolean;
+  language?: "en" | "vi" | "zh" | "fr";
 }
+

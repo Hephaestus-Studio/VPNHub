@@ -231,8 +231,12 @@ const setupIpcSubscriptions = async (
 
 const DEFAULT_APP_SETTINGS: AppSettings = {
   autoLaunch: false,
+  startMinimized: true,
   autoConnect: false,
   minimizeToTray: true,
+  notificationsEnabled: true,
+  autoReconnect: true,
+  language: "en",
 };
 
 function getSavedAppSettings(): AppSettings {

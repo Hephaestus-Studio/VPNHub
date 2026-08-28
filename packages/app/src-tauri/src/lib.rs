@@ -7,6 +7,7 @@ pub mod storage;
 pub mod tray;
 
 use std::sync::Arc;
+use tauri::Manager;
 use tracing::{error, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -51,6 +52,16 @@ pub fn run() {
         .manage(storage_manager.clone())
         .setup(move |app| {
             let app_handle = app.handle().clone();
+
+            // Check if application was launched with minimized/background flag
+            let is_minimized_arg = std::env::args().any(|arg| {
+                arg == "--minimized" || arg == "-m" || arg == "--hidden" || arg == "--background"
+            });
+            if is_minimized_arg {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                }
+            }
 
             // Setup System Tray
             if let Err(e) = setup_system_tray(&app_handle) {

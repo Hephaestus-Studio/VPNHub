@@ -8,10 +8,12 @@ import {
   IconArrowsDownUp,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./DashboardFullLogStream.module.css";
 
 export const DashboardFullLogStream: React.FC = () => {
   const { logs, isLogAutoScroll, setLogAutoScroll, clearLogs, setActiveTab } = useVpnStore();
+  const { t } = useTranslation();
   const logContainerRef = useRef<HTMLDivElement>(null);
 
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -66,7 +68,7 @@ export const DashboardFullLogStream: React.FC = () => {
             className={isMobile ? styles.titleMobile : styles.title}
             truncate
           >
-            {isMobile ? "Activity Stream" : "Live Activity Stream"}
+            {t.dashboard.liveLogStreamTitle}
           </Text>
           <Badge size="xs" variant="dot" color="cyan" style={{ fontSize: 9 }}>
             {logs.length}
@@ -74,7 +76,7 @@ export const DashboardFullLogStream: React.FC = () => {
         </Group>
 
         <Group gap={6} wrap="nowrap">
-          <Tooltip label={isLogAutoScroll ? "Auto-scroll ON" : "Auto-scroll OFF"}>
+          <Tooltip label={isLogAutoScroll ? `${t.logs.autoScroll} (ON)` : `${t.logs.autoScroll} (OFF)`}>
             <ActionIcon
               size="xs"
               variant={isLogAutoScroll ? "light" : "subtle"}
@@ -85,7 +87,7 @@ export const DashboardFullLogStream: React.FC = () => {
             </ActionIcon>
           </Tooltip>
 
-          <Tooltip label="Clear stream">
+          <Tooltip label={t.dashboard.clearStream}>
             <ActionIcon size="xs" variant="subtle" color="gray" onClick={clearLogs}>
               <IconClearAll size={13} />
             </ActionIcon>
@@ -94,7 +96,7 @@ export const DashboardFullLogStream: React.FC = () => {
           <Box className={styles.divider} />
 
           <UnstyledButton onClick={() => setActiveTab("logs")} className={styles.openButton}>
-            {isMobile ? "Console" : "Open Full Console"} <IconArrowUpRight size={12} />
+            {t.nav.logs} <IconArrowUpRight size={12} />
           </UnstyledButton>
         </Group>
       </Group>
@@ -105,7 +107,7 @@ export const DashboardFullLogStream: React.FC = () => {
         className={isMobile ? styles.terminalBodyMobile : styles.terminalBody}
       >
         {recentLogs.length === 0 ? (
-          <Box className={styles.emptyLogs}>No log activity captured yet.</Box>
+          <Box className={styles.emptyLogs}>{t.logs.noLogsMessage}</Box>
         ) : (
           recentLogs.map((log) => {
             const badgeStyle = getLevelBadge(log.level);

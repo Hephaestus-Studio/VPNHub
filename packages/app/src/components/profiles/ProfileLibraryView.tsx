@@ -30,6 +30,7 @@ import {
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
 import { VpnProfile } from "../../types/vpn";
+import { useTranslation } from "../../i18n";
 import { ProfileCard } from "./ProfileCard";
 import { ProfileModal } from "./ProfileModal";
 import { NewProfileHubModal } from "./NewProfileHubModal";
@@ -39,6 +40,7 @@ import styles from "./ProfileLibraryView.module.css";
 export const ProfileLibraryView: React.FC = () => {
   const { profiles, activeProfileId, connectionState, connect, disconnect, toggleFavorite } =
     useVpnStore();
+  const { t } = useTranslation();
 
   const isMobile = useMediaQuery("(max-width: 640px)");
 
@@ -98,16 +100,16 @@ export const ProfileLibraryView: React.FC = () => {
         <Box style={{ minWidth: 0, flex: 1 }}>
           <Group gap="xs" align="center" wrap="nowrap">
             <Text size={isMobile ? "md" : "xl"} fw={700} className={styles.title} truncate>
-              Profile Library
+              {t.profiles.title}
             </Text>
             {!isMobile && (
               <Group gap={6}>
                 <Badge size="xs" variant="light" color="gray">
-                  {profiles.length} Total
+                  {profiles.length} {t.common.all}
                 </Badge>
                 {favoritesCount > 0 && (
                   <Badge size="xs" variant="light" color="yellow">
-                    ★ {favoritesCount} Favorites
+                    ★ {favoritesCount} {t.profiles.favoritesOnly}
                   </Badge>
                 )}
               </Group>
@@ -115,13 +117,13 @@ export const ProfileLibraryView: React.FC = () => {
           </Group>
           {!isMobile && (
             <Text size="xs" c="dimmed">
-              Manage WireGuard and OpenVPN server connection profiles
+              {t.profiles.subtitle}
             </Text>
           )}
         </Box>
 
         {isMobile ? (
-          <Tooltip label="Add Profile" position="left">
+          <Tooltip label={t.profiles.addProfile} position="left">
             <UnstyledButton
               onClick={() => setHubModalOpen(true)}
               className={styles.headerAddBtnMobile}
@@ -136,7 +138,7 @@ export const ProfileLibraryView: React.FC = () => {
             leftSection={<IconPlus size={16} />}
             onClick={() => setHubModalOpen(true)}
           >
-            Add / Import Profile
+            {t.profiles.addProfile}
           </Button>
         )}
       </Group>
@@ -145,7 +147,7 @@ export const ProfileLibraryView: React.FC = () => {
       <Box className={`glass-panel ${styles.controlsPanel}`}>
         <Group justify="space-between" align="center" wrap="nowrap" gap="xs">
           <TextInput
-            placeholder={isMobile ? "Search profiles..." : "Search by name, IP, or country..."}
+            placeholder={isMobile ? t.common.search : t.profiles.searchPlaceholder}
             leftSection={<IconSearch size={15} color="var(--vpn-text-muted)" />}
             rightSection={
               search ? (
@@ -197,8 +199,8 @@ export const ProfileLibraryView: React.FC = () => {
         {/* Horizontally Scrollable Filter Pills */}
         <Box className={styles.pillsScrollContainer}>
           {[
-            { id: "all", label: `All (${profiles.length})` },
-            { id: "favorites", label: `★ Favorites (${favoritesCount})` },
+            { id: "all", label: `${t.common.all} (${profiles.length})` },
+            { id: "favorites", label: `★ ${t.profiles.favoritesOnly} (${favoritesCount})` },
             { id: "wireguard", label: "WireGuard" },
             { id: "openvpn", label: "OpenVPN" },
           ].map((f) => (
@@ -222,17 +224,17 @@ export const ProfileLibraryView: React.FC = () => {
           <IconFolderOff size={36} color="var(--vpn-text-muted)" stroke={1.5} />
           <Box>
             <Text size="sm" fw={600} c="dimmed">
-              No profiles found matching your search
+              {t.profiles.noProfilesFound}
             </Text>
             {search && (
               <Text size="xs" c="dimmed" mt={2}>
-                Try adjusting your search query or filters
+                {t.profiles.createPrompt}
               </Text>
             )}
           </Box>
           {search ? (
             <Button size="xs" variant="light" color="gray" onClick={() => setSearch("")}>
-              Clear Search
+              {t.common.reset}
             </Button>
           ) : (
             <Button
@@ -242,7 +244,7 @@ export const ProfileLibraryView: React.FC = () => {
               leftSection={<IconPlus size={14} />}
               onClick={() => setHubModalOpen(true)}
             >
-              Add Your First Profile
+              {t.profiles.addProfile}
             </Button>
           )}
         </Box>

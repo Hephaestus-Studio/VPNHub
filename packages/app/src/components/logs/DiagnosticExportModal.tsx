@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal, Stack, Text, Group, Button, Box, Checkbox, Progress } from "@mantine/core";
 import { IconFileZip, IconDownload } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./DiagnosticExportModal.module.css";
 
 interface DiagnosticExportModalProps {
@@ -14,6 +15,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
   onClose,
 }) => {
   const { logs } = useVpnStore();
+  const { t } = useTranslation();
   const [includeLogs, setIncludeLogs] = useState(true);
   const [includeRoutes, setIncludeRoutes] = useState(true);
   const [includeDns, setIncludeDns] = useState(true);
@@ -65,7 +67,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
         <Group gap="xs">
           <IconFileZip size={18} color="var(--vpn-cyan)" />
           <Text fw={700} size="md" className={styles.modalTitle}>
-            Export Sanitized Diagnostic Bundle
+            {t.modals.exportDiagTitle}
           </Text>
         </Group>
       }
@@ -78,8 +80,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
     >
       <Stack gap="md">
         <Text size="xs" c="dimmed">
-          Gathers system network routing tables, active DNS configuration, and recent daemon trace
-          logs to assist IT support in diagnosing tunnel issues.
+          {t.modals.exportDiagSubtitle}
         </Text>
 
         <Box className={styles.checkboxContainer}>
@@ -122,7 +123,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
 
         <Group justify="flex-end" mt="md">
           <Button variant="subtle" color="gray" onClick={onClose}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button
             color="cyan"
@@ -130,7 +131,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
             loading={exporting}
             onClick={handleExport}
           >
-            Export Diagnostic Bundle
+            {t.modals.exportDownloadJson}
           </Button>
         </Group>
       </Stack>

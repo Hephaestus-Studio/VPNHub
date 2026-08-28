@@ -14,6 +14,7 @@ import {
   IconAlertTriangle,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./HeroCockpitBanner.module.css";
 
 export const HeroCockpitBanner: React.FC = () => {
@@ -32,6 +33,7 @@ export const HeroCockpitBanner: React.FC = () => {
     retryDaemonIpc,
   } = useVpnStore();
 
+  const { t } = useTranslation();
   const isMobile = useMediaQuery("(max-width: 640px)");
   const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1180px)");
 
@@ -80,15 +82,22 @@ export const HeroCockpitBanner: React.FC = () => {
     }
   };
 
+  const getStatusText = () => {
+    if (isConnected) return t.common.connected.toUpperCase();
+    if (isConnecting) return `${t.common.connecting.toUpperCase()}...`;
+    if (connectionState === "error") return t.common.error.toUpperCase();
+    return t.common.disconnected.toUpperCase();
+  };
+
   const powerTooltip = isConnecting
-    ? "Connecting... Click to cancel"
+    ? `${t.common.connecting}... ${t.common.cancel}`
     : isConnected
-      ? "Connected • Click to disconnect"
+      ? `${t.common.connected} • ${t.dashboard.clickToDisconnect}`
       : isDisconnecting
-        ? "Disconnecting..."
+        ? t.common.disconnecting
         : isDaemonOffline
-          ? "Daemon offline • Click to retry probe"
-          : "Click to connect";
+          ? `${t.dashboard.daemonOffline} • ${t.dashboard.retryIpc}`
+          : t.dashboard.clickToConnect;
 
   // Sparkline generator
   const points = telemetry.sparkline || [];
@@ -166,13 +175,13 @@ export const HeroCockpitBanner: React.FC = () => {
                         variant="filled"
                         color="red"
                         leftSection={<IconAlertTriangle size={10} />}
-                        style={{ fontSize: 9, height: 17, padding: "0 5px", fontWeight: 700 }}
+                        style={{ fontSize: 9.5, height: 17, padding: "0 5px", fontWeight: 700 }}
                       >
-                        DAEMON OFFLINE
+                        {t.dashboard.daemonOffline}
                       </Badge>
                       <UnstyledButton onClick={retryDaemonIpc} className={styles.retryIpcBtn}>
                         <Text size="9px" fw={700} c="red">
-                          Retry ↺
+                          {t.dashboard.retryIpc}
                         </Text>
                       </UnstyledButton>
                     </Group>
@@ -197,15 +206,9 @@ export const HeroCockpitBanner: React.FC = () => {
                               ? "red"
                               : "gray"
                       }
-                      style={{ fontSize: 9, height: 17, padding: "0 5px", fontWeight: 700 }}
+                      style={{ fontSize: 9.5, height: 17, padding: "0 5px", fontWeight: 700 }}
                     >
-                      {isConnected
-                        ? "CONNECTED"
-                        : isConnecting
-                          ? "CONNECTING..."
-                          : connectionState === "error"
-                            ? "ERROR"
-                            : "DISCONNECTED"}
+                      {getStatusText()}
                     </Badge>
                   )}
 
@@ -452,11 +455,11 @@ export const HeroCockpitBanner: React.FC = () => {
                       leftSection={<IconAlertTriangle size={10} />}
                       style={{ fontSize: 9.5, height: 17, padding: "0 5px", fontWeight: 700 }}
                     >
-                      DAEMON OFFLINE
+                      {t.dashboard.daemonOffline}
                     </Badge>
                     <UnstyledButton onClick={retryDaemonIpc} className={styles.retryIpcBtn}>
                       <Text size="9px" fw={700} c="red">
-                        Retry ↺
+                        {t.dashboard.retryIpc}
                       </Text>
                     </UnstyledButton>
                   </Group>
@@ -483,13 +486,7 @@ export const HeroCockpitBanner: React.FC = () => {
                     }
                     style={{ fontSize: 9.5, height: 17, padding: "0 5px", fontWeight: 700 }}
                   >
-                    {isConnected
-                      ? "CONNECTED"
-                      : isConnecting
-                        ? "CONNECTING..."
-                        : connectionState === "error"
-                          ? "ERROR"
-                          : "DISCONNECTED"}
+                    {getStatusText()}
                   </Badge>
                 )}
 
@@ -710,11 +707,11 @@ export const HeroCockpitBanner: React.FC = () => {
                       padding: "0 4px",
                     }}
                   >
-                    DAEMON OFFLINE
+                    {t.dashboard.daemonOffline}
                   </Badge>
                   <UnstyledButton onClick={retryDaemonIpc} className={styles.retryIpcBtn}>
                     <Text size="8.5px" fw={700} c="red">
-                      Retry ↺
+                      {t.dashboard.retryIpc}
                     </Text>
                   </UnstyledButton>
                 </Group>
@@ -746,13 +743,7 @@ export const HeroCockpitBanner: React.FC = () => {
                     padding: "0 4px",
                   }}
                 >
-                  {isConnected
-                    ? "CONNECTED"
-                    : isConnecting
-                      ? "CONNECTING"
-                      : connectionState === "error"
-                        ? "ERROR"
-                        : "DISCONNECTED"}
+                  {getStatusText()}
                 </Badge>
               )}
 

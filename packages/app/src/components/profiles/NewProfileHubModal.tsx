@@ -25,6 +25,7 @@ import {
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { invoke } from "@tauri-apps/api/core";
 import { VpnProfile, ProtocolType } from "../../types/vpn";
+import { useTranslation } from "../../i18n";
 import styles from "./NewProfileHubModal.module.css";
 
 interface NewProfileHubModalProps {
@@ -179,6 +180,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
   onSelectManualCreate,
   onImportParsed,
 }) => {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -232,8 +234,8 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
       return () => {
         unlistenPromise.then((unlisten) => unlisten());
       };
-    } catch {
-      // Fallback for non-tauri or browser context
+    } catch (e) {
+      console.debug("Tauri drag-and-drop listener not supported in web mode", e);
     }
   }, [opened, onClose, onImportParsed]);
 
@@ -263,7 +265,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         }, 300);
       } catch (err: any) {
         setIsLoading(false);
-        setError(err?.message || "Failed to parse configuration file.");
+        setError(err?.message || "Failed to parse VPN configuration file.");
       }
     };
 
@@ -282,7 +284,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         <Group gap="xs">
           <IconFileUpload size={20} color="var(--vpn-cyan)" />
           <Text fw={700} size="md" className={styles.modalTitle}>
-            Add or Import VPN Profile
+            {t.modals.newProfileTitle}
           </Text>
         </Group>
       }
@@ -310,7 +312,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         <Box>
           <Group justify="space-between" align="center" mb="xs">
             <Text size="xs" fw={600} c="dimmed" className={styles.sectionHeader}>
-              Option 1: Import Configuration File
+              {t.modals.newProfileImportTitle}
             </Text>
             {isDraggingOver && (
               <Badge size="xs" color="cyan" variant="filled" className="animate-pulse">
@@ -364,16 +366,12 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                     <span className={styles.cyanHighlight}>Drop file now to import</span>
                   ) : (
                     <>
-                      Drag & Drop <span className={styles.cyanHighlight}>.ovpn</span> or{" "}
-                      <span className={styles.cyanHighlight}>.conf</span> file here
+                      {t.modals.importDropzoneText}
                     </>
                   )}
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Auto-detects OpenVPN 2.x/3.x bundles and WireGuard configs up to 10MB
-                </Text>
-                <Text size="11px" c="cyan" className={styles.browseLink}>
-                  or click to browse files from your computer
+                  {t.modals.importDropzoneSubtext}
                 </Text>
               </Stack>
             )}
@@ -383,7 +381,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         <Divider
           label={
             <Text size="xs" fw={600} c="dimmed" className={styles.dividerText}>
-              OR CONFIGURE MANUALLY
+              OR
             </Text>
           }
           labelPosition="center"
@@ -393,7 +391,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         {/* SECTION 2: CREATE MANUALLY BY PROTOCOL */}
         <Box>
           <Text size="xs" fw={600} c="dimmed" mb="xs" className={styles.sectionHeader}>
-            Option 2: Create Connection Manually
+            {t.profiles.addProfile}
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
             {/* WireGuard Manual Card */}
@@ -412,14 +410,14 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                   <Box>
                     <Group gap="xs" align="center" mb={2}>
                       <Text fw={700} size="sm" className={styles.cardTitle}>
-                        WireGuard
+                        {t.modals.newProfileWireguardTitle}
                       </Text>
                       <Badge size="xs" color="cyan" variant="light">
-                        UDP Only
+                        UDP
                       </Badge>
                     </Group>
                     <Text size="11px" c="dimmed">
-                      Modern cryptographic key exchange with minimal latency.
+                      {t.modals.newProfileWireguardDesc}
                     </Text>
                   </Box>
                 </Group>
@@ -443,14 +441,14 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                   <Box>
                     <Group gap="xs" align="center" mb={2}>
                       <Text fw={700} size="sm" className={styles.cardTitle}>
-                        OpenVPN
+                        {t.modals.newProfileOpenvpnTitle}
                       </Text>
                       <Badge size="xs" color="teal" variant="light">
                         TCP / UDP + 2FA
                       </Badge>
                     </Group>
                     <Text size="11px" c="dimmed">
-                      Enterprise TLS tunnel with TCP/UDP switch and 2FA TOTP.
+                      {t.modals.newProfileOpenvpnDesc}
                     </Text>
                   </Box>
                 </Group>

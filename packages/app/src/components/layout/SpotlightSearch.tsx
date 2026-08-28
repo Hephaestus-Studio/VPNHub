@@ -3,6 +3,7 @@ import { Modal, TextInput, Stack, Group, Text, Badge, UnstyledButton, Box } from
 import { IconSearch, IconBolt, IconShield, IconTerminal2, IconFolder } from "@tabler/icons-react";
 
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./SpotlightSearch.module.css";
 
 export const SpotlightSearch: React.FC = () => {
@@ -15,6 +16,7 @@ export const SpotlightSearch: React.FC = () => {
     setKillSwitch,
     securitySettings,
   } = useVpnStore();
+  const { t } = useTranslation();
 
   const [query, setQuery] = useState("");
 
@@ -41,8 +43,8 @@ export const SpotlightSearch: React.FC = () => {
   const actions = [
     {
       id: "nav-dash",
-      title: "Go to Dashboard",
-      subtitle: "Overview, hero connection & telemetry",
+      title: t.nav.dashboard,
+      subtitle: t.dashboard.heroTitleConnected,
       icon: IconBolt,
       onSelect: () => {
         setActiveTab("dashboard");
@@ -51,8 +53,8 @@ export const SpotlightSearch: React.FC = () => {
     },
     {
       id: "nav-profiles",
-      title: "Open Profile Library",
-      subtitle: "Manage WireGuard and OpenVPN configs",
+      title: t.nav.profiles,
+      subtitle: t.profiles.subtitle,
       icon: IconFolder,
       onSelect: () => {
         setActiveTab("profiles");
@@ -61,8 +63,8 @@ export const SpotlightSearch: React.FC = () => {
     },
     {
       id: "nav-security",
-      title: "Open Security & Shield",
-      subtitle: "Configure Kill Switch, DNS leak shield, IPv6",
+      title: t.nav.security,
+      subtitle: t.security.subtitle,
       icon: IconShield,
       onSelect: () => {
         setActiveTab("security");
@@ -71,8 +73,8 @@ export const SpotlightSearch: React.FC = () => {
     },
     {
       id: "toggle-ks",
-      title: `Toggle Kill Switch (${securitySettings.killSwitch === "strict" ? "Turn Off" : "Turn On"})`,
-      subtitle: "Firewall fail-closed enforcement",
+      title: `${t.security.killSwitchTitle} (${securitySettings.killSwitch === "strict" ? t.common.disable : t.common.enable})`,
+      subtitle: t.security.killSwitchDesc,
       icon: IconShield,
       onSelect: () => {
         setKillSwitch(securitySettings.killSwitch === "strict" ? "off" : "strict");
@@ -81,9 +83,8 @@ export const SpotlightSearch: React.FC = () => {
     },
     {
       id: "nav-logs",
-      title: "Open Live Console",
-
-      subtitle: "View real-time daemon logs & export diagnostics",
+      title: t.nav.logs,
+      subtitle: t.logs.subtitle,
       icon: IconTerminal2,
       onSelect: () => {
         setActiveTab("logs");
@@ -112,7 +113,7 @@ export const SpotlightSearch: React.FC = () => {
     >
       <Box className={styles.searchHeader}>
         <TextInput
-          placeholder="Search profiles, commands, or settings..."
+          placeholder={t.titlebar.searchPlaceholder}
           leftSection={<IconSearch size={18} color="var(--vpn-cyan)" />}
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}

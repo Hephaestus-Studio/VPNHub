@@ -5,11 +5,11 @@ import {
   IconMinus,
   IconSquare,
   IconX,
-  IconShieldLock,
   IconLayoutSidebarLeftCollapse,
   IconDeviceDesktop,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import { IpcBridge } from "../../services/ipcBridge";
 import styles from "./Titlebar.module.css";
 
@@ -23,6 +23,7 @@ export const Titlebar: React.FC = () => {
     appSettings,
   } = useVpnStore();
 
+  const { t } = useTranslation();
   const isNarrow = useMediaQuery("(max-width: 640px)");
   const isMobile = useMediaQuery("(max-width: 480px)");
 
@@ -31,19 +32,19 @@ export const Titlebar: React.FC = () => {
       case "connected":
         return (
           <Badge variant="dot" color="teal" size="sm" className={styles.badgeConnected}>
-            {isMobile ? "Active" : `Active (${daemonVersion})`}
+            {isMobile ? t.titlebar.active : `${t.titlebar.active} (${daemonVersion})`}
           </Badge>
         );
       case "reconnecting":
         return (
           <Badge variant="dot" color="yellow" size="sm" className={styles.badgeReconnecting}>
-            {isMobile ? "Reconnecting" : "Daemon Reconnecting..."}
+            {isMobile ? t.titlebar.reconnecting : `${t.titlebar.reconnecting}...`}
           </Badge>
         );
       case "offline":
         return (
           <Badge variant="dot" color="red" size="sm" className={styles.badgeOffline}>
-            Offline
+            {t.titlebar.offline}
           </Badge>
         );
     }
@@ -72,7 +73,7 @@ export const Titlebar: React.FC = () => {
       <Group gap="xs" data-tauri-drag-region wrap="nowrap">
         <Group gap="xs" style={{ cursor: "pointer" }} data-tauri-drag-region wrap="nowrap">
           <Box className={styles.brandLogo}>
-            <IconShieldLock size={14} color="#fff" stroke={2.5} />
+            <img src="/logo.png" alt="VPNHub Logo" className={styles.logoImage} />
           </Box>
           {!isMobile && (
             <Text fw={700} size="sm" className={styles.brandTitle}>
@@ -100,7 +101,7 @@ export const Titlebar: React.FC = () => {
           onClick={() => setSpotlightOpen(true)}
           className={styles.searchButton}
         >
-          Search profiles, commands...
+          {t.titlebar.searchPlaceholder}
         </Button>
       ) : (
         <ActionIcon

@@ -2,11 +2,13 @@ import { Box, Group, Text, Badge } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { IconShieldCheck, IconShieldX, IconNetwork, IconLock, IconCpu } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./BottomStatusBar.module.css";
 
 export const BottomStatusBar: React.FC = () => {
   const { securitySettings, connectionState, daemonLatencyMs, activeProfileId, profiles } =
     useVpnStore();
+  const { t } = useTranslation();
 
   const isMobile = useMediaQuery("(max-width: 640px)");
 
@@ -19,19 +21,19 @@ export const BottomStatusBar: React.FC = () => {
     switch (securitySettings.killSwitch) {
       case "strict":
         return {
-          label: "Kill Switch: STRICT FAIL-CLOSED",
+          label: t.statusBar.killSwitchStrict,
           color: "teal",
           icon: IconShieldCheck,
         };
       case "standard":
         return {
-          label: "Kill Switch: AUTO DROPOUT",
+          label: t.statusBar.killSwitchAuto,
           color: "blue",
           icon: IconShieldCheck,
         };
       case "off":
         return {
-          label: "Kill Switch: DISABLED",
+          label: t.statusBar.killSwitchOff,
           color: "red",
           icon: IconShieldX,
         };
@@ -74,7 +76,7 @@ export const BottomStatusBar: React.FC = () => {
             fw={500}
             className={securitySettings.ipv6LeakProtection ? styles.ipv6Blocked : styles.ipv6Pass}
           >
-            {securitySettings.ipv6LeakProtection ? "BLOCKED" : "PASS"}
+            {securitySettings.ipv6LeakProtection ? t.statusBar.ipv6Blocked : t.statusBar.ipv6Pass}
           </Text>
         </Group>
 
@@ -87,7 +89,7 @@ export const BottomStatusBar: React.FC = () => {
             DNS:
           </Text>
           <Text size="11px" fw={500} className={styles.dnsSecured}>
-            SECURED
+            {t.statusBar.dnsSecured}
           </Text>
         </Group>
 

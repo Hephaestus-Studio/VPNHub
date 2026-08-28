@@ -15,6 +15,7 @@ import {
   IconChevronRight,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./DashboardProfileDeck.module.css";
 
 export const DashboardProfileDeck: React.FC = () => {
@@ -27,6 +28,7 @@ export const DashboardProfileDeck: React.FC = () => {
     toggleFavorite,
     setActiveTab,
   } = useVpnStore();
+  const { t } = useTranslation();
 
   const isMobile = useMediaQuery("(max-width: 640px)");
   const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
@@ -470,7 +472,7 @@ export const DashboardProfileDeck: React.FC = () => {
 
         <Box style={{ textAlign: "center" }}>
           <Text size={isBig ? "sm" : "xs"} fw={700} style={{ color: "#e2e8f0" }}>
-            Add / Import Profile
+            {t.profiles.addProfile}
           </Text>
           {isBig && (
             <Text size="10.5px" c="dimmed" mt={2}>
@@ -497,15 +499,15 @@ export const DashboardProfileDeck: React.FC = () => {
             fw={700}
             className={isDesktop ? styles.headerTitle : styles.headerTitleMobile}
           >
-            Quick Switch Profiles
+            {t.dashboard.quickSwitchTitle}
           </Text>
           <Badge size="xs" variant="light" color="cyan" style={{ fontSize: 9.5, height: 16 }}>
-            {profiles.length} Total
+            {profiles.length} {t.common.all}
           </Badge>
         </Group>
 
         <UnstyledButton onClick={() => setActiveTab("profiles")} className={styles.manageButton}>
-          Manage All Profiles <IconArrowUpRight size={13} />
+          {t.dashboard.manageAll} <IconArrowUpRight size={13} />
         </UnstyledButton>
       </Group>
 

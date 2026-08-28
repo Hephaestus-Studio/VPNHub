@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { VpnProfile } from "../../types/vpn";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./ProfileCard.module.css";
 
 interface ProfileCardProps {
@@ -35,6 +36,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     deleteProfile,
     addProfile,
   } = useVpnStore();
+  const { t } = useTranslation();
 
   const isMobile = useMediaQuery("(max-width: 640px)");
 
@@ -106,7 +108,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
             fontWeight: 700,
           }}
         >
-          CONNECTED
+          {t.common.connected.toUpperCase()}
         </Badge>
       );
     }
@@ -123,14 +125,14 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
             fontWeight: 700,
           }}
         >
-          CONNECTING...
+          {t.common.connecting.toUpperCase()}...
         </Badge>
       );
     }
     if (isDisconnecting) {
       return (
         <Badge size="xs" color="gray" variant="light">
-          TEARING DOWN...
+          {t.common.disconnecting.toUpperCase()}...
         </Badge>
       );
     }
@@ -147,7 +149,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
             fontWeight: 700,
           }}
         >
-          FAILED
+          {t.common.error.toUpperCase()}
         </Badge>
       );
     }
@@ -157,7 +159,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
   const getButtonProps = () => {
     if (isConnected) {
       return {
-        children: "Disconnect",
+        children: t.profiles.disconnect,
         color: "red",
         variant: "filled" as const,
         loading: false,
@@ -166,7 +168,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     }
     if (isConnecting) {
       return {
-        children: "Cancel",
+        children: t.common.cancel,
         color: "yellow",
         variant: "filled" as const,
         loading: false,
@@ -175,7 +177,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     }
     if (isDisconnecting) {
       return {
-        children: "Disconnecting...",
+        children: `${t.common.disconnecting}...`,
         color: "gray",
         variant: "light" as const,
         loading: true,
@@ -184,7 +186,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     }
     if (isError) {
       return {
-        children: "Retry",
+        children: t.common.reset,
         color: "red",
         variant: "light" as const,
         loading: false,
@@ -192,7 +194,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
       };
     }
     return {
-      children: "Connect",
+      children: t.profiles.connect,
       color: isActive ? "cyan" : "gray",
       variant: isActive ? ("filled" as const) : ("light" as const),
       loading: false,
@@ -249,16 +251,16 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
 
               <Menu.Dropdown className={styles.menuDropdown}>
                 <Menu.Item leftSection={<IconEdit size={14} />} onClick={() => onEdit(profile)}>
-                  Edit Configuration
+                  {t.common.edit}
                 </Menu.Item>
                 <Menu.Item leftSection={<IconQrcode size={14} />} onClick={() => onViewQr(profile)}>
-                  View QR Code
+                  {t.profiles.qrCode}
                 </Menu.Item>
                 <Menu.Item leftSection={<IconDownload size={14} />} onClick={handleExport}>
-                  Export Config File
+                  {t.profiles.exportProfile}
                 </Menu.Item>
                 <Menu.Item leftSection={<IconCopy size={14} />} onClick={handleDuplicate}>
-                  Duplicate Profile
+                  {t.common.copy}
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
@@ -266,7 +268,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
                   leftSection={<IconTrash size={14} />}
                   onClick={() => deleteProfile(profile.id)}
                 >
-                  Delete Profile
+                  {t.common.delete}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>

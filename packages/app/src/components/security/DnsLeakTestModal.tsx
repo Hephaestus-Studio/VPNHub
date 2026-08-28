@@ -8,6 +8,7 @@ import {
   IconLock,
 } from "@tabler/icons-react";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./DnsLeakTestModal.module.css";
 
 interface DnsLeakTestModalProps {
@@ -25,6 +26,7 @@ interface TestServer {
 
 export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onClose }) => {
   const { connectionState } = useVpnStore();
+  const { t } = useTranslation();
   const isConnected = connectionState === "connected";
 
   const [testing, setTesting] = useState(false);
@@ -91,7 +93,7 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
         <Group gap="xs">
           <IconLock size={18} color="var(--vpn-cyan)" />
           <Text fw={700} size="md" className={styles.modalTitle}>
-            DNS Leak & Privacy Diagnostic
+            {t.modals.dnsLeakTitle}
           </Text>
         </Group>
       }
@@ -104,15 +106,14 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
     >
       <Stack gap="md">
         <Text size="xs" c="dimmed">
-          Sends multiple randomized query packets to test if DNS queries leak outside the encrypted
-          VPN tunnel.
+          {t.modals.dnsLeakDesc}
         </Text>
 
         {testing && (
           <Box>
             <Group justify="space-between" mb={4}>
               <Text size="xs" c="dimmed">
-                Resolving test probes across global root resolvers...
+                {t.modals.dnsLeakTesting}
               </Text>
               <Text size="xs" fw={700} className={`font-mono ${styles.progressText}`}>
                 {progress}%
@@ -133,12 +134,7 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
                 )}
                 <Box>
                   <Text size="sm" fw={700} className={styles.resultTitle}>
-                    {isProtected ? "NO DNS LEAKS DETECTED" : "WARNING: DNS QUERIES ARE LEAKING"}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    {isProtected
-                      ? "All DNS traffic is securely encrypted inside the tunnel."
-                      : "Your real ISP DNS servers were observed handling queries."}
+                    {isProtected ? t.modals.dnsLeakPassed : t.modals.dnsLeakFailed}
                   </Text>
                 </Box>
               </Group>
@@ -147,8 +143,8 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
             <Table verticalSpacing="xs">
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Detected IP</Table.Th>
-                  <Table.Th>ISP Organization</Table.Th>
+                  <Table.Th>{t.modals.dnsPublicIp}</Table.Th>
+                  <Table.Th>ISP</Table.Th>
                   <Table.Th>Location</Table.Th>
                 </Table.Tr>
               </Table.Thead>
@@ -169,7 +165,7 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
 
         <Group justify="flex-end" mt="md">
           <Button variant="subtle" color="gray" onClick={onClose}>
-            Close
+            {t.common.close}
           </Button>
           <Button
             color="cyan"
@@ -177,7 +173,7 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
             loading={testing}
             onClick={runTest}
           >
-            {results ? "Re-run Leak Test" : "Start DNS Leak Test"}
+            {results ? t.security.runDnsTest : t.security.runDnsTest}
           </Button>
         </Group>
       </Stack>
