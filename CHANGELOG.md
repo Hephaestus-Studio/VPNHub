@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Bug Fixes
+
+- *(daemon)* Import missing debug macro from tracing in wireguard driver and interface manager - ([b7e342e](https://github.com/Hephaestus-Studio/VPNHub/commit/b7e342ed4e58a0c80cb72234ec871cfde1a5e1a5))
+
 ### Features
 
 - *(packaging)* Configure multiplatform bundles and daemon services - ([bdcaa63](https://github.com/Hephaestus-Studio/VPNHub/commit/bdcaa63653c501ab02577b2cfc79d23a1f9880ea))
