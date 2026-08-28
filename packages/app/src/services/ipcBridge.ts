@@ -428,6 +428,15 @@ export class IpcBridge {
     return () => {};
   }
 
+  static async onTrayToggle(callback: () => void): Promise<UnlistenFn> {
+    if (this.isTauriEnvironment()) {
+      return await listen("vpn:tray-toggle", () => {
+        callback();
+      });
+    }
+    return () => {};
+  }
+
   static async pingHost(host: string, port: number): Promise<number | null> {
     if (this.isTauriEnvironment()) {
       try {

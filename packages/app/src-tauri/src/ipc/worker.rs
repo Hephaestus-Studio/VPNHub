@@ -15,6 +15,7 @@ pub async fn start_ipc_monitor_worker(app_handle: AppHandle, client: Arc<DaemonC
     let mut interval = tokio::time::interval(Duration::from_millis(1000));
     let mut was_online = false;
     let mut first_tick = true;
+    let mut last_vpn_state: Option<String> = None;
 
     loop {
         interval.tick().await;
@@ -34,7 +35,11 @@ pub async fn start_ipc_monitor_worker(app_handle: AppHandle, client: Arc<DaemonC
         if is_alive {
             if let Ok(response) = client.send_request(DaemonRequest::GetStatus).await {
                 if let vpnhub_daemon::ipc::protocol::DaemonResponse::Status(ref snap) = response {
-                    crate::tray::update_tray_status(&app_handle, &format!("{:?}", snap.state));
+                    let state_str = format!("{:?}", snap.state);
+                    if last_vpn_state.as_deref() != Some(&state_str) {
+                        last_vpn_state = Some(state_str.clone());
+                        crate::tray::update_tray_status(&app_handle, &state_str);
+                    }
                 }
                 let _ = app_handle.emit("vpn-status-update", response);
             }
@@ -42,7 +47,8 @@ pub async fn start_ipc_monitor_worker(app_handle: AppHandle, client: Arc<DaemonC
             if let Ok(response) = client.send_request(DaemonRequest::GetMetrics).await {
                 let _ = app_handle.emit("vpn-metrics-update", response);
             }
-        } else {
+        } else if last_vpn_state.as_deref() != Some("disconnected") {
+            last_vpn_state = Some("disconnected".to_string());
             crate::tray::update_tray_status(&app_handle, "disconnected");
         }
     }

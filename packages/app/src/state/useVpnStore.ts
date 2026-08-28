@@ -214,6 +214,19 @@ const setupIpcSubscriptions = async (
       });
     }
   });
+
+  await IpcBridge.onTrayToggle(() => {
+    const current = get();
+    if (
+      current.connectionState === "connected" ||
+      current.connectionState === "connecting" ||
+      current.connectionState === "reconnecting"
+    ) {
+      current.disconnect();
+    } else {
+      current.connect(current.activeProfileId);
+    }
+  });
 };
 
 const DEFAULT_APP_SETTINGS: AppSettings = {

@@ -1,18 +1,75 @@
 //! # System Tray Configuration for Tauri v2
 
+use std::sync::Mutex;
 use tauri::{
-    menu::{Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager,
+    menu::{Menu, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
+    tray::TrayIconBuilder,
+    AppHandle, Emitter, Manager, Runtime,
 };
 use tracing::info;
 
 pub const TRAY_ID: &str = "main_tray";
 
-/// Updates the tray icon and tooltip depending on the current VPN session state.
-pub fn update_tray_status(app: &AppHandle, state: &str) {
+pub const STATUS_ITEM_ID: &str = "tray_status";
+pub const TOGGLE_ITEM_ID: &str = "tray_toggle";
+pub const SHOW_ITEM_ID: &str = "tray_show";
+pub const QUIT_ITEM_ID: &str = "tray_quit";
+
+static LAST_TRAY_STATE: Mutex<Option<String>> = Mutex::new(None);
+
+/// Builds the system tray menu according to the current VPN session state.
+pub fn build_tray_menu<R: Runtime>(
+    app: &AppHandle<R>,
+    state: &str,
+) -> Result<Menu<R>, Box<dyn std::error::Error>> {
+    let state_lower = state.to_lowercase();
+    let is_connected = state_lower == "connected";
+    let is_connecting = state_lower == "connecting" || state_lower == "reconnecting";
+
+    let (toggle_text, toggle_enabled) = if is_connected {
+        ("Disconnect", true)
+    } else if is_connecting {
+        ("Connecting...", false)
+    } else if state_lower == "disconnecting" {
+        ("Disconnecting...", false)
+    } else {
+        ("Connect", true)
+    };
+
+    let toggle_item = MenuItemBuilder::with_id(TOGGLE_ITEM_ID, toggle_text)
+        .enabled(toggle_enabled)
+        .build(app)?;
+
+    let show_item = MenuItemBuilder::with_id(SHOW_ITEM_ID, "Open VPNHub")
+        .enabled(true)
+        .build(app)?;
+
+    let separator = PredefinedMenuItem::separator(app)?;
+
+    let quit_item = MenuItemBuilder::with_id(QUIT_ITEM_ID, "Quit")
+        .enabled(true)
+        .build(app)?;
+
+    let menu = MenuBuilder::new(app)
+        .items(&[&toggle_item, &show_item, &separator, &quit_item])
+        .build()?;
+
+    Ok(menu)
+}
+
+/// Updates the tray icon, tooltip, and context menu depending on the current VPN session state.
+pub fn update_tray_status<R: Runtime>(app: &AppHandle<R>, state: &str) {
+    let state_lower = state.to_lowercase();
+
+    // Prevent tray flickering by skipping redundant menu rebuilds and icon resets if state hasn't changed
+    if let Ok(mut last) = LAST_TRAY_STATE.lock() {
+        if last.as_deref() == Some(&state_lower) {
+            return;
+        }
+        *last = Some(state_lower.clone());
+    }
+
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
-        let state_lower = state.to_lowercase();
         let is_connected = state_lower == "connected";
         let is_connecting = state_lower == "connecting" || state_lower == "reconnecting";
 
@@ -37,15 +94,16 @@ pub fn update_tray_status(app: &AppHandle, state: &str) {
             _ => "VPNHub: Disconnected (Unprotected)",
         };
         let _ = tray.set_tooltip(Some(tooltip));
+
+        // Dynamically update tray menu items
+        if let Ok(menu) = build_tray_menu(app, state) {
+            let _ = tray.set_menu(Some(menu));
+        }
     }
 }
 
-pub fn setup_system_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let show_item = MenuItem::with_id(app, "show", "Open VPNHub", true, None::<&str>)?;
-    let hide_item = MenuItem::with_id(app, "hide", "Hide to Tray", true, None::<&str>)?;
-    let quit_item = MenuItem::with_id(app, "quit", "Quit VPNHub", true, None::<&str>)?;
-
-    let menu = Menu::with_items(app, &[&show_item, &hide_item, &quit_item])?;
+pub fn setup_system_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
+    let menu = build_tray_menu(app, "disconnected")?;
 
     let icon_bytes = include_bytes!("../icons/tray_disconnected.png");
     let icon = tauri::image::Image::from_bytes(icon_bytes)
@@ -55,46 +113,27 @@ pub fn setup_system_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Erro
         .icon(icon)
         .tooltip("VPNHub: Disconnected (Unprotected)")
         .menu(&menu)
-        .show_menu_on_left_click(false)
+        .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id.as_ref() {
-            "show" => {
+            SHOW_ITEM_ID => {
                 if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.unminimize();
                     let _ = window.show();
                     let _ = window.set_focus();
                 }
             }
-            "hide" => {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.hide();
-                }
+            TOGGLE_ITEM_ID => {
+                info!("Quick Toggle VPN triggered from System Tray");
+                let _ = app.emit("vpn:tray-toggle", ());
             }
-            "quit" => {
+            QUIT_ITEM_ID => {
                 info!("Quit triggered from System Tray Menu");
                 app.exit(0);
             }
             _ => {}
         })
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
-            {
-                let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("main") {
-                    let is_visible = window.is_visible().unwrap_or(false);
-                    if is_visible {
-                        let _ = window.hide();
-                    } else {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
-                }
-            }
-        })
         .build(app)?;
 
-    info!("System Tray initialized successfully with dynamic state icons");
+    info!("System Tray initialized successfully with MenuBuilder and dynamic state updates");
     Ok(())
 }
