@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [0.1.0] - 2026-08-29
 
 ### Bug Fixes
 
 - *(daemon)* Import missing debug macro from tracing in wireguard driver and interface manager - ([b7e342e](https://github.com/Hephaestus-Studio/VPNHub/commit/b7e342ed4e58a0c80cb72234ec871cfde1a5e1a5))
 - *(ci)* Specify pnpm version in workflow and packageManager - ([24ddfca](https://github.com/Hephaestus-Studio/VPNHub/commit/24ddfca12beec55352c8f09ad05ccb56994f0ac8))
+- *(ci)* Rely on packageManager for pnpm setup - ([2b0900c](https://github.com/Hephaestus-Studio/VPNHub/commit/2b0900c6f7766bf23ad270682577b02d9b6a2552))
 
 ### Documentation
 
