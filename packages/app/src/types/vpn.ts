@@ -123,4 +123,3 @@ export interface AppSettings {
   autoReconnect?: boolean;
   language?: "en" | "vi" | "zh" | "fr";
 }
-

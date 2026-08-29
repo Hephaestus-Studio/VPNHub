@@ -13,6 +13,7 @@ import {
 import { IconApps, IconPlus } from "@tabler/icons-react";
 import { AppRule, SplitTunnelMode } from "../../types/vpn";
 import { useVpnStore } from "../../state/useVpnStore";
+import { useTranslation } from "../../i18n";
 import styles from "./AddAppRuleModal.module.css";
 
 interface AddAppRuleModalProps {
@@ -30,6 +31,7 @@ const COMMON_APPS = [
 ];
 
 export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClose }) => {
+  const { t } = useTranslation();
   const { addAppRule } = useVpnStore();
   const [appName, setAppName] = useState("");
   const [appPath, setAppPath] = useState("");
@@ -66,7 +68,7 @@ export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClos
         <Group gap="xs">
           <IconApps size={18} color="var(--vpn-cyan)" />
           <Text fw={700} size="md" className={styles.modalTitle}>
-            Add Application Routing Rule
+            {t.modals.addAppTitle}
           </Text>
         </Group>
       }
@@ -81,7 +83,7 @@ export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClos
         {/* Quick Pick Running Apps */}
         <Box>
           <Text size="xs" fw={600} c="dimmed" mb={6}>
-            DETECTED INSTALLED APPLICATIONS
+            {t.modals.addAppDetected}
           </Text>
           <Group gap={6}>
             {COMMON_APPS.map((app) => (
@@ -98,33 +100,33 @@ export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClos
         </Box>
 
         <TextInput
-          label="Application Name"
-          placeholder="e.g. Firefox Developer Edition"
+          label={t.modals.addAppNameLabel}
+          placeholder={t.modals.addAppNamePlaceholder}
           value={appName}
           onChange={(e) => setAppName(e.currentTarget.value)}
         />
 
         <TextInput
-          label="Executable / Binary Path"
-          placeholder="/usr/bin/... or C:\Program Files\..."
+          label={t.modals.addAppPathLabel}
+          placeholder={t.modals.addAppPathPlaceholder}
           value={appPath}
           onChange={(e) => setAppPath(e.currentTarget.value)}
           className="font-mono"
         />
 
         <Select
-          label="Routing Policy"
+          label={t.modals.addAppPolicyLabel}
           value={mode}
           onChange={(val) => setMode(val as SplitTunnelMode)}
           data={[
-            { value: "bypass", label: "Bypass VPN (Direct Internet Connection)" },
-            { value: "route_vpn", label: "Route via Encrypted VPN Tunnel" },
+            { value: "bypass", label: t.modals.addAppBypassLabel },
+            { value: "route_vpn", label: t.modals.addAppRouteLabel },
           ]}
         />
 
         <Group justify="flex-end" mt="md">
           <Button variant="subtle" color="gray" onClick={onClose}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button
             color="cyan"
@@ -132,7 +134,7 @@ export const AddAppRuleModal: React.FC<AddAppRuleModalProps> = ({ opened, onClos
             onClick={handleAdd}
             disabled={!appName || !appPath}
           >
-            Add Rule
+            {t.modals.addAppSubmitBtn}
           </Button>
         </Group>
       </Stack>

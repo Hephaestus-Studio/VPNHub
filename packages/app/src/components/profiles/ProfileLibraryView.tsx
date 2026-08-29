@@ -201,8 +201,8 @@ export const ProfileLibraryView: React.FC = () => {
           {[
             { id: "all", label: `${t.common.all} (${profiles.length})` },
             { id: "favorites", label: `★ ${t.profiles.favoritesOnly} (${favoritesCount})` },
-            { id: "wireguard", label: "WireGuard" },
             { id: "openvpn", label: "OpenVPN" },
+            { id: "wireguard", label: `WireGuard (${t.common.comingSoon})` },
           ].map((f) => (
             <Button
               key={f.id}

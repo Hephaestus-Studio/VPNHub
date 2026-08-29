@@ -26,6 +26,7 @@ import {
   IconCheck,
   IconFileText,
 } from "@tabler/icons-react";
+import { useTranslation } from "../../i18n";
 import styles from "./CertificateManagerModal.module.css";
 
 export interface TlsSecurityConfig {
@@ -72,6 +73,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
   config,
   onSave,
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string | null>("ca");
 
   // Local state for editing
@@ -130,7 +132,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
         <Group gap="xs">
           <IconShieldLock size={20} color="var(--vpn-cyan)" />
           <Text fw={700} size="md" className={styles.modalTitle}>
-            TLS & Certificate Security Manager
+            {t.modals.certManagerTitle}
           </Text>
         </Group>
       }
@@ -164,7 +166,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                 ) : null
               }
             >
-              Root CA
+              {t.modals.tabRootCa}
             </Tabs.Tab>
             <Tabs.Tab
               value="tls"
@@ -178,7 +180,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                 ) : null
               }
             >
-              TLS Channel
+              {t.modals.tabTlsChannel}
             </Tabs.Tab>
             <Tabs.Tab
               value="client"
@@ -191,10 +193,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                 ) : null
               }
             >
-              Client Identity
+              {t.modals.tabClientIdentity}
             </Tabs.Tab>
             <Tabs.Tab value="advanced" leftSection={<IconAdjustments size={15} />}>
-              Advanced
+              {t.modals.tabAdvanced}
             </Tabs.Tab>
           </Tabs.List>
 
@@ -205,12 +207,12 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                 <Group justify="space-between" align="center">
                   <Box>
                     <Text size="xs" fw={600} className={styles.paperTitle}>
-                      Certificate Authority (&lt;ca&gt;)
+                      {t.modals.rootCaTitle}
                     </Text>
                     <Text size="11px" c="dimmed">
                       {caCert
-                        ? `Custom Root CA Loaded (${caCert.length} characters)`
-                        : "Operating system default Root CA bundle will be used."}
+                        ? t.modals.rootCaLoaded.replace("{length}", String(caCert.length))
+                        : t.modals.rootCaDefaultSystem}
                     </Text>
                   </Box>
                   <Group gap="xs">
@@ -223,7 +225,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                         triggerFilePicker(".crt,.pem,.cer,.txt", (content) => setCaCert(content))
                       }
                     >
-                      Import .crt / .pem
+                      {t.modals.importCrtPem}
                     </Button>
                     {caCert && (
                       <ActionIcon
@@ -241,8 +243,8 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
               </Paper>
 
               <Textarea
-                label="Root CA PEM Content"
-                placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+                label={t.modals.rootCaPemLabel}
+                placeholder={t.modals.rootCaPemPlaceholder}
                 value={caCert}
                 onChange={(e) => setCaCert(e.currentTarget.value)}
                 minRows={6}
@@ -260,16 +262,16 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
           <Tabs.Panel value="tls" pt="md">
             <Stack gap="sm">
               <Select
-                label="TLS Channel Protection Mode"
-                description="Provides an additional HMAC signature or control channel encryption layer."
+                label={t.modals.tlsModeLabel}
+                description={t.modals.tlsModeDesc}
                 value={tlsMode}
                 onChange={(val) => setTlsMode((val as any) || "none")}
                 data={[
-                  { value: "none", label: "None (Standard OpenVPN TLS Handshake)" },
-                  { value: "tls-auth", label: "TLS-Auth (<tls-auth>) - Static HMAC Signature" },
+                  { value: "none", label: t.modals.tlsModeNone },
+                  { value: "tls-auth", label: t.modals.tlsModeAuth },
                   {
                     value: "tls-crypt",
-                    label: "TLS-Crypt (<tls-crypt>) - Full Control Channel Encryption",
+                    label: t.modals.tlsModeCrypt,
                   },
                 ]}
               />
@@ -280,12 +282,12 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                     <Group justify="space-between" align="center">
                       <Box>
                         <Text size="xs" fw={600} className={styles.paperTitle}>
-                          TLS-Auth Static Key
+                          {t.modals.tlsAuthStaticKeyTitle}
                         </Text>
                         <Text size="11px" c="dimmed">
                           {tlsAuthKey
-                            ? `Static Key Loaded (${tlsAuthKey.length} chars)`
-                            : "No key loaded"}
+                            ? t.modals.tlsKeyLoaded.replace("{length}", String(tlsAuthKey.length))
+                            : t.modals.noKeyLoaded}
                         </Text>
                       </Box>
                       <Group gap="xs">
@@ -298,7 +300,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                             triggerFilePicker(".key,.pem,.txt", (content) => setTlsAuthKey(content))
                           }
                         >
-                          Import .key file
+                          {t.modals.importKeyFile}
                         </Button>
                         {tlsAuthKey && (
                           <ActionIcon
@@ -317,7 +319,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
 
                   <Group grow align="flex-start">
                     <Textarea
-                      label="TLS Auth Key Content (<tls-auth>)"
+                      label={t.modals.tlsAuthKeyContentLabel}
                       placeholder="-----BEGIN OpenVPN Static key V1-----&#10;...&#10;-----END OpenVPN Static key V1-----"
                       value={tlsAuthKey}
                       onChange={(e) => setTlsAuthKey(e.currentTarget.value)}
@@ -331,14 +333,14 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                     />
 
                     <Select
-                      label="Key Direction (key-direction)"
-                      description="Must match the server configuration."
+                      label={t.modals.keyDirectionLabel}
+                      description={t.modals.keyDirectionDesc}
                       value={keyDirection}
                       onChange={(val) => setKeyDirection(val || "none")}
                       data={[
-                        { value: "none", label: "None / Bidirectional" },
-                        { value: "0", label: "0 (Client / Incoming)" },
-                        { value: "1", label: "1 (Server / Outgoing)" },
+                        { value: "none", label: t.modals.keyDirNone },
+                        { value: "0", label: t.modals.keyDir0 },
+                        { value: "1", label: t.modals.keyDir1 },
                       ]}
                       className={styles.selectKeyDirection}
                     />
@@ -352,12 +354,12 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                     <Group justify="space-between" align="center">
                       <Box>
                         <Text size="xs" fw={600} className={styles.paperTitle}>
-                          TLS-Crypt Symmetric Key
+                          {t.modals.tlsCryptKeyTitle}
                         </Text>
                         <Text size="11px" c="dimmed">
                           {tlsCryptKey
-                            ? `TLS-Crypt Key Loaded (${tlsCryptKey.length} chars)`
-                            : "No key loaded"}
+                            ? t.modals.tlsKeyLoaded.replace("{length}", String(tlsCryptKey.length))
+                            : t.modals.noKeyLoaded}
                         </Text>
                       </Box>
                       <Group gap="xs">
@@ -372,7 +374,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                             )
                           }
                         >
-                          Import .key file
+                          {t.modals.importKeyFile}
                         </Button>
                         {tlsCryptKey && (
                           <ActionIcon
@@ -390,7 +392,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                   </Paper>
 
                   <Textarea
-                    label="TLS Crypt Key Content (<tls-crypt>)"
+                    label={t.modals.tlsCryptKeyContentLabel}
                     placeholder="-----BEGIN OpenVPN Static key V1-----&#10;...&#10;-----END OpenVPN Static key V1-----"
                     value={tlsCryptKey}
                     onChange={(e) => setTlsCryptKey(e.currentTarget.value)}
@@ -411,7 +413,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
           <Tabs.Panel value="client" pt="md">
             <Stack gap="md">
               <Text size="xs" c="dimmed">
-                Required for Mutual TLS (mTLS) or certificate-based client authentication.
+                {t.modals.clientIdentityDesc}
               </Text>
 
               {/* Client Cert */}
@@ -420,12 +422,12 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                   <Group justify="space-between" align="center">
                     <Box>
                       <Text size="xs" fw={600} className={styles.paperTitle}>
-                        Client Certificate (&lt;cert&gt;)
+                        {t.modals.clientCertTitle}
                       </Text>
                       <Text size="11px" c="dimmed">
                         {clientCert
-                          ? `Client Certificate Loaded (${clientCert.length} chars)`
-                          : "No certificate"}
+                          ? t.modals.clientCertLoaded.replace("{length}", String(clientCert.length))
+                          : t.modals.noCertLoaded}
                       </Text>
                     </Box>
                     <Group gap="xs">
@@ -440,7 +442,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                           )
                         }
                       >
-                        Import .crt
+                        {t.modals.importCrt}
                       </Button>
                       {clientCert && (
                         <ActionIcon
@@ -477,12 +479,12 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                   <Group justify="space-between" align="center">
                     <Box>
                       <Text size="xs" fw={600} className={styles.paperTitle}>
-                        Client Private Key (&lt;key&gt;)
+                        {t.modals.clientKeyTitle}
                       </Text>
                       <Text size="11px" c="dimmed">
                         {clientKey
-                          ? `Private Key Loaded (${clientKey.length} chars)`
-                          : "No private key"}
+                          ? t.modals.clientKeyLoaded.replace("{length}", String(clientKey.length))
+                          : t.modals.noPrivateKeyLoaded}
                       </Text>
                     </Box>
                     <Group gap="xs">
@@ -495,7 +497,7 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                           triggerFilePicker(".key,.pem,.txt", (content) => setClientKey(content))
                         }
                       >
-                        Import .key
+                        {t.modals.importKey}
                       </Button>
                       {clientKey && (
                         <ActionIcon
@@ -535,11 +537,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
                 <Group justify="space-between" align="center">
                   <Box>
                     <Text size="xs" fw={600} className={styles.paperTitle}>
-                      Verify Server Certificate
+                      {t.modals.verifyServerCertTitle}
                     </Text>
                     <Text size="11px" c="dimmed">
-                      Enforces server certificate validation flag (
-                      <code>remote-cert-tls server</code>)
+                      {t.modals.verifyServerCertDesc}
                     </Text>
                   </Box>
                   <Switch
@@ -551,9 +552,9 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
               </Paper>
 
               <NumberInput
-                label="Renegotiation Interval (reneg-sec)"
-                placeholder="e.g. 0 to disable data channel re-keying"
-                description="Default: 3600 seconds. Set to 0 if your server or cloud VPN disables renegotiation."
+                label={t.modals.renegSecLabel}
+                placeholder={t.modals.renegSecPlaceholder}
+                description={t.modals.renegSecDesc}
                 value={renegSec}
                 onChange={(val) =>
                   setRenegSec(val !== "" && val !== undefined ? Number(val) : undefined)
@@ -569,10 +570,10 @@ export const CertificateManagerModal: React.FC<CertificateManagerModalProps> = (
 
         <Group justify="flex-end" gap="sm">
           <Button variant="subtle" color="gray" onClick={onClose}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button color="cyan" leftSection={<IconCheck size={16} />} onClick={handleSave}>
-            Apply Certificate Settings
+            {t.modals.applyCertSettings}
           </Button>
         </Group>
       </Stack>

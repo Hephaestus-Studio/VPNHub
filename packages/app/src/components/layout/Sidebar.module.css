@@ -141,36 +141,3 @@
   color: #ffffff;
   line-height: 1.2;
 }
-
-.supportButton {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  color: var(--vpn-text-muted);
-  font-size: 12px;
-  transition: all 0.15s ease;
-  cursor: pointer;
-}
-
-.supportButton:hover {
-  color: var(--vpn-text-primary);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.supportButtonCompact {
-  composes: supportButton;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  min-height: 38px;
-  max-width: 38px;
-  max-height: 38px;
-  aspect-ratio: 1 / 1;
-  margin: 0 auto;
-  padding: 0;
-  border-radius: 8px;
-}

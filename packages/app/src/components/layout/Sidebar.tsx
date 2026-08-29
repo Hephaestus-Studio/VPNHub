@@ -6,7 +6,6 @@ import {
   IconShieldLock,
   IconTerminal2,
   IconSettings,
-  IconLifebuoy,
   IconShieldCheck,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
@@ -155,8 +154,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
         })}
       </Stack>
 
-      {/* Bottom Service Info & Support */}
-      <Stack gap={8}>
+      {/* Bottom Service Info */}
+      <Box>
         {!isCompact ? (
           <Box className={styles.coreCard}>
             <Group justify="space-between" align="center">
@@ -169,7 +168,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
                     {t.nav.coreTitle}
                   </Text>
                   <Text size="10px" c="dimmed" style={{ lineHeight: 1 }}>
-                    {t.nav.daemonStatus} {daemonVersion.startsWith("v") ? daemonVersion : `v${daemonVersion}`}
+                    {t.nav.daemonStatus}{" "}
+                    {daemonVersion.startsWith("v") ? daemonVersion : `v${daemonVersion}`}
                   </Text>
                 </Box>
               </Group>
@@ -189,32 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCompact: propIsCompact, onTo
             </Box>
           </Tooltip>
         )}
-
-        {isCompact ? (
-          <Tooltip label={t.nav.supportAndDocs} position="right" withArrow>
-            <UnstyledButton
-              onClick={() => {
-                window.open("https://github.com/hephaestus-studio/vpnhub", "_blank");
-              }}
-              className={styles.supportButtonCompact}
-            >
-              <IconLifebuoy size={17} />
-            </UnstyledButton>
-          </Tooltip>
-        ) : (
-          <UnstyledButton
-            onClick={() => {
-              window.open("https://github.com/hephaestus-studio/vpnhub", "_blank");
-            }}
-            className={styles.supportButton}
-          >
-            <IconLifebuoy size={16} />
-            <Text size="xs" c="dimmed">
-              {t.nav.supportAndDocs}
-            </Text>
-          </UnstyledButton>
-        )}
-      </Stack>
+      </Box>
     </Box>
   );
 };

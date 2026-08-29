@@ -82,6 +82,10 @@ let telemetryInterval: ReturnType<typeof setInterval> | null = null;
 let ipcSubscribed = false;
 let isStorageLoading = false;
 
+import { notifications } from "@mantine/notifications";
+
+let lastNotifiedState: ConnectionState | null = null;
+
 const setupIpcSubscriptions = async (
   get: () => VpnStoreState,
   set: (
@@ -138,18 +142,41 @@ const setupIpcSubscriptions = async (
       const prevState = current.connectionState;
 
       if (daemonState !== prevState) {
+        const activeProf = current.profiles.find((p) => p.id === current.activeProfileId);
+        const profName = activeProf?.name || "VPN";
+
         if (daemonState === "connected") {
           current.addLog(
             "INFO",
             "TUNNEL_ENGINE",
             `Tunnel established. Interface: ${snap.virtual_interface || "tun0"}, Assigned IP: ${snap.assigned_ip || "DHCP"}`
           );
+          if (current.appSettings.notificationsEnabled && lastNotifiedState !== "connected") {
+            lastNotifiedState = "connected";
+            notifications.show({
+              id: "vpn-status-toast",
+              title: "VPNHub: Connected",
+              message: `Secure tunnel active with ${profName}`,
+              color: "teal",
+              autoClose: 4000,
+            });
+          }
         } else if (daemonState === "error") {
           current.addLog(
             "ERROR",
             "TUNNEL_ENGINE",
             "VPN tunnel encountered a fatal error / authentication failure."
           );
+          if (current.appSettings.notificationsEnabled && lastNotifiedState !== "error") {
+            lastNotifiedState = "error";
+            notifications.show({
+              id: "vpn-status-toast",
+              title: "VPNHub: Error",
+              message: "VPN connection failed or handshake was interrupted.",
+              color: "red",
+              autoClose: 4000,
+            });
+          }
         } else if (daemonState === "disconnected") {
           if (
             prevState === "connected" ||
@@ -157,7 +184,20 @@ const setupIpcSubscriptions = async (
             prevState === "disconnecting"
           ) {
             current.addLog("INFO", "TUNNEL_ENGINE", "VPN tunnel disconnected.");
+            if (
+              current.appSettings.notificationsEnabled &&
+              (prevState === "connected" || lastNotifiedState === "connected")
+            ) {
+              notifications.show({
+                id: "vpn-status-toast",
+                title: "VPNHub: Disconnected",
+                message: "VPN tunnel disconnected. Protection disabled.",
+                color: "gray",
+                autoClose: 4000,
+              });
+            }
           }
+          lastNotifiedState = "disconnected";
         }
 
         const now = Date.now();
@@ -463,6 +503,15 @@ export const useVpnStore = create<VpnStoreState>((set, get) => ({
 
       // Trigger initial background ping for all profiles
       get().pingAllProfiles();
+
+      // Trigger auto-connect if enabled in settings
+      if (get().appSettings.autoConnect && activeId) {
+        setTimeout(() => {
+          if (get().connectionState === "disconnected") {
+            get().connect(activeId);
+          }
+        }, 600);
+      }
     } finally {
       isStorageLoading = false;
     }

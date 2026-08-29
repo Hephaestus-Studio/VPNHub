@@ -41,8 +41,7 @@ pub fn run() {
         }
     };
 
-    // 4. Build Tauri Application
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -102,6 +101,13 @@ pub fn run() {
             read_text_file,
             tray_set_status
         ])
-        .run(tauri::generate_context!())
+        .build(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    app.run(move |_app_handle, event| {
+        if let tauri::RunEvent::Exit = event {
+            info!("VPNHub client exiting: cleanly tearing down active VPN tunnel in daemon");
+            crate::ipc::client::send_synchronous_disconnect();
+        }
+    });
 }

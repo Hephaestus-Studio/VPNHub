@@ -86,25 +86,25 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
         <Box className={styles.checkboxContainer}>
           <Stack gap="xs">
             <Checkbox
-              label="Include last 200 daemon trace logs"
+              label={t.modals.exportIncludeLogs}
               checked={includeLogs}
               onChange={(e) => setIncludeLogs(e.currentTarget.checked)}
               color="cyan"
             />
             <Checkbox
-              label="Include active Kernel Routing Table (`ip route`)"
+              label={t.modals.exportIncludeRoutes}
               checked={includeRoutes}
               onChange={(e) => setIncludeRoutes(e.currentTarget.checked)}
               color="cyan"
             />
             <Checkbox
-              label="Include system DNS resolution cache state"
+              label={t.modals.exportIncludeDns}
               checked={includeDns}
               onChange={(e) => setIncludeDns(e.currentTarget.checked)}
               color="cyan"
             />
             <Checkbox
-              label="Automatically scrub/sanitize private passwords and cryptographic keys"
+              label={t.modals.exportSanitizePrivate}
               checked={sanitizeIps}
               onChange={(e) => setSanitizeIps(e.currentTarget.checked)}
               color="teal"
@@ -115,7 +115,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
         {exporting && (
           <Box>
             <Text size="xs" c="dimmed" mb={4}>
-              Compiling encrypted archive bundle...
+              {t.modals.exportCompiling}
             </Text>
             <Progress value={75} animated color="cyan" size="sm" />
           </Box>

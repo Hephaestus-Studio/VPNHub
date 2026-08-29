@@ -32,6 +32,7 @@ import {
 import { useVpnStore } from "../../state/useVpnStore";
 import { VpnProfile, ProtocolType } from "../../types/vpn";
 import { TotpGenerator } from "../../utils/totp";
+import { useTranslation } from "../../i18n";
 import { CertificateManagerModal } from "./CertificateManagerModal";
 import styles from "./ProfileModal.module.css";
 
@@ -48,6 +49,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   initialProfile,
   defaultProtocol = "wireguard",
 }) => {
+  const { t } = useTranslation();
   const { profiles, addProfile, updateProfile } = useVpnStore();
 
   const isEdit = Boolean(initialProfile && profiles.some((p) => p.id === initialProfile.id));
@@ -280,12 +282,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           )}
           <Text fw={700} size="md" className={styles.modalTitle}>
             {isEdit
-              ? `Edit ${isWireGuard ? "WireGuard" : "OpenVPN"} Profile`
-              : `Create ${isWireGuard ? "WireGuard" : "OpenVPN"} Profile`}
+              ? isWireGuard
+                ? t.modals.editWgTitle
+                : t.modals.editOvpnTitle
+              : isWireGuard
+                ? t.modals.createWgTitle
+                : t.modals.createOvpnTitle}
           </Text>
-          <Badge size="xs" color={isWireGuard ? "cyan" : "teal"} variant="light">
+          <Badge size="xs" color={isWireGuard ? "yellow" : "teal"} variant="light">
             {isWireGuard
-              ? "WireGuard"
+              ? `WireGuard • ${t.common.comingSoon}`
               : protocol === "openvpn_tcp"
                 ? "OpenVPN (TCP)"
                 : "OpenVPN (UDP)"}
@@ -306,15 +312,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           <Group gap="xs" mb="xs">
             <IconWorld size={16} color="var(--vpn-cyan)" />
             <Text fw={600} size="sm" className={styles.sectionTitle}>
-              Server & Connection Settings
+              {t.modals.serverSettingsTitle}
             </Text>
           </Group>
 
           <Stack gap="sm">
             <TextInput
-              label="Profile Name"
+              label={t.modals.profileNameLabel}
               placeholder={
-                isWireGuard ? "e.g. WireGuard Frankfurt Tunnel" : "e.g. OpenVPN Corporate Staging"
+                isWireGuard
+                  ? t.modals.profileNameWgPlaceholder
+                  : t.modals.profileNameOvpnPlaceholder
               }
               value={name}
               onChange={(e) => setName(e.currentTarget.value)}
@@ -324,7 +332,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             {!isWireGuard && (
               <Box>
                 <Text size="xs" fw={500} mb={4} className={styles.fieldLabel}>
-                  Transport Protocol
+                  {t.modals.transportProtoLabel}
                 </Text>
                 <SegmentedControl
                   fullWidth
@@ -347,15 +355,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
             <Group grow align="flex-start">
               <TextInput
-                label="Server Host / IP"
-                placeholder="vpn.example.com or 103.21.244.18"
+                label={t.modals.serverHostLabel}
+                placeholder={t.modals.serverHostPlaceholder}
                 value={serverHost}
                 onChange={(e) => setServerHost(e.currentTarget.value)}
                 className="font-mono"
                 required
               />
               <NumberInput
-                label="Port"
+                label={t.modals.portLabel}
                 value={serverPort}
                 onChange={(val) =>
                   setServerPort(
@@ -368,12 +376,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
             {isWireGuard && (
               <TextInput
-                label="Assigned Virtual IP (CIDR)"
+                label={t.modals.virtualIpLabel}
                 placeholder="10.8.0.2/24"
                 value={virtualIp}
                 onChange={(e) => setVirtualIp(e.currentTarget.value)}
                 className="font-mono"
-                description="Assigned static IP for this WireGuard tunnel peer"
+                description={t.modals.virtualIpDesc}
                 required
               />
             )}
@@ -387,12 +395,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <IconNetwork size={18} color="var(--vpn-cyan)" />
                   <Box>
                     <Text size="xs" fw={600} className={styles.sectionTitle}>
-                      Use this connection only for resources on its network
+                      {t.modals.intranetOnlyTitle}
                     </Text>
                     <Text size="10px" c="dimmed">
                       {useOnlyForNetworkResources
-                        ? "Split-Tunnel active: Routes only internal subnets; Internet goes through local connection"
-                        : "Default: Follows server configuration (Uses VPN default gateway if pushed by server)"}
+                        ? t.modals.intranetOnlyActiveDesc
+                        : t.modals.intranetOnlyDefaultDesc}
                     </Text>
                   </Box>
                 </Group>
@@ -408,16 +416,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <Stack gap="xs" mt="xs">
                   <TextInput
                     size="xs"
-                    label="Custom Corporate Subnets (CIDR)"
-                    placeholder="e.g. 10.0.0.0/8, 192.168.10.0/24, 172.16.0.0/12"
+                    label={t.modals.customSubnetsLabel}
+                    placeholder={t.modals.customSubnetsPlaceholder}
                     value={customSubnetsInput}
                     onChange={(e) => setCustomSubnetsInput(e.currentTarget.value)}
                     className="font-mono"
-                    description="Additional private subnets to route into this VPN tunnel (comma-separated)"
+                    description={t.modals.customSubnetsDesc}
                   />
                   <Text size="10px" c="dimmed" className={styles.hintText}>
-                    💡 Routes pushed by the VPN server & the assigned tunnel IP are automatically
-                    included.
+                    {t.modals.customSubnetsHint}
                   </Text>
                 </Stack>
               )}
@@ -433,31 +440,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <Group gap="xs">
               <IconKey size={16} color="var(--vpn-cyan)" />
               <Text fw={600} size="sm" className={styles.sectionTitle}>
-                Keys & Authentication
+                {t.modals.keysAuthTitle}
               </Text>
             </Group>
             <Badge size="xs" variant="light" color={isWireGuard ? "cyan" : "teal"}>
-              {isWireGuard ? "WireGuard Key Exchange" : "OpenVPN Auth & 2FA"}
+              {isWireGuard ? t.modals.wgKeyExchangeBadge : t.modals.ovpnAuth2faBadge}
             </Badge>
           </Group>
 
           {isWireGuard ? (
             <Stack gap="sm" className={styles.wireguardKeysBox}>
               <PasswordInput
-                label="WireGuard Private Key (Base64)"
-                placeholder="Client peer private key (e.g. aGVwaGFlc3R1cy...)"
+                label={t.modals.wgPrivKeyLabel}
+                placeholder={t.modals.wgPrivKeyPlaceholder}
                 value={privateKey}
                 onChange={(e) => setPrivateKey(e.currentTarget.value)}
                 className="font-mono"
-                description="Encrypted securely in AES-256-GCM Vault"
+                description={t.modals.wgPrivKeyDesc}
               />
               <PasswordInput
-                label="Preshared Key (Optional Post-Quantum Shield)"
-                placeholder="Optional 256-bit symmetric PSK"
+                label={t.modals.wgPskLabel}
+                placeholder={t.modals.wgPskPlaceholder}
                 value={presharedKey}
                 onChange={(e) => setPresharedKey(e.currentTarget.value)}
                 className="font-mono"
-                description="Additional layer of post-quantum symmetric encryption"
+                description={t.modals.wgPskDesc}
               />
             </Stack>
           ) : (
@@ -465,8 +472,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <Box className={styles.openvpnAuthBox}>
                 <Stack gap="sm">
                   <TextInput
-                    label="Username"
-                    placeholder="Enter VPN account username"
+                    label={t.modals.ovpnUsernameLabel}
+                    placeholder={t.modals.ovpnUsernamePlaceholder}
                     value={username}
                     onChange={(e) => setUsername(e.currentTarget.value)}
                   />
@@ -474,7 +481,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   {/* Password / Dynamic 2FA Mode Selector */}
                   <Box>
                     <Text size="xs" fw={500} mb={4} className={styles.fieldLabel}>
-                      Password & 2FA / TOTP Authentication Mode
+                      {t.modals.ovpnAuthModeLabel}
                     </Text>
                     <SegmentedControl
                       fullWidth
@@ -487,7 +494,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           label: (
                             <Group gap={4} justify="center">
                               <IconLock size={13} />
-                              <span>Static Password</span>
+                              <span>{t.modals.authModeStatic}</span>
                             </Group>
                           ),
                         },
@@ -496,7 +503,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           label: (
                             <Group gap={4} justify="center">
                               <IconBolt size={13} color="var(--vpn-cyan)" />
-                              <span>Auto TOTP</span>
+                              <span>{t.modals.authModeTotpAuto}</span>
                             </Group>
                           ),
                         },
@@ -505,7 +512,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           label: (
                             <Group gap={4} justify="center">
                               <IconClock size={13} color="var(--vpn-amber)" />
-                              <span>Prompt on Connect</span>
+                              <span>{t.modals.authModeDynamicPrompt}</span>
                             </Group>
                           ),
                         },
@@ -515,11 +522,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Base Password Input */}
                   <PasswordInput
-                    label={passwordMode === "totp_auto" ? "Base Password" : "Password"}
+                    label={
+                      passwordMode === "totp_auto"
+                        ? t.modals.basePasswordLabel
+                        : t.modals.passwordLabel
+                    }
                     placeholder={
                       passwordMode === "dynamic_prompt"
-                        ? "Base password (or leave empty to prompt on connect)"
-                        : "Enter password"
+                        ? t.modals.basePasswordPlaceholder
+                        : t.modals.passwordPlaceholder
                     }
                     value={password}
                     onChange={(e) => setPassword(e.currentTarget.value)}
@@ -530,29 +541,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <Box className={styles.totpAutoBox}>
                       <Stack gap="xs">
                         <PasswordInput
-                          label="TOTP Secret Key (Base32)"
-                          placeholder="e.g. JBSWY3DPEHPK3PXP"
+                          label={t.modals.totpSecretLabel}
+                          placeholder={t.modals.totpSecretPlaceholder}
                           value={totpSecret}
                           onChange={(e) => setTotpSecret(e.currentTarget.value)}
                           className="font-mono"
-                          description="Stored securely in AES-256-GCM Encrypted Vault"
+                          description={t.modals.totpSecretDesc}
                         />
 
                         <Select
-                          label="Combination Format"
+                          label={t.modals.totpFormatLabel}
                           size="xs"
                           value={totpFormat}
                           onChange={(val) => setTotpFormat(val as typeof totpFormat)}
                           data={[
                             {
                               value: "append",
-                              label: "Base Password + TOTP (e.g. MyPassword123456)",
+                              label: t.modals.totpFormatAppend,
                             },
                             {
                               value: "prefix",
-                              label: "TOTP + Base Password (e.g. 123456MyPassword)",
+                              label: t.modals.totpFormatPrefix,
                             },
-                            { value: "totp_only", label: "TOTP Code Only (e.g. 123456)" },
+                            { value: "totp_only", label: t.modals.totpFormatOnly },
                           ]}
                         />
 
@@ -563,7 +574,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                               <IconShieldLock size={16} color="var(--vpn-emerald)" />
                               <Box>
                                 <Text size="10px" c="dimmed">
-                                  Live Authenticator OTP:
+                                  {t.modals.liveTotpLabel}
                                 </Text>
                                 <Text size="md" fw={700} className="font-mono" c="cyan">
                                   {liveTotpCode}
@@ -588,7 +599,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                                 }
                               />
                               <Badge size="xs" variant="light" color="cyan">
-                                Active OTP
+                                {t.modals.activeOtpBadge}
                               </Badge>
                             </Group>
                           </Group>
@@ -599,8 +610,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {passwordMode === "dynamic_prompt" && (
                     <Text size="xs" c="dimmed" className={styles.hintText}>
-                      💡 Khi bấm Kết Nối, VPNHub sẽ hiển thị hộp thoại xác thực 2FA nhanh để bạn
-                      nhập mã OTP động (Google Authenticator / YubiKey).
+                      {t.modals.dynamicPromptHint}
                     </Text>
                   )}
                 </Stack>
@@ -613,10 +623,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <IconCertificate size={18} color="var(--vpn-cyan)" />
                     <Box>
                       <Text size="sm" fw={600} className={styles.sectionTitle}>
-                        TLS & Certificate Security
+                        {t.modals.tlsSummaryTitle}
                       </Text>
                       <Text size="11px" c="dimmed">
-                        Root CA, TLS Channel Keys, and Client Certificate Authentication
+                        {t.modals.tlsSummaryDesc}
                       </Text>
                     </Box>
                   </Group>
@@ -627,7 +637,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     leftSection={<IconAdjustments size={14} />}
                     onClick={() => setCertModalOpened(true)}
                   >
-                    {hasPopulatedTls ? "Configure Security" : "Setup Certificates"}
+                    {hasPopulatedTls ? t.modals.btnConfigSecurity : t.modals.btnSetupCertificates}
                   </Button>
                 </Group>
 
@@ -635,41 +645,41 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <Group gap="xs" mt="xs" wrap="wrap">
                   {caCert ? (
                     <Badge size="xs" variant="filled" color="teal">
-                      ✓ Custom Root CA
+                      {t.modals.badgeCustomCa}
                     </Badge>
                   ) : (
                     <Badge size="xs" variant="light" color="gray">
-                      System Root CA
+                      {t.modals.badgeSystemCa}
                     </Badge>
                   )}
 
                   {tlsCryptKey ? (
                     <Badge size="xs" variant="filled" color="cyan">
-                      ✓ TLS-Crypt Enabled
+                      {t.modals.badgeTlsCrypt}
                     </Badge>
                   ) : tlsAuthKey ? (
                     <Badge size="xs" variant="filled" color="cyan">
-                      ✓ TLS-Auth (Dir: {keyDirection})
+                      {t.modals.badgeTlsAuth.replace("{direction}", keyDirection)}
                     </Badge>
                   ) : (
                     <Badge size="xs" variant="light" color="gray">
-                      Standard TLS Handshake
+                      {t.modals.badgeStandardTls}
                     </Badge>
                   )}
 
                   {clientCert || clientKey ? (
                     <Badge size="xs" variant="filled" color="indigo">
-                      ✓ Client Cert & Key
+                      {t.modals.badgeClientCertKey}
                     </Badge>
                   ) : (
                     <Badge size="xs" variant="light" color="gray">
-                      User/Pass Auth
+                      {t.modals.badgeUserPassAuth}
                     </Badge>
                   )}
 
                   {remoteCertTlsServer && (
                     <Badge size="xs" variant="outline" color="teal">
-                      Server Verify (Active)
+                      {t.modals.badgeServerVerify}
                     </Badge>
                   )}
                 </Group>
@@ -681,10 +691,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
       <Group justify="flex-end" mt="xl" pt="sm" className={styles.modalFooter}>
         <Button variant="subtle" color="gray" onClick={onClose}>
-          Cancel
+          {t.common.cancel}
         </Button>
         <Button color="cyan" onClick={handleSubmit}>
-          {isEdit ? "Save Changes" : "Create Profile"}
+          {isEdit ? t.modals.btnSaveChanges : t.modals.btnCreateProfile}
         </Button>
       </Group>
 

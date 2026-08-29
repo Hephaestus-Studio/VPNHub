@@ -6,7 +6,7 @@ import { AppShell } from "./components/layout/AppShell";
 function App() {
   return (
     <MantineProvider theme={vpnTheme} defaultColorScheme="dark">
-      <Notifications position="top-right" zIndex={2000} />
+      <Notifications position="bottom-right" zIndex={2000} autoClose={4000} />
       <AppShell />
     </MantineProvider>
   );

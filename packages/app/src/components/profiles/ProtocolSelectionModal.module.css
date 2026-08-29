@@ -34,6 +34,18 @@
   transform: translateY(-2px);
 }
 
+.wireguardOptionDisabled {
+  composes: wireguardOption;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wireguardOptionDisabled:hover {
+  background: rgba(6, 182, 212, 0.04);
+  border-color: rgba(6, 182, 212, 0.2);
+  transform: none;
+}
+
 .wireguardIconBox {
   width: 44px;
   height: 44px;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Stack, Text, Group, Box, Paper, Badge } from "@mantine/core";
+import { Modal, Stack, Text, Group, Box, Paper, Badge, Tooltip } from "@mantine/core";
 import {
   IconBolt,
   IconShieldLock,
@@ -7,6 +7,7 @@ import {
   IconPlus,
   IconChevronRight,
 } from "@tabler/icons-react";
+import { useTranslation } from "../../i18n";
 import styles from "./ProtocolSelectionModal.module.css";
 
 interface ProtocolSelectionModalProps {
@@ -22,6 +23,7 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
   mode,
   onSelect,
 }) => {
+  const { t } = useTranslation();
   const isImport = mode === "import";
 
   return (
@@ -36,7 +38,7 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
             <IconPlus size={20} color="var(--vpn-cyan)" />
           )}
           <Text fw={700} size="md" className={styles.modalTitle}>
-            {isImport ? "Import Profile - Select Protocol" : "Add Profile - Select Protocol"}
+            {isImport ? t.modals.protoSelectImportTitle : t.modals.protoSelectAddTitle}
           </Text>
         </Group>
       }
@@ -50,43 +52,34 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
     >
       <Stack gap="md">
         <Text size="xs" c="dimmed">
-          {isImport
-            ? "Choose which type of configuration file you want to import:"
-            : "Choose the VPN protocol engine to configure for this connection profile:"}
+          {isImport ? t.modals.protoSelectImportDesc : t.modals.protoSelectAddDesc}
         </Text>
 
-        {/* Option 1: WireGuard */}
-        <Paper
-          onClick={() => {
-            onClose();
-            onSelect("wireguard");
-          }}
-          className={styles.wireguardOption}
-        >
-          <Group justify="space-between" align="center">
-            <Group gap="md">
-              <Box className={styles.wireguardIconBox}>
-                <IconBolt size={24} color="var(--vpn-cyan)" />
-              </Box>
-              <Box>
-                <Group gap="xs" align="center" mb={2}>
-                  <Text fw={700} size="sm" className={styles.optionTitle}>
-                    WireGuard
+        {/* Option 1: WireGuard (Disabled - Coming Soon) */}
+        <Tooltip label={t.modals.wireguardComingSoonError} position="top" withArrow>
+          <Paper className={styles.wireguardOptionDisabled}>
+            <Group justify="space-between" align="center">
+              <Group gap="md">
+                <Box className={styles.wireguardIconBox}>
+                  <IconBolt size={24} color="var(--vpn-cyan)" />
+                </Box>
+                <Box>
+                  <Group gap="xs" align="center" mb={2}>
+                    <Text fw={700} size="sm" className={styles.optionTitle}>
+                      {t.modals.protoWgTitle}
+                    </Text>
+                    <Badge size="xs" color="yellow" variant="light">
+                      {t.common.comingSoon}
+                    </Badge>
+                  </Group>
+                  <Text size="xs" c="dimmed">
+                    {isImport ? t.modals.protoWgDescImport : t.modals.protoWgDescAdd}
                   </Text>
-                  <Badge size="xs" color="cyan" variant="light">
-                    {isImport ? ".conf file" : "UDP Peer-to-Peer"}
-                  </Badge>
-                </Group>
-                <Text size="xs" c="dimmed">
-                  {isImport
-                    ? "Import standard WireGuard configuration (.conf)"
-                    : "Ultra-fast throughput, modern cryptography & lowest latency."}
-                </Text>
-              </Box>
+                </Box>
+              </Group>
             </Group>
-            <IconChevronRight size={18} className={styles.chevronIcon} />
-          </Group>
-        </Paper>
+          </Paper>
+        </Tooltip>
 
         {/* Option 2: OpenVPN */}
         <Paper
@@ -104,16 +97,14 @@ export const ProtocolSelectionModal: React.FC<ProtocolSelectionModalProps> = ({
               <Box>
                 <Group gap="xs" align="center" mb={2}>
                   <Text fw={700} size="sm" className={styles.optionTitle}>
-                    OpenVPN
+                    {t.modals.protoOvpnTitle}
                   </Text>
                   <Badge size="xs" color="teal" variant="light">
-                    {isImport ? ".ovpn / .conf" : "TCP / UDP + 2FA"}
+                    {isImport ? t.modals.protoOvpnBadgeImport : t.modals.protoOvpnBadgeAdd}
                   </Badge>
                 </Group>
                 <Text size="xs" c="dimmed">
-                  {isImport
-                    ? "Import OpenVPN client bundle (.ovpn / .conf)"
-                    : "Enterprise protocol supporting TCP/UDP, 2FA OTP & TLS Certificates."}
+                  {isImport ? t.modals.protoOvpnDescImport : t.modals.protoOvpnDescAdd}
                 </Text>
               </Box>
             </Group>

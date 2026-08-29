@@ -106,7 +106,10 @@ export const SettingsView: React.FC = () => {
             color={daemonHealth === "connected" ? "teal" : "red"}
             className={styles.statusBadge}
           >
-            Core: {daemonHealth === "connected" ? t.settings.coreReady.replace("{version}", daemonVersion) : t.settings.coreOffline}
+            Core:{" "}
+            {daemonHealth === "connected"
+              ? t.settings.coreReady.replace("{version}", daemonVersion)
+              : t.settings.coreOffline}
           </Badge>
           <Badge size="sm" variant="outline" color="cyan" className={styles.statusBadge}>
             {t.settings.vaultAes}
@@ -179,9 +182,7 @@ export const SettingsView: React.FC = () => {
                   <Text size="xs" fw={600} className={styles.itemTitle}>
                     {t.settings.launchAtStartup}
                   </Text>
-                  <Text className={styles.itemDesc}>
-                    {t.settings.launchAtStartupDesc}
-                  </Text>
+                  <Text className={styles.itemDesc}>{t.settings.launchAtStartupDesc}</Text>
                 </Box>
                 <Switch
                   checked={appSettings.autoLaunch}
@@ -200,9 +201,7 @@ export const SettingsView: React.FC = () => {
                       <Text size="xs" fw={600} className={styles.itemTitle}>
                         {t.settings.startMinimized}
                       </Text>
-                      <Text className={styles.itemDesc}>
-                        {t.settings.startMinimizedDesc}
-                      </Text>
+                      <Text className={styles.itemDesc}>{t.settings.startMinimizedDesc}</Text>
                     </Box>
                     <Switch
                       checked={appSettings.startMinimized}
@@ -224,9 +223,7 @@ export const SettingsView: React.FC = () => {
                   <Text size="xs" fw={600} className={styles.itemTitle}>
                     {t.settings.autoConnectOnLaunch}
                   </Text>
-                  <Text className={styles.itemDesc}>
-                    {t.settings.autoConnectOnLaunchDesc}
-                  </Text>
+                  <Text className={styles.itemDesc}>{t.settings.autoConnectOnLaunchDesc}</Text>
                 </Box>
                 <Switch
                   checked={appSettings.autoConnect}
@@ -244,9 +241,7 @@ export const SettingsView: React.FC = () => {
                   <Text size="xs" fw={600} className={styles.itemTitle}>
                     {t.settings.minimizeToTrayOnClose}
                   </Text>
-                  <Text className={styles.itemDesc}>
-                    {t.settings.minimizeToTrayOnCloseDesc}
-                  </Text>
+                  <Text className={styles.itemDesc}>{t.settings.minimizeToTrayOnCloseDesc}</Text>
                 </Box>
                 <Switch
                   checked={appSettings.minimizeToTray}
@@ -276,9 +271,7 @@ export const SettingsView: React.FC = () => {
                   <Text size="xs" fw={600} className={styles.itemTitle}>
                     {t.settings.autoReconnect}
                   </Text>
-                  <Text className={styles.itemDesc}>
-                    {t.settings.autoReconnectDesc}
-                  </Text>
+                  <Text className={styles.itemDesc}>{t.settings.autoReconnectDesc}</Text>
                 </Box>
                 <Switch
                   checked={appSettings.autoReconnect ?? true}
@@ -296,9 +289,7 @@ export const SettingsView: React.FC = () => {
                   <Text size="xs" fw={600} className={styles.itemTitle}>
                     {t.settings.desktopNotifications}
                   </Text>
-                  <Text className={styles.itemDesc}>
-                    {t.settings.desktopNotificationsDesc}
-                  </Text>
+                  <Text className={styles.itemDesc}>{t.settings.desktopNotificationsDesc}</Text>
                 </Box>
                 <Switch
                   checked={appSettings.notificationsEnabled ?? true}
@@ -318,9 +309,7 @@ export const SettingsView: React.FC = () => {
                   <Text size="xs" fw={600} className={styles.itemTitle}>
                     {t.settings.spotlightTitle}
                   </Text>
-                  <Text className={styles.itemDesc}>
-                    {t.settings.spotlightDesc}
-                  </Text>
+                  <Text className={styles.itemDesc}>{t.settings.spotlightDesc}</Text>
                 </Box>
                 <Button
                   variant="light"
@@ -414,8 +403,14 @@ export const SettingsView: React.FC = () => {
                 color="cyan"
                 size="xs"
                 leftSection={<IconExternalLink size={14} />}
-                onClick={() => {
-                  window.open("https://github.com/hephaestus-studio/vpnhub", "_blank");
+                onClick={async () => {
+                  const url = "https://github.com/Hephaestus-Studio/VPNHub";
+                  try {
+                    const { openUrl } = await import("@tauri-apps/plugin-opener");
+                    await openUrl(url);
+                  } catch {
+                    window.open(url, "_blank");
+                  }
                 }}
               >
                 {t.settings.docsAndGithub}
@@ -427,5 +422,3 @@ export const SettingsView: React.FC = () => {
     </Box>
   );
 };
-
-

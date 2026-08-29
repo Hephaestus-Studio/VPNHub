@@ -103,14 +103,14 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
           </Box>
 
           <TextInput
-            label="Username"
+            label={t.modals.mfaUsername}
             value={profile.credentials?.username || "user"}
             disabled
             className="font-mono"
           />
 
           <PasswordInput
-            label="Password"
+            label={t.modals.mfaPassword}
             placeholder="••••••••"
             value={basePassword}
             onChange={(e) => setBasePassword(e.currentTarget.value)}
@@ -118,7 +118,7 @@ export const ConnectMfaModal: React.FC<ConnectMfaModalProps> = ({
           />
 
           <TextInput
-            label="TOTP / MFA Code"
+            label={t.modals.mfaCodeLabel}
             placeholder={t.modals.mfaPlaceholder}
             value={totpCode}
             onChange={(e) => setTotpCode(e.currentTarget.value)}

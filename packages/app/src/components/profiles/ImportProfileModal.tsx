@@ -3,6 +3,7 @@ import { Modal, Stack, Text, Box, Alert, Group, Badge } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { IconFileTypeTxt, IconAlertCircle, IconBolt, IconShieldLock } from "@tabler/icons-react";
 import { VpnProfile, ProtocolType } from "../../types/vpn";
+import { useTranslation } from "../../i18n";
 import styles from "./ImportProfileModal.module.css";
 
 interface ImportProfileModalProps {
@@ -18,6 +19,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
   targetProtocol = "openvpn",
   onImportParsed,
 }) => {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
 
   const isWireGuardExpected = targetProtocol === "wireguard";
@@ -29,7 +31,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
 
     const reader = new FileReader();
     reader.onerror = () => {
-      setError("Failed to read configuration file. Please try again.");
+      setError(t.modals.failedReadFile);
     };
 
     reader.onload = (e) => {
@@ -45,16 +47,12 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
           file.name.toLowerCase().endsWith(".ovpn");
 
         if (isWireGuardExpected && isOpenVpnContent && !isWireGuardContent) {
-          setError(
-            "The selected file appears to be an OpenVPN configuration. Please select a valid WireGuard (.conf) file containing [Interface] directives."
-          );
+          setError(t.modals.errExpectedWg);
           return;
         }
 
         if (!isWireGuardExpected && isWireGuardContent && !isOpenVpnContent) {
-          setError(
-            "The selected file appears to be a WireGuard configuration. Please select an OpenVPN (.ovpn) file."
-          );
+          setError(t.modals.errExpectedOvpn);
           return;
         }
 
@@ -202,7 +200,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
         }
         onClose();
       } catch (err: any) {
-        setError(err?.message || "Failed to parse configuration file.");
+        setError(err?.message || t.modals.failedParseFile);
       }
     };
 
@@ -221,7 +219,7 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
             <IconShieldLock size={20} color="var(--vpn-emerald)" />
           )}
           <Text fw={700} size="md" className={styles.modalTitle}>
-            {isWireGuardExpected ? "Import WireGuard (.conf)" : "Import OpenVPN (.ovpn)"}
+            {isWireGuardExpected ? t.modals.importWgTitle : t.modals.importOvpnTitle}
           </Text>
           <Badge size="xs" color={isWireGuardExpected ? "cyan" : "teal"} variant="light">
             {isWireGuardExpected ? "WireGuard" : "OpenVPN"}
@@ -277,21 +275,17 @@ export const ImportProfileModal: React.FC<ImportProfileModalProps> = ({
               />
             </Box>
             <Text size="sm" fw={600} className={styles.dropzoneTitle}>
-              {isWireGuardExpected
-                ? "Drag & Drop WireGuard .conf file here"
-                : "Drag & Drop OpenVPN .ovpn or .conf file here"}
+              {isWireGuardExpected ? t.modals.importWgDropzone : t.modals.importOvpnDropzone}
             </Text>
             <Text size="xs" c="dimmed">
-              {isWireGuardExpected
-                ? "Supports WireGuard standard config format (.conf) up to 5MB"
-                : "Supports OpenVPN 2.x/3.x unified format (.ovpn) up to 5MB"}
+              {isWireGuardExpected ? t.modals.importWgHelp : t.modals.importOvpnHelp}
             </Text>
             <Text
               size="11px"
               c={isWireGuardExpected ? "cyan" : "teal"}
               className={styles.browseLink}
             >
-              or click to browse from your computer
+              {t.modals.importClickBrowse}
             </Text>
           </Stack>
         </Dropzone>

@@ -76,6 +76,7 @@ pub async fn window_close(window: Window, minimize_to_tray: Option<bool>) -> Res
     if minimize_to_tray.unwrap_or(true) {
         window.hide().map_err(|e| AppError::Tauri(e.to_string()))
     } else {
+        crate::ipc::client::send_synchronous_disconnect();
         window.app_handle().exit(0);
         Ok(())
     }

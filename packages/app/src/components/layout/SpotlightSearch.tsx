@@ -128,7 +128,9 @@ export const SpotlightSearch: React.FC = () => {
       <Box className={styles.resultsList}>
         {filteredProfiles.length > 0 && (
           <Box mb="xs">
-            <Text className={styles.sectionHeader}>VPN PROFILES ({filteredProfiles.length})</Text>
+            <Text className={styles.sectionHeader}>
+              {t.common.vpnProfiles} ({filteredProfiles.length})
+            </Text>
             <Stack gap={2}>
               {filteredProfiles.map((prof) => (
                 <UnstyledButton
@@ -167,7 +169,7 @@ export const SpotlightSearch: React.FC = () => {
 
         {filteredActions.length > 0 && (
           <Box>
-            <Text className={styles.sectionHeader}>COMMANDS & VIEWS</Text>
+            <Text className={styles.sectionHeader}>{t.common.commands}</Text>
             <Stack gap={2}>
               {filteredActions.map((action) => {
                 const Icon = action.icon;

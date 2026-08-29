@@ -44,6 +44,19 @@ export interface TranslationDictionary {
     all: string;
     success: string;
     warning: string;
+    username: string;
+    password: string;
+    or: string;
+    comingSoon: string;
+    actions: string;
+    location: string;
+    isp: string;
+    vpnProfiles: string;
+    commands: string;
+    statusLabel: string;
+    type: string;
+    policy: string;
+    target: string;
   };
   nav: {
     menu: string;
@@ -198,11 +211,48 @@ export interface TranslationDictionary {
     coreOffline: string;
     vaultAes: string;
   };
+  splitTunnel: {
+    title: string;
+    subtitle: string;
+    tabApps: string;
+    tabIpDomain: string;
+    appsSectionTitle: string;
+    appsSectionDesc: string;
+    btnAddAppRule: string;
+    colStatus: string;
+    colApp: string;
+    colPath: string;
+    colPolicy: string;
+    colActions: string;
+    routeVpnBadge: string;
+    bypassBadge: string;
+    addIpSectionTitle: string;
+    targetLabel: string;
+    targetPlaceholder: string;
+    typeLabel: string;
+    typeCidr: string;
+    typeDomain: string;
+    policyLabel: string;
+    policyRouteVpn: string;
+    policyBypass: string;
+    descLabel: string;
+    descPlaceholder: string;
+    btnAddRule: string;
+    colTarget: string;
+    colType: string;
+    colDesc: string;
+  };
   modals: {
+    // MFA Modal
     mfaTitle: string;
     mfaSubtitle: string;
     mfaPlaceholder: string;
     mfaConfirm: string;
+    mfaUsername: string;
+    mfaPassword: string;
+    mfaCodeLabel: string;
+
+    // DNS Leak Test Modal
     dnsLeakTitle: string;
     dnsLeakDesc: string;
     dnsLeakTesting: string;
@@ -210,6 +260,10 @@ export interface TranslationDictionary {
     dnsLeakFailed: string;
     dnsServersFound: string;
     dnsPublicIp: string;
+    dnsIsp: string;
+    dnsLocation: string;
+
+    // New Profile Hub Modal
     newProfileTitle: string;
     newProfileWireguardTitle: string;
     newProfileWireguardDesc: string;
@@ -219,9 +273,179 @@ export interface TranslationDictionary {
     newProfileImportDesc: string;
     importDropzoneText: string;
     importDropzoneSubtext: string;
+    dropzoneRelease: string;
+    dropzoneDropNow: string;
+    dropzoneAnalyzing: string;
+    dropzoneExtracting: string;
+    invalidFileType: string;
+    failedReadFile: string;
+    failedParseFile: string;
+
+    // Diagnostic Export Modal
     exportDiagTitle: string;
     exportDiagSubtitle: string;
     exportDownloadJson: string;
     exportCopyText: string;
+    exportIncludeLogs: string;
+    exportIncludeRoutes: string;
+    exportIncludeDns: string;
+    exportSanitizePrivate: string;
+    exportCompiling: string;
+
+    // QR Code Modal
+    qrTitle: string;
+    qrSubtitle: string;
+    qrCopyBase64: string;
+
+    // Protocol Selection Modal
+    protoSelectImportTitle: string;
+    protoSelectAddTitle: string;
+    protoSelectImportDesc: string;
+    protoSelectAddDesc: string;
+    protoWgTitle: string;
+    protoWgBadgeImport: string;
+    protoWgBadgeAdd: string;
+    protoWgDescImport: string;
+    protoWgDescAdd: string;
+    protoOvpnTitle: string;
+    protoOvpnBadgeImport: string;
+    protoOvpnBadgeAdd: string;
+    protoOvpnDescImport: string;
+    protoOvpnDescAdd: string;
+
+    // Import Profile Modal
+    importWgTitle: string;
+    importOvpnTitle: string;
+    importWgDropzone: string;
+    importOvpnDropzone: string;
+    importWgHelp: string;
+    importOvpnHelp: string;
+    importClickBrowse: string;
+    errExpectedWg: string;
+    errExpectedOvpn: string;
+
+    // Add App Rule Modal
+    addAppTitle: string;
+    addAppDetected: string;
+    addAppNameLabel: string;
+    addAppNamePlaceholder: string;
+    addAppPathLabel: string;
+    addAppPathPlaceholder: string;
+    addAppPolicyLabel: string;
+    addAppBypassLabel: string;
+    addAppRouteLabel: string;
+    addAppSubmitBtn: string;
+
+    // Certificate Manager Modal
+    certManagerTitle: string;
+    tabRootCa: string;
+    tabTlsChannel: string;
+    tabClientIdentity: string;
+    tabAdvanced: string;
+    rootCaTitle: string;
+    rootCaLoaded: string;
+    rootCaDefaultSystem: string;
+    importCrtPem: string;
+    rootCaPemLabel: string;
+    rootCaPemPlaceholder: string;
+    tlsModeLabel: string;
+    tlsModeDesc: string;
+    tlsModeNone: string;
+    tlsModeAuth: string;
+    tlsModeCrypt: string;
+    tlsAuthStaticKeyTitle: string;
+    tlsKeyLoaded: string;
+    noKeyLoaded: string;
+    importKeyFile: string;
+    tlsAuthKeyContentLabel: string;
+    keyDirectionLabel: string;
+    keyDirectionDesc: string;
+    keyDirNone: string;
+    keyDir0: string;
+    keyDir1: string;
+    tlsCryptKeyTitle: string;
+    tlsCryptKeyContentLabel: string;
+    clientIdentityDesc: string;
+    clientCertTitle: string;
+    clientCertLoaded: string;
+    noCertLoaded: string;
+    importCrt: string;
+    clientKeyTitle: string;
+    clientKeyLoaded: string;
+    noPrivateKeyLoaded: string;
+    importKey: string;
+    verifyServerCertTitle: string;
+    verifyServerCertDesc: string;
+    renegSecLabel: string;
+    renegSecPlaceholder: string;
+    renegSecDesc: string;
+    applyCertSettings: string;
+
+    // Profile Modal (Create / Edit)
+    wireguardComingSoonError: string;
+    createWgTitle: string;
+    createOvpnTitle: string;
+    editWgTitle: string;
+    editOvpnTitle: string;
+    serverSettingsTitle: string;
+    profileNameLabel: string;
+    profileNameWgPlaceholder: string;
+    profileNameOvpnPlaceholder: string;
+    transportProtoLabel: string;
+    serverHostLabel: string;
+    serverHostPlaceholder: string;
+    portLabel: string;
+    virtualIpLabel: string;
+    virtualIpDesc: string;
+    intranetOnlyTitle: string;
+    intranetOnlyActiveDesc: string;
+    intranetOnlyDefaultDesc: string;
+    customSubnetsLabel: string;
+    customSubnetsPlaceholder: string;
+    customSubnetsDesc: string;
+    customSubnetsHint: string;
+    keysAuthTitle: string;
+    wgKeyExchangeBadge: string;
+    ovpnAuth2faBadge: string;
+    wgPrivKeyLabel: string;
+    wgPrivKeyPlaceholder: string;
+    wgPrivKeyDesc: string;
+    wgPskLabel: string;
+    wgPskPlaceholder: string;
+    wgPskDesc: string;
+    ovpnUsernameLabel: string;
+    ovpnUsernamePlaceholder: string;
+    ovpnAuthModeLabel: string;
+    authModeStatic: string;
+    authModeTotpAuto: string;
+    authModeDynamicPrompt: string;
+    basePasswordLabel: string;
+    passwordLabel: string;
+    basePasswordPlaceholder: string;
+    passwordPlaceholder: string;
+    totpSecretLabel: string;
+    totpSecretPlaceholder: string;
+    totpSecretDesc: string;
+    totpFormatLabel: string;
+    totpFormatAppend: string;
+    totpFormatPrefix: string;
+    totpFormatOnly: string;
+    liveTotpLabel: string;
+    activeOtpBadge: string;
+    dynamicPromptHint: string;
+    tlsSummaryTitle: string;
+    tlsSummaryDesc: string;
+    btnConfigSecurity: string;
+    btnSetupCertificates: string;
+    badgeCustomCa: string;
+    badgeSystemCa: string;
+    badgeTlsCrypt: string;
+    badgeTlsAuth: string;
+    badgeStandardTls: string;
+    badgeClientCertKey: string;
+    badgeUserPassAuth: string;
+    badgeServerVerify: string;
+    btnSaveChanges: string;
+    btnCreateProfile: string;
   };
 }

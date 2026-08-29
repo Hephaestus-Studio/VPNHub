@@ -144,8 +144,8 @@ export const DnsLeakTestModal: React.FC<DnsLeakTestModalProps> = ({ opened, onCl
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>{t.modals.dnsPublicIp}</Table.Th>
-                  <Table.Th>ISP</Table.Th>
-                  <Table.Th>Location</Table.Th>
+                  <Table.Th>{t.modals.dnsIsp}</Table.Th>
+                  <Table.Th>{t.modals.dnsLocation}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>

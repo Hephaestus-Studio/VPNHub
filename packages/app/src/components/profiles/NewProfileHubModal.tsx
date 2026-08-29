@@ -11,6 +11,7 @@ import {
   Alert,
   SimpleGrid,
   Loader,
+  Tooltip,
 } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import {
@@ -217,6 +218,11 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
             try {
               const fileContent = await invoke<string>("read_text_file", { path: filePath });
               const parsedProfile = parseConfigContent(fileContent, fileName);
+              if (parsedProfile.protocol === "wireguard") {
+                setIsLoading(false);
+                setError(t.modals.wireguardComingSoonError);
+                return;
+              }
               // Brief UI feedback before opening parsed profile modal
               setTimeout(() => {
                 setIsLoading(false);
@@ -237,7 +243,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
     } catch (e) {
       console.debug("Tauri drag-and-drop listener not supported in web mode", e);
     }
-  }, [opened, onClose, onImportParsed]);
+  }, [opened, onClose, onImportParsed, t]);
 
   const handleFiles = (files: File[]) => {
     setError(null);
@@ -251,13 +257,18 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
     const reader = new FileReader();
     reader.onerror = () => {
       setIsLoading(false);
-      setError("Failed to read configuration file. Please try again.");
+      setError(t.modals.failedReadFile);
     };
 
     reader.onload = (e) => {
       try {
         const content = (e.target?.result as string) || "";
         const parsed = parseConfigContent(content, file.name);
+        if (parsed.protocol === "wireguard") {
+          setIsLoading(false);
+          setError(t.modals.wireguardComingSoonError);
+          return;
+        }
         setTimeout(() => {
           setIsLoading(false);
           onClose();
@@ -265,7 +276,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         }, 300);
       } catch (err: any) {
         setIsLoading(false);
-        setError(err?.message || "Failed to parse VPN configuration file.");
+        setError(err?.message || t.modals.failedParseFile);
       }
     };
 
@@ -316,7 +327,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
             </Text>
             {isDraggingOver && (
               <Badge size="xs" color="cyan" variant="filled" className="animate-pulse">
-                Release File to Import
+                {t.modals.dropzoneRelease}
               </Badge>
             )}
           </Group>
@@ -327,9 +338,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
             onDragLeave={() => setIsDraggingOver(false)}
             onReject={() => {
               setIsDraggingOver(false);
-              setError(
-                "Invalid file type. Please upload a valid .ovpn or .conf configuration file."
-              );
+              setError(t.modals.invalidFileType);
             }}
             maxSize={10 * 1024 * 1024}
             disabled={isLoading}
@@ -341,10 +350,10 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                   <Loader size="md" color="cyan" />
                 </Box>
                 <Text size="sm" fw={700} className={styles.loadingTitle}>
-                  Analyzing & Parsing Configuration...
+                  {t.modals.dropzoneAnalyzing}
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Extracting TLS certificates, keys & tunnel endpoints from{" "}
+                  {t.modals.dropzoneExtracting}{" "}
                   <span className={styles.loadingFileName}>{loadingFileName || "config"}</span>
                 </Text>
               </Stack>
@@ -363,11 +372,9 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
                 </Box>
                 <Text size="sm" fw={600} className={styles.dropzoneText}>
                   {isDraggingOver ? (
-                    <span className={styles.cyanHighlight}>Drop file now to import</span>
+                    <span className={styles.cyanHighlight}>{t.modals.dropzoneDropNow}</span>
                   ) : (
-                    <>
-                      {t.modals.importDropzoneText}
-                    </>
+                    <>{t.modals.importDropzoneText}</>
                   )}
                 </Text>
                 <Text size="xs" c="dimmed">
@@ -381,7 +388,7 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
         <Divider
           label={
             <Text size="xs" fw={600} c="dimmed" className={styles.dividerText}>
-              OR
+              {t.common.or}
             </Text>
           }
           labelPosition="center"
@@ -394,36 +401,31 @@ export const NewProfileHubModal: React.FC<NewProfileHubModalProps> = ({
             {t.profiles.addProfile}
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-            {/* WireGuard Manual Card */}
-            <Paper
-              onClick={() => {
-                onClose();
-                onSelectManualCreate("wireguard");
-              }}
-              className={styles.wireguardCard}
-            >
-              <Group justify="space-between" align="flex-start" wrap="nowrap">
-                <Group gap="sm" align="flex-start">
-                  <Box className={styles.wireguardIconBox}>
-                    <IconBolt size={20} color="var(--vpn-cyan)" />
-                  </Box>
-                  <Box>
-                    <Group gap="xs" align="center" mb={2}>
-                      <Text fw={700} size="sm" className={styles.cardTitle}>
-                        {t.modals.newProfileWireguardTitle}
+            {/* WireGuard Manual Card (Disabled - Coming Soon) */}
+            <Tooltip label={t.modals.wireguardComingSoonError} position="top" withArrow>
+              <Paper className={styles.wireguardCardDisabled}>
+                <Group justify="space-between" align="flex-start" wrap="nowrap">
+                  <Group gap="sm" align="flex-start">
+                    <Box className={styles.wireguardIconBox}>
+                      <IconBolt size={20} color="var(--vpn-cyan)" />
+                    </Box>
+                    <Box>
+                      <Group gap="xs" align="center" mb={2}>
+                        <Text fw={700} size="sm" className={styles.cardTitle}>
+                          {t.modals.newProfileWireguardTitle}
+                        </Text>
+                        <Badge size="xs" color="yellow" variant="light">
+                          {t.common.comingSoon}
+                        </Badge>
+                      </Group>
+                      <Text size="11px" c="dimmed">
+                        {t.modals.newProfileWireguardDesc}
                       </Text>
-                      <Badge size="xs" color="cyan" variant="light">
-                        UDP
-                      </Badge>
-                    </Group>
-                    <Text size="11px" c="dimmed">
-                      {t.modals.newProfileWireguardDesc}
-                    </Text>
-                  </Box>
+                    </Box>
+                  </Group>
                 </Group>
-                <IconChevronRight size={16} className={styles.chevronIcon} />
-              </Group>
-            </Paper>
+              </Paper>
+            </Tooltip>
 
             {/* OpenVPN Manual Card */}
             <Paper

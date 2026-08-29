@@ -1,6 +1,7 @@
 import { Modal, Stack, Text, Box, Group, Button, Badge } from "@mantine/core";
 import { IconQrcode, IconCopy } from "@tabler/icons-react";
 import { VpnProfile } from "../../types/vpn";
+import { useTranslation } from "../../i18n";
 import styles from "./QrCodeModal.module.css";
 
 interface QrCodeModalProps {
@@ -10,6 +11,7 @@ interface QrCodeModalProps {
 }
 
 export const QrCodeModal: React.FC<QrCodeModalProps> = ({ opened, onClose, profile }) => {
+  const { t } = useTranslation();
   if (!profile) return null;
 
   return (
@@ -20,7 +22,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({ opened, onClose, profi
         <Group gap="xs">
           <IconQrcode size={18} color="var(--vpn-cyan)" />
           <Text fw={700} size="md" className={styles.modalTitle}>
-            Sync Profile with Mobile Client
+            {t.modals.qrTitle}
           </Text>
         </Group>
       }
@@ -64,7 +66,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({ opened, onClose, profi
             </Badge>
           </Group>
           <Text size="xs" c="dimmed" mt={4}>
-            Scan this QR code in VPNHub iOS or Android app to instantly import configuration.
+            {t.modals.qrSubtitle}
           </Text>
         </Box>
 
@@ -80,7 +82,7 @@ export const QrCodeModal: React.FC<QrCodeModalProps> = ({ opened, onClose, profi
             );
           }}
         >
-          Copy Base64 Config String
+          {t.modals.qrCopyBase64}
         </Button>
       </Stack>
     </Modal>

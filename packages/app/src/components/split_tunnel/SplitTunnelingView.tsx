@@ -17,9 +17,11 @@ import { IconApps, IconNetwork, IconPlus, IconTrash } from "@tabler/icons-react"
 import { useVpnStore } from "../../state/useVpnStore";
 import { AddAppRuleModal } from "./AddAppRuleModal";
 import { IpDomainRule } from "../../types/vpn";
+import { useTranslation } from "../../i18n";
 import styles from "./SplitTunnelingView.module.css";
 
 export const SplitTunnelingView: React.FC = () => {
+  const { t } = useTranslation();
   const { appRules, toggleAppRule, deleteAppRule, ipRules, toggleIpRule, deleteIpRule, addIpRule } =
     useVpnStore();
 
@@ -54,11 +56,10 @@ export const SplitTunnelingView: React.FC = () => {
       <Group justify="space-between" align="center">
         <Box>
           <Text size="xl" fw={700} className={styles.title}>
-            Split Tunneling Policy Manager
+            {t.splitTunnel.title}
           </Text>
           <Text size="xs" c="dimmed">
-            Granularly define which applications, CIDR subnets, and domains route through VPN or
-            direct internet
+            {t.splitTunnel.subtitle}
           </Text>
         </Box>
       </Group>
@@ -67,10 +68,10 @@ export const SplitTunnelingView: React.FC = () => {
       <Tabs defaultValue="apps" color="cyan">
         <Tabs.List mb="md">
           <Tabs.Tab value="apps" leftSection={<IconApps size={15} />}>
-            Application Rules ({appRules.length})
+            {t.splitTunnel.tabApps} ({appRules.length})
           </Tabs.Tab>
           <Tabs.Tab value="ip-domain" leftSection={<IconNetwork size={15} />}>
-            IP Subnets & Domains ({ipRules.length})
+            {t.splitTunnel.tabIpDomain} ({ipRules.length})
           </Tabs.Tab>
         </Tabs.List>
 
@@ -80,11 +81,10 @@ export const SplitTunnelingView: React.FC = () => {
             <Group justify="space-between" align="center" mb="md">
               <Box>
                 <Text size="sm" fw={700} className={styles.cardTitle}>
-                  Application-Specific Tunnel Rules
+                  {t.splitTunnel.appsSectionTitle}
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Packets emitted by specified binaries will follow designated routing table
-                  overrides
+                  {t.splitTunnel.appsSectionDesc}
                 </Text>
               </Box>
 
@@ -94,18 +94,18 @@ export const SplitTunnelingView: React.FC = () => {
                 leftSection={<IconPlus size={14} />}
                 onClick={() => setAppModalOpen(true)}
               >
-                Add Application Rule
+                {t.splitTunnel.btnAddAppRule}
               </Button>
             </Group>
 
             <Table verticalSpacing="xs">
               <Table.Thead className={styles.tableHeader}>
                 <Table.Tr>
-                  <Table.Th style={{ width: 40 }}>Status</Table.Th>
-                  <Table.Th>Application</Table.Th>
-                  <Table.Th>Executable Path</Table.Th>
-                  <Table.Th>Routing Policy</Table.Th>
-                  <Table.Th style={{ textAlign: "right" }}>Actions</Table.Th>
+                  <Table.Th style={{ width: 40 }}>{t.splitTunnel.colStatus}</Table.Th>
+                  <Table.Th>{t.splitTunnel.colApp}</Table.Th>
+                  <Table.Th>{t.splitTunnel.colPath}</Table.Th>
+                  <Table.Th>{t.splitTunnel.colPolicy}</Table.Th>
+                  <Table.Th style={{ textAlign: "right" }}>{t.splitTunnel.colActions}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -138,7 +138,9 @@ export const SplitTunnelingView: React.FC = () => {
                         color={rule.mode === "route_vpn" ? "teal" : "yellow"}
                         variant="light"
                       >
-                        {rule.mode === "route_vpn" ? "Route via VPN" : "Bypass VPN (Direct)"}
+                        {rule.mode === "route_vpn"
+                          ? t.splitTunnel.routeVpnBadge
+                          : t.splitTunnel.bypassBadge}
                       </Badge>
                     </Table.Td>
                     <Table.Td style={{ textAlign: "right" }}>
@@ -164,23 +166,23 @@ export const SplitTunnelingView: React.FC = () => {
             {/* Quick Add Form */}
             <Box className={`glass-panel ${styles.panel}`}>
               <Text size="xs" fw={700} className={styles.cardTitle} mb="xs">
-                Add Subnet CIDR or Domain Rule
+                {t.splitTunnel.addIpSectionTitle}
               </Text>
               <Group grow align="flex-end">
                 <TextInput
                   size="xs"
-                  label="Target CIDR / Wildcard Domain"
-                  placeholder="10.0.0.0/8 or *.corp.domain.com"
+                  label={t.splitTunnel.targetLabel}
+                  placeholder={t.splitTunnel.targetPlaceholder}
                   value={newTarget}
                   onChange={(e) => setNewTarget(e.currentTarget.value)}
                   className="font-mono"
                 />
                 <Select
                   size="xs"
-                  label="Type"
+                  label={t.splitTunnel.typeLabel}
                   data={[
-                    { value: "cidr", label: "IPv4/IPv6 CIDR Subnet" },
-                    { value: "domain", label: "Domain Pattern" },
+                    { value: "cidr", label: t.splitTunnel.typeCidr },
+                    { value: "domain", label: t.splitTunnel.typeDomain },
                   ]}
                   value={newType}
                   onChange={(val) => setNewType(val as any)}
@@ -188,10 +190,10 @@ export const SplitTunnelingView: React.FC = () => {
                 />
                 <Select
                   size="xs"
-                  label="Routing Mode"
+                  label={t.splitTunnel.policyLabel}
                   data={[
-                    { value: "route_vpn", label: "Route via VPN" },
-                    { value: "bypass", label: "Bypass VPN (Direct)" },
+                    { value: "route_vpn", label: t.splitTunnel.policyRouteVpn },
+                    { value: "bypass", label: t.splitTunnel.policyBypass },
                   ]}
                   value={newMode}
                   onChange={(val) => setNewMode(val as any)}
@@ -199,8 +201,8 @@ export const SplitTunnelingView: React.FC = () => {
                 />
                 <TextInput
                   size="xs"
-                  label="Description / Purpose"
-                  placeholder="e.g. AWS VPC Staging"
+                  label={t.splitTunnel.descLabel}
+                  placeholder={t.splitTunnel.descPlaceholder}
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.currentTarget.value)}
                 />
@@ -211,7 +213,7 @@ export const SplitTunnelingView: React.FC = () => {
                   disabled={!newTarget}
                   className={styles.addButton}
                 >
-                  Add
+                  {t.splitTunnel.btnAddRule}
                 </Button>
               </Group>
             </Box>
@@ -221,12 +223,12 @@ export const SplitTunnelingView: React.FC = () => {
               <Table verticalSpacing="xs">
                 <Table.Thead className={styles.tableHeader}>
                   <Table.Tr>
-                    <Table.Th style={{ width: 40 }}>Status</Table.Th>
-                    <Table.Th>Target Destination</Table.Th>
-                    <Table.Th>Type</Table.Th>
-                    <Table.Th>Description</Table.Th>
-                    <Table.Th>Policy</Table.Th>
-                    <Table.Th style={{ textAlign: "right" }}>Actions</Table.Th>
+                    <Table.Th style={{ width: 40 }}>{t.splitTunnel.colStatus}</Table.Th>
+                    <Table.Th>{t.splitTunnel.colTarget}</Table.Th>
+                    <Table.Th>{t.splitTunnel.colType}</Table.Th>
+                    <Table.Th>{t.splitTunnel.colDesc}</Table.Th>
+                    <Table.Th>{t.splitTunnel.colPolicy}</Table.Th>
+                    <Table.Th style={{ textAlign: "right" }}>{t.splitTunnel.colActions}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -261,7 +263,9 @@ export const SplitTunnelingView: React.FC = () => {
                           color={rule.mode === "route_vpn" ? "teal" : "yellow"}
                           variant="light"
                         >
-                          {rule.mode === "route_vpn" ? "Route via VPN" : "Bypass VPN"}
+                          {rule.mode === "route_vpn"
+                            ? t.splitTunnel.policyRouteVpn
+                            : t.splitTunnel.policyBypass}
                         </Badge>
                       </Table.Td>
                       <Table.Td style={{ textAlign: "right" }}>

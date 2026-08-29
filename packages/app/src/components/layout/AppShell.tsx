@@ -38,6 +38,29 @@ export const AppShell: React.FC = () => {
     };
   }, []);
 
+  // Handle Auto-Reconnect when network adapter connectivity is restored
+  useEffect(() => {
+    const handleOnline = () => {
+      const state = useVpnStore.getState();
+      if (
+        state.appSettings.autoReconnect &&
+        state.activeProfileId &&
+        state.connectionState !== "connected" &&
+        state.connectionState !== "connecting"
+      ) {
+        state.addLog(
+          "INFO",
+          "NETWORK_ADAPTER",
+          "Network connectivity restored. Auto-reconnecting VPN tunnel..."
+        );
+        state.connect(state.activeProfileId);
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
+
   const renderActiveView = () => {
     switch (activeTab) {
       case "dashboard":

@@ -91,7 +91,10 @@ export const SecurityHubView: React.FC = () => {
 
             <Group justify="space-between" mt="md">
               <Text size="10px" c="dimmed">
-                IPv6: {securitySettings.ipv6LeakProtection ? t.statusBar.ipv6Blocked : t.statusBar.ipv6Pass}
+                IPv6:{" "}
+                {securitySettings.ipv6LeakProtection
+                  ? t.statusBar.ipv6Blocked
+                  : t.statusBar.ipv6Pass}
               </Text>
               <Badge
                 size="xs"

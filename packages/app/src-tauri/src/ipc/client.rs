@@ -192,3 +192,23 @@ impl DaemonClient {
         }
     }
 }
+
+/// Synchronously sends a force disconnect frame to the daemon on exit without Tokio runtime or stream Mutex contention.
+pub fn send_synchronous_disconnect() {
+    #[cfg(unix)]
+    {
+        use std::io::Write;
+        use std::os::unix::net::UnixStream;
+
+        let socket_path = std::env::var("VPNHUB_SOCKET_PATH")
+            .unwrap_or_else(|_| DEFAULT_LINUX_SOCKET_PATH.to_string());
+        if let Ok(mut stream) = UnixStream::connect(socket_path) {
+            let _ = stream.set_write_timeout(Some(std::time::Duration::from_millis(300)));
+            let payload = r#"{"action":"disconnect","params":{"force":true}}"#;
+            let len_bytes = (payload.len() as u32).to_be_bytes();
+            let _ = stream.write_all(&len_bytes);
+            let _ = stream.write_all(payload.as_bytes());
+            let _ = stream.flush();
+        }
+    }
+}

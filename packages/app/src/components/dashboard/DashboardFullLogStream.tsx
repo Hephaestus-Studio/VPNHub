@@ -76,7 +76,9 @@ export const DashboardFullLogStream: React.FC = () => {
         </Group>
 
         <Group gap={6} wrap="nowrap">
-          <Tooltip label={isLogAutoScroll ? `${t.logs.autoScroll} (ON)` : `${t.logs.autoScroll} (OFF)`}>
+          <Tooltip
+            label={isLogAutoScroll ? `${t.logs.autoScroll} (ON)` : `${t.logs.autoScroll} (OFF)`}
+          >
             <ActionIcon
               size="xs"
               variant={isLogAutoScroll ? "light" : "subtle"}

@@ -47,8 +47,8 @@ pub async fn start_ipc_monitor_worker(app_handle: AppHandle, client: Arc<DaemonC
             if let Ok(response) = client.send_request(DaemonRequest::GetMetrics).await {
                 let _ = app_handle.emit("vpn-metrics-update", response);
             }
-        } else if last_vpn_state.as_deref() != Some("disconnected") {
-            last_vpn_state = Some("disconnected".to_string());
+        } else if last_vpn_state.as_deref() != Some("Disconnected") {
+            last_vpn_state = Some("Disconnected".to_string());
             crate::tray::update_tray_status(&app_handle, "disconnected");
         }
     }
