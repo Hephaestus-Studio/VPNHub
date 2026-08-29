@@ -30,7 +30,7 @@ export const DiagnosticExportModal: React.FC<DiagnosticExportModalProps> = ({
       // Trigger download
       const bundleData = {
         exportedAt: new Date().toISOString(),
-        vpnhubVersion: "0.1.0",
+        vpnhubVersion: "0.1.1",
         platform: "Linux x86_64 (Kernel 6.8.0)",
         sanitized: sanitizeIps,
         logs: includeLogs ? logs.slice(-200) : [],

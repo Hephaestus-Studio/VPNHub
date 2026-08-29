@@ -79,7 +79,7 @@ impl AuthHandler {
     /// Formats standard `auth-user-pass` credentials for transmission over the TLS control channel.
     pub fn encode_credentials(username: &str, password: &str) -> Vec<u8> {
         let options = "V4,dev-type tun,link-mtu 1550,tun-mtu 1500,proto TCPv4_CLIENT,keydir 1,cipher AES-256-GCM,auth [null-digest],keysize 256,tls-auth,key-method 2,tls-client";
-        let peer_info = "IV_VER=3.0\nIV_PLAT=linux\nIV_NCP=2\nIV_TCP=1\nIV_PROTO=30\nIV_CIPHERS=AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305\nIV_GUI_VER=VPNHub-Daemon/0.1.0\n";
+        let peer_info = "IV_VER=3.0\nIV_PLAT=linux\nIV_NCP=2\nIV_TCP=1\nIV_PROTO=30\nIV_CIPHERS=AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305\nIV_GUI_VER=VPNHub-Daemon/0.1.1\n";
         Self::encode_key_method_2(options, Some(username), Some(password), peer_info)
     }
 

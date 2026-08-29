@@ -1,6 +1,6 @@
 [package]
 name = "vpnhub"
-version = "0.1.0"
+version = "0.1.1"
 description = "VPNHub Desktop Application"
 authors = ["VPNHub Team"]
 edition = "2021"

@@ -104,7 +104,7 @@ export const INITIAL_LOGS: LogEntry[] = [
     timestamp: "23:15:02.110",
     level: "INFO",
     source: "DAEMON_CORE",
-    message: "VPNHub System Daemon v0.1.0 (x86_64-unknown-linux-gnu) initialized successfully",
+    message: "VPNHub System Daemon v0.1.1 (x86_64-unknown-linux-gnu) initialized successfully",
   },
   {
     id: "log-2",

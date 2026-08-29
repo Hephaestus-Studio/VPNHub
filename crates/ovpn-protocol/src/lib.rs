@@ -15,7 +15,9 @@ pub mod reliable;
 pub mod tls;
 
 pub use auth::{AuthChallenge, AuthHandler};
-pub use engine::{EngineState, OutputAction, ProtocolEngine};
+pub use engine::{
+    EngineState, OutputAction, ProtocolEngine, EXPLICIT_EXIT_NOTIFY_MAGIC, KEEPALIVE_MAGIC,
+};
 pub use error::ProtocolError;
 pub use frame::{ControlPacket, DataPacket};
 pub use key_slots::{KeySlot, KeySlotManager};

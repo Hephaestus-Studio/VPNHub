@@ -287,3 +287,50 @@ fn test_protocol_engine_deterministic_handshake_flow() {
     assert!(has_state_change);
     assert!(has_net_send);
 }
+
+#[test]
+fn test_keepalive_magic_constants() {
+    assert_eq!(ovpn_protocol::KEEPALIVE_MAGIC.len(), 16);
+    assert_eq!(ovpn_protocol::EXPLICIT_EXIT_NOTIFY_MAGIC.len(), 16);
+    assert_eq!(
+        ovpn_protocol::KEEPALIVE_MAGIC[0..4],
+        [0x2a, 0x18, 0x7b, 0xf3]
+    );
+}
+
+#[test]
+fn test_keepalive_ping_emission_on_timeout() {
+    let now = Instant::now();
+    let mut config = OpenVpnConfig::default();
+    config.ping_interval = Some(Duration::from_secs(10));
+    config.ping_restart = Some(Duration::from_secs(60));
+
+    let mut engine = ProtocolEngine::new(config, now).expect("Engine initialization failed");
+
+    // When disconnected, send_keepalive_ping should be a no-op
+    assert!(engine.send_keepalive_ping(now).is_ok());
+    assert!(engine.poll_output_action().is_none());
+
+    // In connecting state, handle_timeout should not crash
+    engine.start_connect(now).unwrap();
+    while engine.poll_output_action().is_some() {}
+
+    let timeout_res = engine.handle_timeout(now + Duration::from_secs(1));
+    assert!(timeout_res.is_ok());
+}
+
+#[test]
+fn test_inactivity_ping_restart_timeout() {
+    let now = Instant::now();
+    let mut config = OpenVpnConfig::default();
+    config.ping_restart = Some(Duration::from_secs(120));
+
+    let mut engine = ProtocolEngine::new(config, now).expect("Engine initialization failed");
+    engine.start_connect(now).unwrap();
+    while engine.poll_output_action().is_some() {}
+
+    // When not yet connected, ping-restart is not triggered
+    let future = now + Duration::from_secs(125);
+    let timeout_res = engine.handle_timeout(future);
+    assert!(timeout_res.is_ok());
+}

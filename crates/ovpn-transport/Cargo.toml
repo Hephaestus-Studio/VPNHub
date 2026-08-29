@@ -1,6 +1,6 @@
 [package]
 name = "ovpn-transport"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["VPNHub Team"]
 description = "Tokio-based UDP/TCP AsyncSockets, SOCKS5 & HTTP CONNECT proxies for openvpn3-rs"

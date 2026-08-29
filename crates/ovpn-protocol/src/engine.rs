@@ -46,6 +46,16 @@ pub enum OutputAction {
     CloseSession(String),
 }
 
+/// OpenVPN Data Channel Keepalive ping magic sequence.
+pub const KEEPALIVE_MAGIC: [u8; 16] = [
+    0x2a, 0x18, 0x7b, 0xf3, 0x64, 0x1e, 0xb4, 0xcb, 0x07, 0xed, 0x2d, 0x0a, 0x98, 0x1f, 0xc7, 0x48,
+];
+
+/// OpenVPN Data Channel Explicit Exit Notify magic sequence.
+pub const EXPLICIT_EXIT_NOTIFY_MAGIC: [u8; 16] = [
+    0x28, 0x7f, 0x34, 0x6b, 0xd4, 0xef, 0x7a, 0x81, 0x2d, 0x56, 0xb8, 0xd3, 0xaf, 0xc5, 0x45, 0x9c,
+];
+
 /// Pure deterministic OpenVPN protocol engine.
 pub struct ProtocolEngine {
     config: OpenVpnConfig,
@@ -67,6 +77,7 @@ pub struct ProtocolEngine {
     cipher_suite: CipherSuite,
     mss_fix: Option<u16>,
     pushed_options_accumulator: String,
+    auth_token: Option<String>,
 }
 
 impl ProtocolEngine {
@@ -163,6 +174,7 @@ impl ProtocolEngine {
             cipher_suite,
             mss_fix,
             pushed_options_accumulator: String::new(),
+            auth_token: None,
         })
     }
 
@@ -332,15 +344,6 @@ impl ProtocolEngine {
         slot.bytes_received += ciphertext_buf.len() as u64;
 
         // Check for OpenVPN Data Channel Keepalive ping message
-        const KEEPALIVE_MAGIC: [u8; 16] = [
-            0x2a, 0x18, 0x7b, 0xf3, 0x64, 0x1e, 0xb4, 0xcb, 0x07, 0xed, 0x2d, 0x0a, 0x98, 0x1f,
-            0xc7, 0x48,
-        ];
-        const EXPLICIT_EXIT_NOTIFY_MAGIC: [u8; 16] = [
-            0x28, 0x7f, 0x34, 0x6b, 0xd4, 0xef, 0x7a, 0x81, 0x2d, 0x56, 0xb8, 0xd3, 0xaf, 0xc5,
-            0x45, 0x9c,
-        ];
-
         if ciphertext_buf.len() >= 16 && &ciphertext_buf[..16] == &KEEPALIVE_MAGIC {
             debug!(target: "ovpn::protocol", "Received OpenVPN keepalive ping packet from server, discarded from TUN");
             return Ok(());
@@ -483,6 +486,62 @@ impl ProtocolEngine {
         Ok(())
     }
 
+    /// Encrypts and emits an OpenVPN data channel keepalive ping packet to the network outbox.
+    pub fn send_keepalive_ping(&mut self, now: Instant) -> Result<(), ProtocolError> {
+        if self.state != EngineState::Connected && self.state != EngineState::Rekeying {
+            return Ok(());
+        }
+
+        let slot = match self.key_manager.get_tx_slot() {
+            Some(s) => s,
+            None => return Ok(()),
+        };
+
+        let peer_id = self.peer_id;
+        let opcode = if peer_id.is_some() {
+            Opcode::DataV2
+        } else {
+            Opcode::DataV1
+        };
+
+        let packet_id = slot.next_tx_packet_id();
+        let mut nonce = [0u8; 12];
+        nonce[0..4].copy_from_slice(&packet_id.to_be_bytes());
+        nonce[4..12].copy_from_slice(&slot.tx_implicit_iv);
+
+        // 1. Header (AAD): [ Opcode (1B) ] [ Peer-ID (3B) if V2 ] [ Packet ID (4B) ]
+        let mut header = BytesMut::with_capacity(8);
+        DataPacket::encode_header(opcode, slot.key_id, peer_id, packet_id, &mut header);
+
+        // 2. Encrypt plaintext KEEPALIVE_MAGIC in-place
+        let mut ping_buf = BytesMut::from(&KEEPALIVE_MAGIC[..]);
+        let tag = slot
+            .tx_cipher
+            .encrypt_in_place(&nonce, header.as_ref(), &mut ping_buf)
+            .map_err(ProtocolError::Crypto)?;
+
+        // 3. OpenVPN AEAD wire layout: [ Header (4/8B) ] [ Tag (16B) ] [ Ciphertext ]
+        let mut out_frame = BytesMut::with_capacity(header.len() + 16 + ping_buf.len());
+        out_frame.extend_from_slice(&header);
+        out_frame.extend_from_slice(&tag);
+        out_frame.extend_from_slice(&ping_buf);
+
+        slot.bytes_sent += ping_buf.len() as u64;
+        self.last_ping_sent = now;
+
+        debug!(
+            target: "ovpn::protocol",
+            "Emitted Data Channel keepalive ping (packet_id={}, key_id={}, total_len={})",
+            packet_id,
+            slot.key_id,
+            out_frame.len()
+        );
+
+        self.outbox
+            .push_back(OutputAction::SendToNetwork(out_frame));
+        Ok(())
+    }
+
     /// Advances control channel state, TLS processing, and emits outgoing packets.
     fn flush_control_channel(&mut self, now: Instant) -> Result<(), ProtocolError> {
         let ready_chunks = self.recv_queue.drain_ready();
@@ -585,15 +644,30 @@ impl ProtocolEngine {
         self.key_manager.install_new_key(&session_keys, now)?;
         info!(target: "ovpn::protocol", "Data channel session keys successfully installed into KeySlotManager");
 
-        let auth_creds = self.config.auth_user_pass.as_ref().and_then(|auth| {
-            match (&auth.username, &auth.password) {
-                (Some(u), Some(p)) => Some((u.clone(), p.as_str().to_string())),
-                _ => None,
-            }
-        });
+        let auth_creds = if let Some(ref token) = self.auth_token {
+            let username = self
+                .config
+                .auth_user_pass
+                .as_ref()
+                .and_then(|auth| auth.username.clone())
+                .unwrap_or_else(|| "auth-token-user".to_string());
+            info!(
+                target: "ovpn::protocol",
+                "Using dynamic server-pushed auth-token for re-authentication as user '{}'",
+                username
+            );
+            Some((username, token.clone()))
+        } else {
+            self.config.auth_user_pass.as_ref().and_then(|auth| {
+                match (&auth.username, &auth.password) {
+                    (Some(u), Some(p)) => Some((u.clone(), p.as_str().to_string())),
+                    _ => None,
+                }
+            })
+        };
 
         if let Some((u, p)) = auth_creds {
-            info!(target: "ovpn::protocol", "Sending user-password credentials for user '{}'", u);
+            info!(target: "ovpn::protocol", "Sending credentials for user '{}'", u);
             self.transition_state(EngineState::Authenticating);
             let creds = AuthHandler::encode_credentials(&u, &p);
             if let Some(ref mut tls) = self.tls_adapter {
@@ -647,6 +721,18 @@ impl ProtocolEngine {
                 info!(target: "ovpn::protocol", "Received server assigned peer-id={pid}");
                 self.peer_id = Some(pid);
             }
+            if let Some(ping) = push_opts.ping_interval {
+                info!(target: "ovpn::protocol", "Server pushed ping_interval: {:?}", ping);
+                self.config.ping_interval = Some(ping);
+            }
+            if let Some(restart) = push_opts.ping_restart {
+                info!(target: "ovpn::protocol", "Server pushed ping_restart: {:?}", restart);
+                self.config.ping_restart = Some(restart);
+            }
+            if let Some(ref token) = push_opts.auth_token {
+                info!(target: "ovpn::protocol", "Server pushed dynamic auth-token (len={})", token.as_str().len());
+                self.auth_token = Some(token.as_str().to_string());
+            }
 
             let prov_config = push_opts.build_provisioning_config(&self.config);
             info!(target: "ovpn::protocol", "Parsed network provisioning config: ip={:?}, netmask={:?}, gw={:?}, dns={:?}, routes={}", 
@@ -690,7 +776,7 @@ impl ProtocolEngine {
         self.flush_control_channel(now)
     }
 
-    /// Periodic timeout driver handling retransmissions and keepalive pings.
+    /// Periodic timeout driver handling retransmissions, keepalive pings, and inactivity timeouts.
     pub fn handle_timeout(&mut self, now: Instant) -> Result<(), ProtocolError> {
         let resends = self.send_queue.poll_retransmissions(now)?;
         for mut cp in resends {
@@ -699,9 +785,23 @@ impl ProtocolEngine {
         }
 
         if self.state == EngineState::Connected {
+            // 1. Send keepalive ping if interval elapsed
             let ping_interval = self.config.ping_interval.unwrap_or(Duration::from_secs(10));
             if now.duration_since(self.last_ping_sent) >= ping_interval {
-                self.last_ping_sent = now;
+                self.send_keepalive_ping(now)?;
+            }
+
+            // 2. Check for inactivity timeout (ping-restart)
+            let ping_restart = self.config.ping_restart.unwrap_or(Duration::from_secs(120));
+            if now.duration_since(self.last_packet_recv) >= ping_restart {
+                let err_msg = format!(
+                    "Inactivity timeout: no packets received from server in {}s (ping-restart)",
+                    ping_restart.as_secs()
+                );
+                error!(target: "ovpn::protocol", "{}", err_msg);
+                self.transition_state(EngineState::Error);
+                self.outbox.push_back(OutputAction::CloseSession(err_msg));
+                return Err(ProtocolError::HandshakeTimeout(ping_restart));
             }
         }
 

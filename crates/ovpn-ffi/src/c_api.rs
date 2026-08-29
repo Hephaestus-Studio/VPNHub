@@ -10,7 +10,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 
 /// Static library version string.
-static VERSION_STR: &[u8] = b"openvpn3-rs 0.1.0\0";
+static VERSION_STR: &[u8] = b"openvpn3-rs 0.1.1\0";
 
 #[no_mangle]
 pub extern "C" fn ovpn_version() -> *const c_char {

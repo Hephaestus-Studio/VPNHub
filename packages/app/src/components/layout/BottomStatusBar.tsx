@@ -116,7 +116,7 @@ export const BottomStatusBar: React.FC = () => {
 
         {!isMobile && (
           <Badge size="xs" variant="outline" color="gray" className={styles.versionBadge}>
-            v0.1.0
+            v0.1.1
           </Badge>
         )}
       </Group>

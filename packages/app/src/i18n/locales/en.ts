@@ -194,7 +194,7 @@ export const en: TranslationDictionary = {
     ipcDaemonDesc: "Unix Domain Socket • Latency: {latency}ms",
     encryptedVaultTitle: "Encrypted Vault",
     encryptedVaultDesc: "AES-256-GCM Zeroized Hardware Storage Key",
-    clientVersionText: "VPNHub Desktop Client v0.1.0",
+    clientVersionText: "VPNHub Desktop Client v0.1.1",
     resetDefaults: "Reset Defaults",
     settingsRestoredTitle: "Settings Restored",
     settingsRestoredMsg: "Application settings have been reset to default values.",

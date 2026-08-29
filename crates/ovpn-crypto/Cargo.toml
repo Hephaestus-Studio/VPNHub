@@ -1,6 +1,6 @@
 [package]
 name = "ovpn-crypto"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["VPNHub Team"]
 description = "Cryptographic primitives, AEAD, KDF, Post-Quantum ML-KEM-768, and anti-replay protection for openvpn3-rs"
