@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/v0.34.0/schema/markdownlint-config-schema.json",
+  "default": true,
+  "MD013": false,
+  "MD024": {
+    "siblings_only": true
+  },
+  "MD025": false,
+  "MD029": {
+    "style": "one_or_ordered"
+  },
+  "MD033": false,
+  "MD034": false,
+  "MD036": false,
+  "MD041": false,
+  "MD046": {
+    "style": "fenced"
+  },
+  "MD049": {
+    "style": "consistent"
+  },
+  "MD050": {
+    "style": "consistent"
+  }
+}
