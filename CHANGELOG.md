@@ -5,15 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [0.1.1] - 2026-08-29
 
 ### Features
 
 - *(assets)* Update application logo and regenerate platform icons - ([9a2d2fd](https://github.com/Hephaestus-Studio/VPNHub/commit/9a2d2fd19b8b585cf135a94e8e9a23905487931d))
+- *(ovpn)* Implement keepalive pings, inactivity timeout, and bump to v0.1.1 - ([86196a1](https://github.com/Hephaestus-Studio/VPNHub/commit/86196a1920e075934096af0c568f16888c3c750b))
 
 ### Maintenance
 
 - *(changelog)* Format spacing and newlines in cliff template - ([f11ad88](https://github.com/Hephaestus-Studio/VPNHub/commit/f11ad889c203c2a82422b7fb720865a6f0aa33de))
+- *(lint)* Configure markdownlint rules and ignore patterns - ([892e3bd](https://github.com/Hephaestus-Studio/VPNHub/commit/892e3bd42d7aa3def2f403914fa143a34112762d))
 
 ## [0.1.0] - 2026-08-29
 
