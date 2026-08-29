@@ -119,8 +119,6 @@ export const en: TranslationDictionary = {
     connect: "Connect",
     disconnect: "Disconnect",
     deleteConfirm: "Are you sure you want to delete this profile?",
-    exportProfile: "Export Profile",
-    qrCode: "QR Code",
   },
   security: {
     title: "Security & Shield Center",
@@ -194,7 +192,7 @@ export const en: TranslationDictionary = {
     ipcDaemonDesc: "Unix Domain Socket • Latency: {latency}ms",
     encryptedVaultTitle: "Encrypted Vault",
     encryptedVaultDesc: "AES-256-GCM Zeroized Hardware Storage Key",
-    clientVersionText: "VPNHub Desktop Client v0.1.1",
+    clientVersionText: "VPNHub Desktop Client v0.1.2",
     resetDefaults: "Reset Defaults",
     settingsRestoredTitle: "Settings Restored",
     settingsRestoredMsg: "Application settings have been reset to default values.",

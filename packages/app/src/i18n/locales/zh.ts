@@ -119,8 +119,6 @@ export const zh: TranslationDictionary = {
     connect: "连接",
     disconnect: "断开",
     deleteConfirm: "确定要删除此配置吗？",
-    exportProfile: "导出配置",
-    qrCode: "二维码",
   },
   security: {
     title: "安全与防护中心",
@@ -188,7 +186,7 @@ export const zh: TranslationDictionary = {
     ipcDaemonDesc: "Unix 域套接字 • 延迟：{latency}ms",
     encryptedVaultTitle: "安全加密数据保险库",
     encryptedVaultDesc: "AES-256-GCM 硬件级安全密钥，具备内存自动擦除 (Zeroize)",
-    clientVersionText: "VPNHub 桌面客户端 v0.1.1",
+    clientVersionText: "VPNHub 桌面客户端 v0.1.2",
     resetDefaults: "恢复默认设置",
     settingsRestoredTitle: "已恢复设置",
     settingsRestoredMsg: "所有应用设置已重置为默认初始值。",

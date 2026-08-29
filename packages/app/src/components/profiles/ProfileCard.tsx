@@ -6,9 +6,6 @@ import {
   IconDotsVertical,
   IconBolt,
   IconEdit,
-  IconQrcode,
-  IconDownload,
-  IconCopy,
   IconTrash,
   IconPower,
   IconShieldCheck,
@@ -23,19 +20,11 @@ import styles from "./ProfileCard.module.css";
 interface ProfileCardProps {
   profile: VpnProfile;
   onEdit: (profile: VpnProfile) => void;
-  onViewQr: (profile: VpnProfile) => void;
 }
 
-export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onViewQr }) => {
-  const {
-    activeProfileId,
-    connectionState,
-    connect,
-    disconnect,
-    toggleFavorite,
-    deleteProfile,
-    addProfile,
-  } = useVpnStore();
+export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit }) => {
+  const { activeProfileId, connectionState, connect, disconnect, toggleFavorite, deleteProfile } =
+    useVpnStore();
   const { t } = useTranslation();
 
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -53,34 +42,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
     } else {
       connect(profile.id);
     }
-  };
-
-  const handleDuplicate = () => {
-    const duplicated: VpnProfile = {
-      ...profile,
-      id: crypto.randomUUID(),
-      name: `${profile.name} (Copy)`,
-      isFavorite: false,
-    };
-    addProfile(duplicated);
-  };
-
-  const handleExport = () => {
-    const element = document.createElement("a");
-    const file = new Blob(
-      [
-        profile.rawConfig ||
-          `# VPNHub Config for ${profile.name}\nendpoint = ${profile.serverHost}:${profile.serverPort}`,
-      ],
-      {
-        type: "text/plain",
-      }
-    );
-    element.href = URL.createObjectURL(file);
-    element.download = `${profile.id}.${profile.protocol === "wireguard" ? "conf" : "ovpn"}`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
   };
 
   let cardClass = styles.card;
@@ -252,15 +213,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onEdit, onVie
               <Menu.Dropdown className={styles.menuDropdown}>
                 <Menu.Item leftSection={<IconEdit size={14} />} onClick={() => onEdit(profile)}>
                   {t.common.edit}
-                </Menu.Item>
-                <Menu.Item leftSection={<IconQrcode size={14} />} onClick={() => onViewQr(profile)}>
-                  {t.profiles.qrCode}
-                </Menu.Item>
-                <Menu.Item leftSection={<IconDownload size={14} />} onClick={handleExport}>
-                  {t.profiles.exportProfile}
-                </Menu.Item>
-                <Menu.Item leftSection={<IconCopy size={14} />} onClick={handleDuplicate}>
-                  {t.common.copy}
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item

@@ -24,7 +24,6 @@ import {
   IconStarFilled,
   IconBolt,
   IconEdit,
-  IconQrcode,
   IconFolderOff,
   IconX,
 } from "@tabler/icons-react";
@@ -34,7 +33,6 @@ import { useTranslation } from "../../i18n";
 import { ProfileCard } from "./ProfileCard";
 import { ProfileModal } from "./ProfileModal";
 import { NewProfileHubModal } from "./NewProfileHubModal";
-import { QrCodeModal } from "./QrCodeModal";
 import styles from "./ProfileLibraryView.module.css";
 
 export const ProfileLibraryView: React.FC = () => {
@@ -51,7 +49,6 @@ export const ProfileLibraryView: React.FC = () => {
   // Modals state
   const [isProfileModalOpen, setProfileModalOpen] = useState(false);
   const [isHubModalOpen, setHubModalOpen] = useState(false);
-  const [isQrModalOpen, setQrModalOpen] = useState(false);
   const [chosenProtocol, setChosenProtocol] = useState<"wireguard" | "openvpn">("wireguard");
   const [selectedProfile, setSelectedProfile] = useState<VpnProfile | null>(null);
 
@@ -76,11 +73,6 @@ export const ProfileLibraryView: React.FC = () => {
     setSelectedProfile(profile);
     setChosenProtocol(profile.protocol === "wireguard" ? "wireguard" : "openvpn");
     setProfileModalOpen(true);
-  };
-
-  const handleViewQr = (profile: VpnProfile) => {
-    setSelectedProfile(profile);
-    setQrModalOpen(true);
   };
 
   const effectiveViewMode = isMobile ? "grid" : viewMode;
@@ -251,12 +243,7 @@ export const ProfileLibraryView: React.FC = () => {
       ) : effectiveViewMode === "grid" ? (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing={{ base: "xs", sm: "sm", md: "md" }}>
           {filteredProfiles.map((profile) => (
-            <ProfileCard
-              key={profile.id}
-              profile={profile}
-              onEdit={handleEdit}
-              onViewQr={handleViewQr}
-            />
+            <ProfileCard key={profile.id} profile={profile} onEdit={handleEdit} />
           ))}
         </SimpleGrid>
       ) : (
@@ -395,17 +382,6 @@ export const ProfileLibraryView: React.FC = () => {
 
                     <Table.Td style={{ textAlign: "right" }}>
                       <Box className={styles.actionsGroup}>
-                        <Tooltip label="QR Code">
-                          <ActionIcon
-                            size="sm"
-                            variant="subtle"
-                            color="gray"
-                            onClick={() => handleViewQr(prof)}
-                          >
-                            <IconQrcode size={15} />
-                          </ActionIcon>
-                        </Tooltip>
-
                         <Tooltip label="Edit">
                           <ActionIcon
                             size="sm"
@@ -468,12 +444,6 @@ export const ProfileLibraryView: React.FC = () => {
         onClose={() => setProfileModalOpen(false)}
         initialProfile={selectedProfile}
         defaultProtocol={chosenProtocol}
-      />
-
-      <QrCodeModal
-        opened={isQrModalOpen}
-        onClose={() => setQrModalOpen(false)}
-        profile={selectedProfile}
       />
     </Box>
   );

@@ -1,6 +1,6 @@
 [package]
 name = "ovpn-protocol"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["VPNHub Team"]
 description = "Pure No-I/O deterministic state machine protocol engine for openvpn3-rs"

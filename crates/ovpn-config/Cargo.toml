@@ -1,6 +1,6 @@
 [package]
 name = "ovpn-config"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["VPNHub Team"]
 description = "High-performance .ovpn configuration and dynamic PUSH_REPLY parser for openvpn3-rs"

@@ -292,7 +292,7 @@ function getSavedAppSettings(): AppSettings {
 export const useVpnStore = create<VpnStoreState>((set, get) => ({
   connectionState: "disconnected",
   daemonHealth: "offline",
-  daemonVersion: "0.1.1",
+  daemonVersion: "0.1.2",
   daemonLatencyMs: 0.42,
   activeProfileId: "",
   activeTab: "dashboard",

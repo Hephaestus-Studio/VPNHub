@@ -3078,7 +3078,7 @@ dependencies = [
 
 [[package]]
 name = "ovpn-config"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "base64 0.22.1",
  "ipnet",
@@ -3094,7 +3094,7 @@ dependencies = [
 
 [[package]]
 name = "ovpn-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3113,7 +3113,7 @@ dependencies = [
 
 [[package]]
 name = "ovpn-crypto"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "aead",
  "aes-gcm",
@@ -3139,7 +3139,7 @@ dependencies = [
 
 [[package]]
 name = "ovpn-ffi"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "libc",
  "ovpn-config",
@@ -3154,7 +3154,7 @@ dependencies = [
 
 [[package]]
 name = "ovpn-protocol"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "hex",
@@ -3174,7 +3174,7 @@ dependencies = [
 
 [[package]]
 name = "ovpn-transport"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3189,7 +3189,7 @@ dependencies = [
 
 [[package]]
 name = "ovpn-tun"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -5390,7 +5390,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vpnhub"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "aes-gcm",
  "bytes",
@@ -5415,7 +5415,7 @@ dependencies = [
 
 [[package]]
 name = "vpnhub-daemon"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",

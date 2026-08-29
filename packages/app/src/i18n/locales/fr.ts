@@ -119,8 +119,6 @@ export const fr: TranslationDictionary = {
     connect: "Connecter",
     disconnect: "Déconnecter",
     deleteConfirm: "Êtes-vous sûr de vouloir supprimer ce profil ?",
-    exportProfile: "Exporter le profil",
-    qrCode: "Code QR",
   },
   security: {
     title: "Centre de Sécurité & Protection",
@@ -195,7 +193,7 @@ export const fr: TranslationDictionary = {
     ipcDaemonDesc: "Socket de domaine Unix • Latence : {latency}ms",
     encryptedVaultTitle: "Coffre-fort chiffré",
     encryptedVaultDesc: "Clé matérielle AES-256-GCM avec effacement sécurisé en mémoire (Zeroize)",
-    clientVersionText: "Client VPNHub v0.1.1",
+    clientVersionText: "Client VPNHub v0.1.2",
     resetDefaults: "Rétablir les paramètres par défaut",
     settingsRestoredTitle: "Paramètres réinitialisés",
     settingsRestoredMsg:

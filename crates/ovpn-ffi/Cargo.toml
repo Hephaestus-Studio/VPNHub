@@ -1,6 +1,6 @@
 [package]
 name = "ovpn-ffi"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["VPNHub Team"]
 description = "C-ABI Foreign Function Interface (FFI) bindings for openvpn3-rs"

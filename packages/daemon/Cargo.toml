@@ -1,6 +1,6 @@
 [package]
 name = "vpnhub-daemon"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["VPNHub Team"]
 description = "Background VPN daemon for VPNHub with multi-protocol support, fail-closed kill switch, and secure IPC."

@@ -119,8 +119,6 @@ export const vi: TranslationDictionary = {
     connect: "Kết nối",
     disconnect: "Ngắt kết nối",
     deleteConfirm: "Bạn có chắc chắn muốn xóa cấu hình này không?",
-    exportProfile: "Xuất cấu hình",
-    qrCode: "Mã QR",
   },
   security: {
     title: "Trung tâm Bảo mật & Lá chắn",
@@ -192,7 +190,7 @@ export const vi: TranslationDictionary = {
     ipcDaemonDesc: "Unix Domain Socket • Độ trễ: {latency}ms",
     encryptedVaultTitle: "Két lưu trữ bảo mật",
     encryptedVaultDesc: "Khóa phần cứng mã hóa AES-256-GCM với cơ chế tự hủy bộ nhớ (Zeroize)",
-    clientVersionText: "VPNHub Desktop Client v0.1.1",
+    clientVersionText: "VPNHub Desktop Client v0.1.2",
     resetDefaults: "Khôi phục mặc định",
     settingsRestoredTitle: "Đã khôi phục cài đặt",
     settingsRestoredMsg: "Các tùy chọn cài đặt ứng dụng đã được đưa về giá trị mặc định.",

@@ -133,8 +133,6 @@ export interface TranslationDictionary {
     connect: string;
     disconnect: string;
     deleteConfirm: string;
-    exportProfile: string;
-    qrCode: string;
   };
   security: {
     title: string;
