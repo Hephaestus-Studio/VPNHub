@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+
+### Features
+
+- *(assets)* Update application logo and regenerate platform icons - ([9a2d2fd](https://github.com/Hephaestus-Studio/VPNHub/commit/9a2d2fd19b8b585cf135a94e8e9a23905487931d))
 ## [0.1.0] - 2026-08-29
 
 ### Bug Fixes
