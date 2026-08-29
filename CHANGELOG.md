@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Features
 
 - *(assets)* Update application logo and regenerate platform icons - ([9a2d2fd](https://github.com/Hephaestus-Studio/VPNHub/commit/9a2d2fd19b8b585cf135a94e8e9a23905487931d))
+
+### Maintenance
+
+- *(changelog)* Format spacing and newlines in cliff template - ([f11ad88](https://github.com/Hephaestus-Studio/VPNHub/commit/f11ad889c203c2a82422b7fb720865a6f0aa33de))
+
 ## [0.1.0] - 2026-08-29
 
 ### Bug Fixes
