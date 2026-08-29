@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-08-29
+
+### Refactoring
+
+- *(ui)* Remove QR code, profile export, and copy actions, bump to v0.1.2 - ([29e5ea0](https://github.com/Hephaestus-Studio/VPNHub/commit/29e5ea03fa177adf7d39b6982f4da0d73e63428c))
+
 ## [0.1.1] - 2026-08-29
 
 ### Features
