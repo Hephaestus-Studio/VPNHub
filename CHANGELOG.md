@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(settings)* Integrate autostart plugin and desktop window close behavior - ([96e4bac](https://github.com/Hephaestus-Studio/VPNHub/commit/96e4bacb6eff24e8b67cae7285b8989d15d13709))
 - *(windows)* Add Wintun driver support, Win32 IP Helper routing, and Windows Named Pipe IPC - ([f7e12d2](https://github.com/Hephaestus-Studio/VPNHub/commit/f7e12d2b17521206964d85711130a55343628459))
 - *(tray)* Refactor system tray with MenuBuilder, dynamic toggle, and deduplicated status updates - ([2f0a67e](https://github.com/Hephaestus-Studio/VPNHub/commit/2f0a67ee7ca4cd243147cca27f703f166217aa1b))
+- *(i18n)* Add multi-language support (EN, VI, ZH, FR) and app icon branding - ([2ca6a01](https://github.com/Hephaestus-Studio/VPNHub/commit/2ca6a01ac037e425868c49a651bd9219d442d187))
 
 ### Maintenance
 
